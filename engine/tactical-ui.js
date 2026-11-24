@@ -73,15 +73,12 @@ function tacticalCompactHTML(m){
 }
 // Both inspection modes use the identical artwork and live stat markup.
 function tacticalHTML(m,pinned){return tacticalCompactHTML(m);}
-let tacPinnedEntity=null,tacPinnedState=null,tacPinnedSide=null;
+// Always anchor the same inspector to the defender's bottom-left canvas corner.
 function tacticalPosition(panel,e,pinned){
- const rect=cv.getBoundingClientRect(),w=panel.offsetWidth,h=panel.offsetHeight,margin=10,x=rect.left+e.x*scale,y=rect.top+e.y*scale;
- // Choose the pinned side once per selection; a moving unit cannot make the card jump.
- if(!pinned){tacPinnedEntity=null;tacPinnedSide=null;}
- else if(tacPinnedEntity!==e||tacPinnedState!==S){tacPinnedEntity=e;tacPinnedState=S;tacPinnedSide=x>rect.left+rect.width/2?'left':'right';}
- const gap=24;const left=pinned?(tacPinnedSide==='left'?rect.left+12:rect.right-w-12):(x+w+gap<=innerWidth-margin?x+gap:x-w-gap);
- const top=pinned?Math.max(margin,rect.top+12):y-h*.55;
- panel.style.left=Math.round(Math.max(margin,Math.min(innerWidth-w-margin,left)))+'px';panel.style.top=Math.round(Math.max(margin,Math.min(innerHeight-h-margin,top)))+'px';
+ const rect=cv.getBoundingClientRect(),w=panel.offsetWidth,h=panel.offsetHeight,margin=10;
+ const left=rect.left+10,top=rect.bottom-h-10;
+ panel.style.left=Math.round(Math.max(margin,Math.min(innerWidth-w-margin,left)))+'px';
+ panel.style.top=Math.round(Math.max(margin,Math.min(innerHeight-h-margin,top)))+'px';
 }
 function tacticalTick(now,force=false){
  if(!S){tacticalHide();return;}tacReset();

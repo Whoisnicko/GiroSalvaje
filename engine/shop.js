@@ -33,6 +33,7 @@ function showShop(purchased=false){
 function buyArtifact(id){
  if(!shopAvailable()||!Object.hasOwn(SHOP_ARTIFACTS,id)||artifactOwned(id))return false;
  const a=SHOP_ARTIFACTS[id];if(S.gold<a.price)return false;
+ prepUndoRecord('Steal '+a.name);
  S.gold-=a.price;(S.artifacts??=[]).push(id);
  if(a.apply)a.apply();
  if(id==='boneplate'){

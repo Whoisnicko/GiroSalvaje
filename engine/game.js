@@ -479,6 +479,7 @@ function summon(type){
 const mergeable = (a, b) => a && b && a !== b && a.type === b.type && a.lvl === b.lvl && a.lvl < 3 && !a.temp && !b.temp && a.type !== 'L';
 /* Fusión manual: soltar un monstruo sobre otro igual los apila; al juntar 3 (o 2 con Necromancy) se fusionan. */
 function doMerge(target, src){
+  prepUndoRecord('Merge / stack '+NAMES[target.type]);
   const total = target.pile + src.pile, train = Math.max(target.train || 0, src.train || 0);
   removeUnit(src);
   if (total < S.mods.mergeN) {
@@ -520,6 +521,7 @@ function buyCard(){
   if (!(S.phase === 'prep' || S.phase === 'fight')) return;
   const free = buyable(), cost = cardCost();
   if (!free.length || S.gold < cost) return;
+  prepUndoClear();
   const di = free[Math.floor(Math.random() * free.length)];
   S.gold -= cost; S.cardBuys++;
   S.hand.push({ id:S.deck[di], di, used:false });
@@ -531,7 +533,8 @@ function useCard(i){
   if (!c || c.used || !usableNow(c.id)) return;
   const C = CARDS[c.id];
   if (C.aim) { S.aim = S.aim === i ? null : i; renderHand(); return; }
-  C.play(); c.used = true; sfx('card'); renderHand();
+  if(S.phase==='prep'){if(spinning||S.drag||S.pendingMerge)return;prepUndoRecord('Play '+C.n);}
+  C.play(); c.used = true; sfx('card'); renderHand();renderPrepUndo();
 }
 function castAim(p){
   const c = S.hand[S.aim];
@@ -544,6 +547,8 @@ let spinning = false;
 const cellHTML = k => img(SYM[k].spr);
 async function spin(){
   if (S.phase !== 'prep' || spinning || S.spinsLeft <= 0) return;
+  if(S.drag||S.pendingMerge)return;
+  prepUndoClear();
   spinning = true; S.spinsLeft--; S.spunOnce = true; S.confirmFight = false; S.wins.clear(); S.aim = null; renderUI();
   const cells = [...document.querySelectorAll('.cell')];
   const stops = [0, 1, 2].map(c => 380 + c * 170);
@@ -601,6 +606,7 @@ const slotCost = () => 10 + S.slotBuys * 6;
 function buySlot(){
   const cost = slotCost();
   if (S.phase !== 'prep' || S.gold < cost || spinning) return;
+  prepUndoRecord('Buy field slot');
   S.gold -= cost; S.slotBuys++; S.maxUnits++;
   setResult('Valley expanded', `Field capacity: ${S.maxUnits}. Next slot costs ${slotCost()} souls.`);
   bigMsg(`+1 SLOT · ${S.maxUnits}`); sfx('fusion'); renderUI();
@@ -608,14 +614,15 @@ function buySlot(){
 function buySpin(){
   const cost = spinCost();
   if (S.phase !== 'prep' || S.gold < cost || spinning) return;
+  prepUndoRecord('Buy spin');
   S.gold -= cost; S.bought++; S.spinsLeft++; S.confirmFight = false;
   setResult('Spin purchased', `Paid ${cost} souls. Next spin costs ${spinCost()}.`);
   sfx('coin'); renderUI();
 }
 function toggleHold(i){
   if (S.phase !== 'prep' || spinning) return;
-  if (S.held.has(i)) S.held.delete(i);
-  else if (S.held.size < S.holdsMax) S.held.add(i);
+  if (S.held.has(i)) {prepUndoRecord('Release symbol');S.held.delete(i);}
+  else if (S.held.size < S.holdsMax) {prepUndoRecord('Hold symbol');S.held.add(i);}
   else { setResult('Hold limit', `You can hold up to ${S.holdsMax} symbols.`); renderUI(); return; }
   sfx('stop'); renderUI();
 }
@@ -629,6 +636,7 @@ function startFight(){
     renderUI(); return;
   }
   if (S.drag) { cancelDrag(); }
+  prepUndoClear();
   S.phase = 'fight'; S.held.clear(); S.wins.clear(); S.confirmFight = false; S.drag = null; S.aim = null; S.sel = null;
   S.buff = { haste:0, slow:0 }; S.zones = []; S.fightT = 0; S.charge = false;
   const W = waveInfo(S.wave);
@@ -948,6 +956,7 @@ function cancelDrag(){
 function resolveDrop(){
   const d = S.drag, u = d.u, plan = dropPlan(u);
   if (plan.kind === 'bad') { cancelDrag(); setResult('Invalid placement', plan.msg); renderUI(); return; }
+  if(plan.kind!=='merge')prepUndoRecord(plan.kind==='sell'?'Sell '+NAMES[u.type]:plan.kind==='bench'?'Move '+NAMES[u.type]+' to reserve':'Move '+NAMES[u.type],d);
   S.drag = null;
   if (plan.kind === 'sell') { removeUnit(u); S.gold += plan.value; floatText(WALL_X + 30, u.y, `+${plan.value} souls`, 'soul'); burst(WALL_X, u.y, 'soul', 12, 90); sfx('coin'); setResult('Sold', `${NAMES[u.type]} ${'★'.repeat(u.lvl)} for ${plan.value} souls.`); }
   else if (plan.kind === 'merge') { u.x = d.ox; u.y = d.oy; if (askMerge) { askMergeConfirm(plan.target, u); return; } doMerge(plan.target, u); }
@@ -962,6 +971,7 @@ cv.addEventListener('pointerdown', ev => {
   audioInit();
   const p = toWorld(ev);
   if (S.phase === 'fight' && S.aim !== null) { castAim(p); return; }
+  if(S.phase==='prep'&&spinning)return;
   const u = S.phase === 'prep' ? mineAt(p) : (unitAt(p)||mineAt(p));
   tacticalAllowHover();
   if (S.phase !== 'prep') { tacticalSelect(u||enemyAt(p)); renderIntel(); return; }
@@ -1076,6 +1086,7 @@ function renderUI(){
     return `<span class="${ready ? 'near' : ''}" title="${ready ? 'Stack on the field or in reserve to merge' : ''}">${img(USPR[u.type])} ${NAMES[u.type]} ${'★'.repeat(u.lvl)} ×${n}${u.lvl < 3 ? ` <small>(${n}/${S.mods.mergeN})${ready ? ' ready to merge!' : ''}</small>` : ''}</span>`;
   }).join('');
   $('#speedBtn').textContent = '×' + S.speed;
+  renderPrepUndo();
 }
 function showDeck(){
   const inRun = S && S.phase !== 'relic', deck = inRun ? S.deck : META.deck;
@@ -1098,15 +1109,16 @@ document.addEventListener('click', e => {
   if (!b || b.disabled) return;
   const a = b.dataset.act;
   if (a === 'spin') spin();
+  else if (a === 'undo') prepUndo();
   else if (a === 'buy') buySpin();
   else if (a === 'slot') buySlot();
   else if (a === 'buycard') buyCard();
   else if (a === 'fight') startFight();
   else if (a === 'shop') showShop();
   else if (a === 'artifactbuy') buyArtifact(b.dataset.id);
-  else if (a === 'shopclose') $('#ov2').hidden = true;
+  else if (a === 'shopclose') {$('#ov2').hidden = true;renderPrepUndo();}
   else if (a === 'deck') showDeck();
-  else if (a === 'closedeck') $('#ov2').hidden = true;
+  else if (a === 'closedeck') {$('#ov2').hidden = true;renderPrepUndo();}
   else if (a === 'mergeYes') closeMergeConfirm(true);
   else if (a === 'mergeNo') closeMergeConfirm(false);
   else if (a === 'music') setMusic(!AU.music);
@@ -1118,14 +1130,15 @@ document.addEventListener('click', e => {
 });
 document.addEventListener('keydown', e => {
   if (!S) return;
-  if (e.key === 'Escape' && !$('#ov2').hidden) { if (S.pendingMerge) closeMergeConfirm(false); else $('#ov2').hidden = true; return; }
+  if (e.key === 'Escape' && !$('#ov2').hidden) { if (S.pendingMerge) closeMergeConfirm(false); else {$('#ov2').hidden = true;renderPrepUndo();} return; }
   if (!$('#ov').hidden || !$('#ov2').hidden) return;
   if (e.key === 'Escape' && S.aim !== null) { S.aim = null; renderHand(); return; }
   if (e.key === 'Escape' && tacticalClose()) { e.preventDefault(); return; }
+  if((e.ctrlKey||e.metaKey)&&!e.shiftKey&&e.key.toLowerCase()==='z'&&S.phase==='prep'){e.preventDefault();prepUndo();return;}
   if (/^[1-6]$/.test(e.key)) { useCard(+e.key - 1); return; }
   if (S.phase === 'prep' && e.code === 'Space' && !e.target.closest('button')) { e.preventDefault(); spin(); }
 });
-window.addEventListener('resize', () => { resize(); if (S) { const zm = zoneMax(); if(S.phase==='prep') S.units.forEach(u => u.x = Math.min(u.x, zm)); S.bench.forEach((u, i) => { if (u) Object.assign(u, benchSlot(i)); }); renderFrame(); } });
+window.addEventListener('resize', () => { if(S?.phase==='prep')prepUndoClear();resize(); if (S) { const zm = zoneMax(); if(S.phase==='prep') S.units.forEach(u => u.x = Math.min(u.x, zm)); S.bench.forEach((u, i) => { if (u) Object.assign(u, benchSlot(i)); }); renderFrame(); } });
 
 const BATTLEFIELD_ART='assets/battlefield.png';
 const HYBRID_ATLAS='assets/hybrid-atlas.png';
@@ -1182,7 +1195,7 @@ function restore(v){
 function showRewardRestored(){showOv(`<h2>Choose your reward</h2><div class="offers">${S.offer.map((o,i)=>`<button class="offer" data-act="reward" data-i="${i}"><span class="ic">${rewardArt(o)}</span><span class="nm">${o.n}</span><span class="ds">${o.d}</span></button>`).join('')}</div>`);}
 function showEndRestored(){showOv(`<h2>${S.phase==='win'?'The Altar stands!':'The Altar has fallen'}</h2><p>${S.kills} humans defeated. Choose a card for your next run.</p><div class="cards-row">${S.endOffer.map((id,i)=>cardHTML(id,`data-act="endcard" data-i="${i}"`)).join('')}</div><button class="btn" data-front="scores">View scores</button>`);}
 function front(panel){tacticalHide();$('#front').hidden=false;menuOpen=true;document.querySelector('.wrap').inert=true;$('#ov').inert=true;$('#ov2').inert=true;for(const el of document.querySelectorAll('.front-view'))el.hidden=el.id!==panel;$('#'+panel+' button:not([disabled]),#'+panel+' input')?.focus();}
-function closeFront(){menuOpen=false;$('#front').hidden=true;document.querySelector('.wrap').inert=false;$('#ov').inert=false;$('#ov2').inert=false;last=performance.now();resize();}
+function closeFront(){menuOpen=false;$('#front').hidden=true;document.querySelector('.wrap').inert=false;$('#ov').inert=false;$('#ov2').inert=false;last=performance.now();resize();if(S)renderPrepUndo();}
 function showHome(){if(S){cancelDrag();persist();}loadedSave=store.get(SAVE_KEY,null);if(!validSave(loadedSave))loadedSave=null;$('#playerName').value=profile.name;$('#continueBtn').disabled=!loadedSave;$('#continueInfo').textContent=loadedSave?`${loadedSave.name} · oleada ${Math.min(loadedSave.state.wave,10)} · ${new Date(loadedSave.savedAt).toLocaleString('en')}`:'The invasion awaits.';$('#resumeBtn').hidden=!S;front('homeView');}
 function beginNew(){let name=$('#playerName').value.trim().slice(0,20);if(!name){$('#nameError').textContent='Enter your name (1–20 characters).';$('#playerName').focus();return;}profile.name=name;durableWrite(PROFILE_KEY,profile);if(validSave(loadedSave)){front('confirmView');return;}launchNew();}
 function launchNew(){runName=profile.name;sessionRunId=uid();loadedSave=null;try{localStorage.removeItem(SAVE_KEY);}catch(e){}savedWorldWidth=null;closeFront();newGame();S.runId=sessionRunId;$('#saveStatus').textContent='Choose a relic to create your first save.';}
