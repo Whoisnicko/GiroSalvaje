@@ -49,6 +49,10 @@ function sfx(name){
     case 'fireLaunch': noise(.22, .16, 1100, 0, null, 'bandpass'); tone(180, .2, 'sawtooth', .05, 0, null, 420); break;
     case 'boom': noise(.5, .42, 320); tone(75, .45, 'sine', .42, 0, null, 32); break;                          // explosión del dragón
     case 'clank': tone(1850, .09, 'square', .05); tone(2500, .07, 'square', .04, .012); noise(.06, .1, 5200, 0, null, 'highpass'); break; // armadura
+    case 'heroCleave': noise(.16,.24,1600,0,null,'bandpass');tone(370,.16,'triangle',.12,0,null,130);break;
+    case 'heroStorm': noise(.16,.12,2200,0,null,'bandpass');tone(160,.14,'triangle',.08,0,null,90);break;
+    case 'heroCharge': noise(.22,.18,1300,0,null,'bandpass');tone(220,.2,'sine',.08,0,null,630);break;
+    case 'heroCry': tone(100,.6,'sawtooth',.10,0,null,75);tone(150,.5,'triangle',.12,.08,null,105);noise(.3,.09,500);break;
     case 'heroLeap': tone(130,.36,'triangle',.16,0,null,390);noise(.34,.16,1400,0,null,'bandpass');break;
     case 'heroLand': noise(.42,.32,420);tone(95,.4,'sine',.28,0,null,38);tone(520,.17,'triangle',.08,0,null,95);break;
     case 'clash': noise(.05, .16, 3500, 0, null, 'bandpass'); tone(950, .06, 'triangle', .05, 0, null, 600); break;
@@ -700,7 +704,7 @@ function update(dt){
     if (u.down||u.hp<=0) continue;                                   // caído: queda en el piso hasta la próxima oleada
     const st = stats(u.type, u.lvl, u);
     // Aura de la Banshee: +30/50/80% de daño y velocidad de ataque a los monsters cercanos
-    const buff = bansheeOn(u);
+    const buff = bansheeOn(u),warCry=martialGuardBuff(u);
     u.buffed = buff;
     if (u.type === 'B') { u.cd -= dt; if (u.cd <= 0) { u.cd = st.cd; S.fx.push({ k:'ring', x:u.x, y:u.y, r:st.range, c:'soul', t:.7, T:.7 }); if (Math.random() < .35) sfx('wail'); } continue; }
     if (u.type === 'N') { u.cd = Math.max(0, u.cd - dt); continue; }
@@ -715,10 +719,10 @@ function update(dt){
     let tgt = null, best = 1e9;
     for (const e of alive) { const d = dist(e, u) - e.r - radius(u); if (d < best) { best = d; tgt = e; } }
     if (!tgt || best > st.range) continue;
-    u.cd -= dt * (S.buff.haste > 0 ? 2 : 1) * (1 + buff);
+    u.cd -= dt * (S.buff.haste > 0 ? 2 : 1) * (1 + buff) * (warCry?1+MARTIAL_SKILLS.cry.speedBonus:1);
     if (u.cd > 0) continue;
     u.cd = st.cd;
-    const dmg = st.dmg * (1 + buff);
+    const dmg = st.dmg * (1 + buff) * (warCry?1+MARTIAL_SKILLS.cry.damageBonus:1);
     const dd = dist(tgt, u) || 1; u.lx = (tgt.x - u.x) / dd; u.ly = (tgt.y - u.y) / dd; u.lunge = .14;
     if (u.type === 'M') { S.shots.push({ k:'fire', x:u.x + 14, y:u.y - 12, tgt, tx:tgt.x, ty:tgt.y, sp:300, dmg, splash:st.splash }); sfx('fireLaunch'); }
     else if (u.type === 'A') { S.shots.push({ k:'orb', x:u.x + 8, y:u.y - 4, tgt, tx:tgt.x, ty:tgt.y, sp:380, dmg }); sfx('orb'); }
