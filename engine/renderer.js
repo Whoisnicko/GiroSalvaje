@@ -59,20 +59,27 @@ function draw(){
     ctx.fillStyle = colors.gold; ctx.globalAlpha = .35; ctx.fillRect(0, 0, WALL_X, WORLD_H); ctx.globalAlpha = 1;
     ctx.fillStyle = colors.gold; ctx.font = '600 13px Rubik, sans-serif'; ctx.fillText(`Sell: +${plan.value} souls`, WALL_X + 8, Math.max(20, dragU.y - 34));
   }
-  // Alcance del monstruo seleccionado o arrastrado
-  const show = dragU || (S.sel && (S.units.includes(S.sel) || S.bench.includes(S.sel)) ? S.sel : null);
-  if (show && show.y < WORLD_H) {
-    const st = stats(show.type, show.lvl, show), rr = BASE[show.type].guard ? guardOf(show) : BASE[show.type].support ? st.range : st.range + radius(show);
-    ctx.fillStyle = colors.soul; ctx.globalAlpha = .07; ctx.beginPath(); ctx.arc(show.x, show.y, rr, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1;
-    ctx.strokeStyle = colors.soul; ctx.lineWidth = 2; ctx.setLineDash([6, 5]); ctx.beginPath(); ctx.arc(show.x, show.y, rr, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+  // Hover range is a world-space overlay, clipped to the combat area (not reserve).
+  const hovered=tacticalHovered(),show=dragU||hovered;
+  if(show&&show.y<WORLD_H&&!show.down){
+    ctx.save();ctx.beginPath();ctx.rect(0,0,W,WORLD_H);ctx.clip();
+    const ring=(x,y,rr,c,dash)=>{if(!(rr>0))return;ctx.fillStyle=c;ctx.globalAlpha=.065;ctx.beginPath();ctx.arc(x,y,rr,0,Math.PI*2);ctx.fill();ctx.globalAlpha=.82;ctx.strokeStyle=c;ctx.lineWidth=1.6;ctx.setLineDash(dash);ctx.beginPath();ctx.arc(x,y,rr,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);};
+    if(S.enemies.includes(show)){
+      if(show.kind==='bal')ring(show.x,show.y,show.range,colors.red,[5,4]);
+      else if(show.kind==='cle')ring(show.x,show.y,100,colors.red,[5,4]);
+    }else{
+      const st=stats(show.type,show.lvl,show),base=BASE[show.type];
+      if(base.guard){ring(S.phase==='fight'?(show.hx??show.x):show.x,S.phase==='fight'?(show.hy??show.y):show.y,guardOf(show),colors.gold,[6,5]);ring(show.x,show.y,st.range+radius(show),colors.soul,[3,3]);}
+      else ring(show.x,show.y,base.support?st.range:st.range+radius(show),colors.soul,[6,5]);
+    }ctx.restore();
   }
   if (dragU) {
     allMine().forEach(o => { if (mergeable(o, dragU)) { const hot = plan && plan.kind === 'merge' && plan.target === o; ctx.strokeStyle = colors.gold; ctx.lineWidth = hot ? 4 : 2; ctx.globalAlpha = hot ? 1 : .6 + .3 * Math.sin(t * 6); ctx.beginPath(); ctx.arc(o.x, o.y, Math.min(radius(o), 22) + 10, 0, Math.PI * 2); ctx.stroke(); ctx.globalAlpha = 1; } });
     if (plan.kind === 'bad') { ctx.strokeStyle = colors.red; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(dragU.x, dragU.y, radius(dragU) + 6, 0, Math.PI * 2); ctx.stroke(); }
   }
 
-  const hovU = S.aimP && !S.drag && S.aim === null ? (unitAt(S.aimP)||mineAt(S.aimP)) : null;
-  const hovE = S.aimP && !hovU && S.aim === null ? enemyAt(S.aimP) : null;
+  const hovU = hovered&&!S.enemies.includes(hovered)?hovered:null;
+  const hovE = hovered&&S.enemies.includes(hovered)?hovered:null;
 
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   const ents = [...S.units.map(u => ({ u })), ...S.bench.filter(Boolean).map(u => ({ u })), ...S.enemies.map(e => ({ e }))].sort((a, b) => (a.u || a.e).y - (b.u || b.e).y);

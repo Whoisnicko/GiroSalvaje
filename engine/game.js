@@ -974,7 +974,7 @@ cv.addEventListener('pointerdown', ev => {
   if(S.phase==='prep'&&spinning)return;
   const u = S.phase === 'prep' ? mineAt(p) : (unitAt(p)||mineAt(p));
   tacticalAllowHover();
-  if (S.phase !== 'prep') { tacticalSelect(u||enemyAt(p)); renderIntel(); return; }
+  if (S.phase !== 'prep') { if(S.phase==='fight')tacticalSelect(u||enemyAt(p)); renderIntel(); return; }
   tacticalClearEnemy();
   if (!u) { tacticalSelect(null); renderIntel(); return; }
   S.drag = { u, dx:u.x - p.x, dy:u.y - p.y, ox:u.x, oy:u.y, sx:p.x, sy:p.y, moved:false, from:S.bench.includes(u) ? 'bench' : 'field' };
@@ -1096,7 +1096,7 @@ function showDeck(){
     <button class="go" data-act="closedeck">Close</button></div>`;
   o.hidden = false; o.querySelector('[data-act="closedeck"]').focus();
 }
-function showOv(html){ const o = $('#ov'); o.innerHTML = `<div class="panel">${html}</div>`; o.hidden = false; const b = o.querySelector('button'); if (b) b.focus(); }
+function showOv(html){ closeBestiary();const o = $('#ov'); o.innerHTML = `<div class="panel">${html}</div>`; o.hidden = false; const b = o.querySelector('button'); if (b) b.focus(); }
 function hideOv(){ $('#ov').hidden = true; }
 
 document.addEventListener('click', e => {
@@ -1194,7 +1194,7 @@ function restore(v){
 }
 function showRewardRestored(){showOv(`<h2>Choose your reward</h2><div class="offers">${S.offer.map((o,i)=>`<button class="offer" data-act="reward" data-i="${i}"><span class="ic">${rewardArt(o)}</span><span class="nm">${o.n}</span><span class="ds">${o.d}</span></button>`).join('')}</div>`);}
 function showEndRestored(){showOv(`<h2>${S.phase==='win'?'The Altar stands!':'The Altar has fallen'}</h2><p>${S.kills} humans defeated. Choose a card for your next run.</p><div class="cards-row">${S.endOffer.map((id,i)=>cardHTML(id,`data-act="endcard" data-i="${i}"`)).join('')}</div><button class="btn" data-front="scores">View scores</button>`);}
-function front(panel){tacticalHide();$('#front').hidden=false;menuOpen=true;document.querySelector('.wrap').inert=true;$('#ov').inert=true;$('#ov2').inert=true;for(const el of document.querySelectorAll('.front-view'))el.hidden=el.id!==panel;$('#'+panel+' button:not([disabled]),#'+panel+' input')?.focus();}
+function front(panel){closeBestiary();tacticalHide();$('#front').hidden=false;menuOpen=true;document.querySelector('.wrap').inert=true;$('#ov').inert=true;$('#ov2').inert=true;for(const el of document.querySelectorAll('.front-view'))el.hidden=el.id!==panel;$('#'+panel+' button:not([disabled]),#'+panel+' input')?.focus();}
 function closeFront(){menuOpen=false;$('#front').hidden=true;document.querySelector('.wrap').inert=false;$('#ov').inert=false;$('#ov2').inert=false;last=performance.now();resize();if(S)renderPrepUndo();}
 function showHome(){if(S){cancelDrag();persist();}loadedSave=store.get(SAVE_KEY,null);if(!validSave(loadedSave))loadedSave=null;$('#playerName').value=profile.name;$('#continueBtn').disabled=!loadedSave;$('#continueInfo').textContent=loadedSave?`${loadedSave.name} · oleada ${Math.min(loadedSave.state.wave,10)} · ${new Date(loadedSave.savedAt).toLocaleString('en')}`:'The invasion awaits.';$('#resumeBtn').hidden=!S;front('homeView');}
 function beginNew(){let name=$('#playerName').value.trim().slice(0,20);if(!name){$('#nameError').textContent='Enter your name (1–20 characters).';$('#playerName').focus();return;}profile.name=name;durableWrite(PROFILE_KEY,profile);if(validSave(loadedSave)){front('confirmView');return;}launchNew();}

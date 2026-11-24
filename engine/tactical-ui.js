@@ -1,5 +1,14 @@
 /* Tactical presentation only — v20-alpha.2. */
 const TAC_ROLES={W:['Tank · Melee','Intercepts humans in its patrol radius.'],A:['Ranged · Spectral','Fires spectral projectiles.'],M:['Ranged · Area damage','Fireballs damage enemies near the impact.'],N:['Support · Summoner','Raises skeletons when humans fall nearby.'],B:['Support · Aura','Empowers nearby monsters with damage and attack speed.'],L:['Melee · Temporary','Fast hunter summoned for this wave.'],K:['Melee · Temporary','Raised by a necromancer for this wave.']};
+const BESTIARY_LORE={
+ W:{title:'The restless sentinel',lore:'Once a watchman of the living kingdom, this guardian still remembers the gate it failed to defend. The souls beneath the altar have given its stubborn body a second duty.',tactic:'Place near the front. Its patrol radius is larger than its melee reach.'},
+ A:{title:'Echo of a lost soul',lore:'A fragment of a forgotten spirit, bound to the valley by a promise that outlived its name. It has no need of a bow; its anger takes the shape of spectral bolts.',tactic:'Deploy behind sturdy guardians. Its long reach lets it attack from safety.'},
+ M:{title:'Ember of the abyss',lore:'Born in the furnaces beneath the underworld, this small dragon carries a coal from the first infernal flame. Even its smallest breath can scatter a human formation.',tactic:'Fireballs damage enemies near their impact. Aim for clustered waves with its positioning.'},
+ N:{title:'Keeper of the unquiet dead',lore:'The keeper of forgotten burial rites learned to hear the names of souls that refused to leave. Every fallen invader becomes a possibility rather than an ending.',tactic:'Place where humans are likely to die within its summoning radius.'},
+ B:{title:'The mournful chorus',lore:'Her song is the echo of a ruined kingdom. To the living it is a warning; to the dead it is a rallying cry.',tactic:'Cover several attacking guardians with her aura; only the strongest overlapping aura applies.'},
+ L:{title:'Hunter of the moonless night',lore:'An ancient curse follows this creature through the valley. The spell of Howl briefly binds its hunger to the altar.',tactic:'Temporary melee reinforcement with a wide patrol area; it does not persist beyond the wave.'},
+ K:{title:'Bones in borrowed service',lore:'The bones of the defeated rise under a necromancer’s command. Their former loyalties are dust, their new duty carved into their marrow.',tactic:'Temporary melee summon; its strength depends on the necromancer and the wave.'}
+};
 let tacState=null,tacEnemy=null,tacSuppressed=false,tacLast=0,tacMarkup='',waveMarkup='',waveDetailMarkup='',waveState=null;
 function tacReset(){if(tacState!==S){tacState=S;tacEnemy=null;tacSuppressed=false;tacLast=0;tacMarkup='';}}
 function tacNum(n,d=1){return Number.isFinite(n)?String(Math.round(n*10**d)/10**d):'—';}
@@ -22,9 +31,9 @@ function tacticalAlive(e){return !!e&&(S.units.includes(e)||S.bench.includes(e)|
 function tacticalEnemySelected(e){return tacState===S&&tacEnemy===e;}
 function tacticalClearEnemy(){tacReset();tacEnemy=null;}
 function tacticalAllowHover(){tacReset();tacSuppressed=false;}
-function tacticalSelect(e){tacReset();const old=tacEnemy||S.sel;S.sel=null;tacEnemy=null;if(e&&old!==e){if(S.enemies.includes(e))tacEnemy=e;else S.sel=e;tacSuppressed=false;}else tacSuppressed=true;tacLast=0;}
+function tacticalSelect(e){tacReset();S.sel=null;tacEnemy=null;tacLast=0;if(e&&tacticalAlive(e))openBestiary(e);else{tacSuppressed=true;tacticalHide();}}
 function tacticalHide(){const p=$('#unitInspector');if(p)p.hidden=true;}
-function tacticalClose(){if(!S)return false;tacReset();const p=$('#unitInspector');if(!S.sel&&!tacEnemy&&p.hidden)return false;S.sel=null;tacEnemy=null;tacSuppressed=true;tacticalHide();return true;}
+function tacticalClose(){if(bestiaryDialog().open){closeBestiary();return true;}if(!S)return false;tacReset();const p=$('#unitInspector');if(!S.sel&&!tacEnemy&&p.hidden)return false;S.sel=null;tacEnemy=null;tacSuppressed=true;tacticalHide();return true;}
 function tacticalModel(e){
  const enemy=S.enemies.includes(e),rows=[],tags=[],add=(icon,label,value)=>rows.push({icon,label,value:String(value)});
  const hp=Math.max(0,e.hp),max=Math.max(1,e.maxHp??e.hp);
@@ -71,26 +80,74 @@ function tacticalCompactHTML(m){
  const hp=Math.max(0,Math.min(100,m.hp/m.max*100));
  return '<div class="sanctuary-shell"><div class="sanctuary-title"><strong>'+m.name+'</strong><span>'+m.stars+'</span></div><div class="sanctuary-health"><span class="sanctuary-fallback-heart" aria-hidden="true">♥</span><b>'+Math.ceil(m.hp)+' / '+Math.ceil(m.max)+'</b></div><div class="sanctuary-hp-track" role="meter" aria-label="Health" aria-valuemin="0" aria-valuemax="'+Math.ceil(m.max)+'" aria-valuenow="'+Math.ceil(Math.min(m.hp,m.max))+'"><i style="width:'+hp+'%"></i></div>'+sanctuaryStats(m).map((s,i)=>'<div class="sanctuary-stat sanctuary-stat-'+i+'" title="'+s.title+'"><span class="sanctuary-fallback-icon" aria-hidden="true">'+s.icon+'</span><span>'+s.label+'</span><b>'+s.value+'</b></div>').join('')+'</div>'+(tags.length?'<div class="sanctuary-buffs">'+tags.map(t=>'<span>'+t+'</span>').join('')+'</div>':'');
 }
-// Both inspection modes use the identical artwork and live stat markup.
-function tacticalHTML(m,pinned){return tacticalCompactHTML(m);}
-// Always anchor the same inspector to the defender's bottom-left canvas corner.
-function tacticalPosition(panel,e,pinned){
- const rect=cv.getBoundingClientRect(),w=panel.offsetWidth,h=panel.offsetHeight,margin=10;
- const left=rect.left+10,top=rect.bottom-h-10;
- panel.style.left=Math.round(Math.max(margin,Math.min(innerWidth-w-margin,left)))+'px';
- panel.style.top=Math.round(Math.max(margin,Math.min(innerHeight-h-margin,top)))+'px';
+function tacticalHTML(m){return tacticalCompactHTML(m);}
+function bestiaryDialog(){return $('#unitBestiary');}
+let bestiaryEntity=null,bestiaryState=null,bestiaryPhase=null,bestiaryMarkup='';
+function bestiaryHTML(e,m){
+ const l=m.enemy?{title:'Invader of the living kingdom',lore:'Driven by the living kingdom’s fear of the dead, this invader marches toward the altar in the Valley of Souls.',tactic:m.note}:BESTIARY_LORE[e.type];
+ const cards=sanctuaryStats(m).map(s=>'<div class="bestiary-stat"><span aria-hidden="true">'+s.icon+'</span><small>'+s.label+'</small><b>'+s.value+'</b></div>').join('');
+ return '<div class="bestiary-hero"><div class="bestiary-portrait">'+tacPic(m.portrait)+'</div><div><span class="bestiary-role">'+m.role+'</span><h2 id="bestiaryTitle">'+m.name+' <em>'+m.stars+'</em></h2><p>'+l.title+'</p><div class="bestiary-vitality"><span>VITALITY</span><b>'+Math.ceil(m.hp)+' / '+Math.ceil(m.max)+'</b></div><div class="bestiary-hp"><i style="width:'+Math.max(0,Math.min(100,m.hp/m.max*100))+'%"></i></div></div></div><div class="bestiary-stats">'+cards+'</div><div class="bestiary-columns"><section><h3>Chronicle</h3><p>'+l.lore+'</p></section><section><h3>Battlecraft</h3><p>'+l.tactic+'</p><dl>'+m.rows.filter(s=>!['Attack','Attack interval','Attack reach','Reach','Armor'].includes(s.label)).map(s=>'<div><dt>'+s.label+'</dt><dd>'+s.value+'</dd></div>').join('')+'</dl></section></div><div class="bestiary-tags">'+m.tags.map(t=>'<span>'+t+'</span>').join('')+'</div>';
+}
+function bestiaryPosition(){
+ const d=bestiaryDialog(),r=cv.getBoundingClientRect(),left=Math.max(0,r.left),right=Math.min(innerWidth,r.right),top=Math.max(0,r.top),bottom=Math.min(innerHeight,r.top+WORLD_H*scale);
+ const w=d.offsetWidth,h=d.offsetHeight;
+ d.style.left=Math.max(8,Math.min(innerWidth-w-8,(left+right-w)/2))+'px';
+ d.style.top=Math.max(8,Math.min(innerHeight-h-8,(top+bottom-h)/2))+'px';
+}
+function openBestiary(e){
+ if(!S||menuOpen||!$('#ov').hidden||!$('#ov2').hidden||spinning||!['prep','fight'].includes(S.phase))return;
+ const d=bestiaryDialog();bestiaryEntity=e;bestiaryState=S;bestiaryPhase=S.phase;bestiaryMarkup='';
+ tacticalHide();S.aimP=null;tacSuppressed=true;updateBestiary();
+ if(!d.open)d.showModal();bestiaryPosition();d.querySelector('.bestiary-close').focus();
+}
+function closeBestiary(){
+ const d=bestiaryDialog();if(d.open)d.close();bestiaryEntity=null;bestiaryMarkup='';if(S){S.aimP=null;S.sel=null;}tacSuppressed=true;tacticalHide();
+}
+function updateBestiary(){
+ if(!bestiaryEntity||bestiaryState!==S||bestiaryPhase!==S.phase||!tacticalAlive(bestiaryEntity)||menuOpen||!$('#ov').hidden||!$('#ov2').hidden){closeBestiary();return;}
+ const m=tacticalModel(bestiaryEntity),html=bestiaryHTML(bestiaryEntity,m);
+ if(html!==bestiaryMarkup){$('#bestiaryBody').innerHTML=html;bestiaryMarkup=html;}
+ $('#bestiaryNotice').textContent=S.phase==='fight'?'Battle continues while reading.':'Preparation · inspect your army';
+ if(bestiaryDialog().open)bestiaryPosition();
+}
+function tacticalHovered(){
+ if(!S||menuOpen||document.hidden||bestiaryDialog().open||!$('#ov').hidden||!$('#ov2').hidden||S.drag||S.aim!==null||tacSuppressed||!S.aimP)return null;
+ return unitAt(S.aimP)||mineAt(S.aimP)||enemyAt(S.aimP);
+}
+// Keep the entire card above the reserve band, inside the visible battlefield.
+// Prefer a side of the inspected unit; avoid covering other deployed units where possible.
+function tacticalPosition(panel,e){
+ const r=cv.getBoundingClientRect(),pad=6,L=Math.max(pad,r.left+pad),R=Math.min(innerWidth-pad,r.right-pad),T=Math.max(pad,r.top+pad),B=Math.min(innerHeight-pad,r.top+WORLD_H*scale-pad);
+ panel.style.width='';const roomW=R-L,roomH=B-T;
+ if(roomW<100||roomH<105)return false;
+ // The shell aspect ratio is fixed; allow a smaller card on short screens.
+ const desired=Math.min(innerWidth<=620?210:224,roomW,Math.max(90,(roomH-25)*425/392));
+ panel.style.width=desired+'px';
+ const w=panel.offsetWidth,h=panel.offsetHeight;if(h>roomH||w>roomW)return false;
+ const x=r.left+e.x*scale,y=r.top+e.y*scale,gap=Math.max(24,(S.enemies.includes(e)?e.r:radius(e))*scale+10);
+ const clampXY=(a,b)=>({x:Math.max(L,Math.min(R-w,a)),y:Math.max(T,Math.min(B-h,b))});
+ const candidates=[clampXY(x+gap,y-h*.5),clampXY(x-w-gap,y-h*.5),clampXY(x-w*.5,y-h-gap),clampXY(x-w*.5,y+gap)];
+ const others=[...S.units,...S.enemies].filter(o=>o!==e&&o.y<WORLD_H);
+ const hit=(p,ox,oy,rad)=>ox+rad>p.x&&ox-rad<p.x+w&&oy+rad>p.y&&oy-rad<p.y+h;
+ const score=p=>(hit(p,x,y,gap*.7)?1000:0)+others.reduce((n,o)=>n+(hit(p,r.left+o.x*scale,r.top+o.y*scale,12*scale)?20:0),0)+Math.hypot(p.x+w/2-x,p.y+h/2-y)*.03;
+ candidates.sort((a,b)=>score(a)-score(b));const p=candidates[0];
+ panel.style.left=Math.round(p.x)+'px';panel.style.top=Math.round(p.y)+'px';return true;
 }
 function tacticalTick(now,force=false){
  if(!S){tacticalHide();return;}tacReset();
- if(menuOpen||document.hidden||!$('#ov').hidden||!$('#ov2').hidden||S.drag||S.aim!==null){tacticalHide();return;}
  if(!force&&now-tacLast<100)return;tacLast=now;
- if(tacEnemy&&!tacticalAlive(tacEnemy))tacEnemy=null;if(S.sel&&!tacticalAlive(S.sel))S.sel=null;
- const pinned=tacEnemy||S.sel,p=S.aimP,hover=!tacSuppressed&&p?(unitAt(p)||mineAt(p)||enemyAt(p)):null,entity=pinned||hover;
- if(!entity){tacticalHide();return;}
- const panel=$('#unitInspector'),model=tacticalModel(entity),markup=tacticalHTML(model,!!pinned);
+ if(bestiaryDialog().open){updateBestiary();tacticalHide();return;}
+ const entity=tacticalHovered();if(!entity){tacticalHide();return;}
+ const panel=$('#unitInspector'),model=tacticalModel(entity),markup=tacticalHTML(model);
  if(markup!==tacMarkup){panel.querySelector('.inspect-body').innerHTML=markup;tacMarkup=markup;}
- panel.classList.add('is-compact');panel.classList.toggle('is-pinned',!!pinned);panel.classList.toggle('is-enemy',model.enemy);panel.querySelector('.inspect-close').hidden=!pinned;panel.hidden=false;tacticalPosition(panel,entity,!!pinned);
+ panel.classList.add('is-compact');panel.classList.remove('is-pinned');panel.classList.toggle('is-enemy',model.enemy);panel.querySelector('.inspect-close').hidden=true;panel.hidden=false;if(!tacticalPosition(panel,entity))tacticalHide();
 }
+const bestiaryEl=bestiaryDialog();
+bestiaryEl.querySelector('.bestiary-close').addEventListener('click',closeBestiary);
+bestiaryEl.querySelector('.bestiary-return').addEventListener('click',closeBestiary);
+bestiaryEl.addEventListener('cancel',e=>{e.preventDefault();closeBestiary();});
+bestiaryEl.addEventListener('click',e=>{if(e.target===bestiaryEl){const r=bestiaryEl.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)closeBestiary();}});
+document.addEventListener('keydown',e=>{if(!bestiaryEl.open)return;if(e.key==='Escape'){e.preventDefault();closeBestiary();}else if(e.key!=='Tab'&&e.key!=='Enter'&&e.key!==' '){e.preventDefault();}e.stopImmediatePropagation();},true);
 document.querySelector('#unitInspector .inspect-close').addEventListener('click',()=>tacticalClose());
 // Preload once. The fallback is readable immediately, including if the asset fails.
 const sanctuaryImage=new Image();
