@@ -1,0 +1,27 @@
+/* v22-alpha.7.1 — command HUD: bigger mana, discoverable Vault. */
+#lane #magicHud{padding:9px 12px;gap:7px}
+#magicHud .magic-top{gap:10px 12px;align-items:center}
+#magicHud .magic-mana{flex:1 1 280px;min-width:min(220px,100%);max-width:none;gap:10px;padding:5px 0}
+#magicHud .magic-mana>div{min-width:0;flex:1}
+#magicHud .magic-crystal{font-size:30px;line-height:1;color:#b1eaff;text-shadow:0 0 10px #4fbcf7,0 0 19px #4a6bbf}
+#magicHud .magic-mana-label{font:700 13px/1.3 system-ui,sans-serif;letter-spacing:.07em;color:#d1ecff;font-variant-numeric:tabular-nums}
+#magicHud .magic-mana-label span{font-size:14px;letter-spacing:0;color:#e5f6ff}
+#magicHud .magic-meter{height:15px;margin-top:5px;border:1px solid #82bbdc;border-radius:3px;box-shadow:0 0 8px #4aa9ec38,inset 0 1px 5px #070e1b;background:#0d1729}
+#magicHud .magic-meter i{background:linear-gradient(180deg,#a9e9ff 0%,#61bbf1 28%,#357fc8 57%,#284e9b 100%);box-shadow:inset 0 1px 0 #d5f7ff,0 0 7px #70cfff}
+#magicHud .magic-cast{min-height:42px;padding:7px 12px;font-size:12px}
+#magicHud .magic-message{flex:1 1 100%;min-width:0;font-size:11px}
+#magicHud .magic-timer:empty{display:none}
+.wrap .vault-cta.btn{display:flex;flex:0 1 auto;align-items:center;justify-content:space-between;gap:9px;min-width:0;max-width:100%;min-height:48px;padding:6px 12px;white-space:normal;text-align:left;border:1px solid #e1b56d!important;border-radius:5px;color:#ffe6ae;background:linear-gradient(110deg,#3e271f,#68452b 48%,#342321);box-shadow:inset 0 0 0 2px #2c1b19,0 0 11px #e4a45b50;cursor:pointer}
+.vault-cta .vault-copy{display:flex;flex-direction:column;min-width:0;gap:2px}
+.vault-cta .vault-copy strong{font:700 14px/1.1 Georgia,serif;color:#ffe8b7;letter-spacing:.015em}
+.vault-cta .vault-copy small{font:10px/1.2 system-ui,sans-serif;color:#efc88d}
+.vault-cta .vault-emblem{flex:none;display:grid;place-items:center;width:30px;height:30px;border:1px solid #d9a65f;border-radius:4px;background:radial-gradient(circle,#96612d,#382320 75%);font-size:22px;line-height:1;color:#ffe6a3;text-shadow:0 0 7px #ffb65e}
+.vault-cta .vault-arrow{font-size:25px;line-height:1;color:#ffd18e;flex:none}
+.wrap .vault-cta:not(:disabled){animation:vault-invite 2.8s ease-in-out 3}
+.wrap .vault-cta:not(:disabled):hover,.wrap .vault-cta:focus-visible{border-color:#fff1bd!important;box-shadow:inset 0 0 0 2px #563829,0 0 18px #f8c4789c;background:linear-gradient(110deg,#61402b,#86582f,#493026);outline:2px solid #f2c782;outline-offset:2px}
+.wrap .vault-cta:disabled{opacity:.65;cursor:default;animation:none;box-shadow:inset 0 0 0 2px #2c1b19}
+#heroHud .vault-warlord{margin-left:auto}
+@keyframes vault-invite{0%,100%{box-shadow:inset 0 0 0 2px #2c1b19,0 0 9px #e4a45b40}50%{box-shadow:inset 0 0 0 2px #2c1b19,0 0 18px #f6bf7590}}
+@media(max-width:680px){#magicHud .magic-mana{flex:1 1 100%;min-width:0}#magicHud .vault-sorcerer{flex:1 1 180px}#heroHud .vault-warlord{margin-left:0;flex:1 1 190px}}
+@media(prefers-reduced-motion:reduce){.wrap .vault-cta:not(:disabled){animation:none}}
+.reduce-motion .vault-cta:not(:disabled){animation:none}

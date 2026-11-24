@@ -1,0 +1,3 @@
+# v22-alpha.7.1 — Command HUD
+
+User-approved UI refinement. Increased mana meter from 7 to 15 CSS px, flexible width, larger labels and crystal. Moved Underworld's Vault from card hand and artifact shelf into the top Sorcerer and Warlord HUDs; only active hero HUD visible. Gold styling, brief subtle glow, descriptive action text, disabled state in combat, reduced-motion support, responsive wrapping. No changes to mana amount/regeneration, shop eligibility, shop items, costs, classes, infusion logic, save schema or combat. Existing delegated shop handler preserved. Next: Monster Synergies after UI review.

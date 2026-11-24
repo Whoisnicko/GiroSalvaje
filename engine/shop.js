@@ -17,8 +17,13 @@ function shopAvailable(){return !!S&&S.phase==='prep'&&!spinning&&!S.drag&&!S.pe
 function renderArtifactShelf(){
  const box=$('#artifactShelf');if(!box)return;
  const ids=(S.artifacts||[]).filter(id=>Object.hasOwn(SHOP_ARTIFACTS,id));
- box.innerHTML='<h3>Artifacts <b>'+ids.length+'/6</b></h3><div class="artifact-owned">'+(ids.length?ids.map(id=>{const a=SHOP_ARTIFACTS[id];return '<span title="'+a.desc+'">'+artifactArt(id)+'<b>'+a.name+'</b></span>';}).join(''):'<span class="artifact-empty">No artifacts yet.</span>')+'</div><button class="btn shop-entry" data-act="shop" '+(shopAvailable()?'':'disabled')+'>⚒ Underworld&#39;s Vault</button>';
- document.querySelectorAll('[data-act="shop"]').forEach(b=>b.disabled=!shopAvailable());
+ box.innerHTML='<h3>Artifacts <b>'+ids.length+'/6</b></h3><div class="artifact-owned">'+(ids.length?ids.map(id=>{const a=SHOP_ARTIFACTS[id];return '<span title="'+a.desc+'">'+artifactArt(id)+'<b>'+a.name+'</b></span>';}).join(''):'<span class="artifact-empty">No artifacts yet.</span>')+'</div>';
+ const available=shopAvailable();
+ document.querySelectorAll('[data-act="shop"]').forEach(b=>{
+  b.disabled=!available;
+  const hint=b.querySelector('[data-vault-hint]');
+  if(hint)hint.textContent=available?hint.dataset.readyCopy:S.phase==='prep'?'Preparing…':'Opens between waves';
+ });
 }
 function scrollShopHTML(){
  if(!heroUsesMagic(S))return '';
