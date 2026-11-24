@@ -308,9 +308,9 @@ const CARDS = {
   rugido:  { n:'Dragon Roar', ic:'≫', t:'sup', d:()=>'Your monsters attack twice as fast for 5 s.', play(){ S.buff.haste = 5; bigMsg('ROAR!'); } },
   manos:   { n:'Earth Hands',ic:'✋', t:'ctl', aim:75, d:()=>'Humans in the area are rooted for 3 s.', play(p){ S.enemies.forEach(e => { if (dist(e, p) <= 75 + e.r) e.root = 3; }); S.fx.push({ k:'ring', x:p.x, y:p.y, r:75, c:'leaf', t:.5, T:.5 }); } },
   huesos:  { n:'Bone Rain',  ic:'✹', t:'atk', aim:60, d:()=>`${bonesDmg()} area damage. Ignores armor.`, play(p){ S.enemies.forEach(e => { if (dist(e, p) <= 60 + e.r) damage(e, bonesDmg(), { pierce:true }); }); S.fx.push({ k:'ring', x:p.x, y:p.y, r:60, c:'cream', t:.4, T:.4 }); sfx('hit'); } },
-  festin:  { n:'Feast',            ic:'❦', t:'sup', d:()=>'Your monsters heal 60% HP; fallen monsters revive with 40%.', play(){ S.units.forEach(u => { if (u.down) { u.down = false; u.hp = u.maxHp * .4; floatText(u.x, u.y - 22, 'Back up!', 'leaf'); } else { u.hp = Math.min(u.maxHp, u.hp + u.maxHp * .6); floatText(u.x, u.y - 22, '+HP', 'leaf'); } }); } },
+  festin:  { n:'Feast',            ic:'❦', t:'sup', d:()=>'Your monsters heal 60% HP; fallen monsters revive with 40%.', play(){ S.units.forEach(u => { if (u.down) { u.down = false; u.hp = u.maxHp * .4; floatText(u.x, u.y - 22, 'Back up!', 'leaf'); } else { const before=u.hp;u.hp = Math.min(u.maxHp, u.hp + u.maxHp * .6); feelNumber(u.x,u.y-22,u.hp-before,'heal');feelImpact(u.x,u.y,'heal'); } }); } },
   aullido: { n:'Howl',           sp:'lobo', t:'sum', aim:20, d:()=>'Summon a werewolf at the target for this wave.', play(p){ const u = makeUnit('L', 1); u.temp = true; u.x = clamp(p.x, WALL_X + 20, worldW() - 20); u.y = clamp(p.y, 20, WORLD_H - 20); S.units.push(u); } },
-  ofrenda: { n:'Offering',           ic:'⌂', t:'sup', d:()=>'The Altar restores 15 HP.', play(){ S.wallHp = Math.min(S.wallMax, S.wallHp + 15); floatText(WALL_X + 20, 40, '+15', 'leaf'); } },
+  ofrenda: { n:'Offering',           ic:'⌂', t:'sup', d:()=>'The Altar restores 15 HP.', play(){ const before=S.wallHp;S.wallHp = Math.min(S.wallMax, S.wallHp + 15);feelNumber(WALL_X+20,40,S.wallHp-before,'heal');feelImpact(WALL_X-8,WORLD_H*.42,'heal'); } },
   niebla:  { n:'Mist',            ic:'≈', t:'ctl', d:()=>'Humans move 60% slower for 6 s.', play(){ S.buff.slow = 6; bigMsg('MIST'); } },
   temblor: { n:'Earthquake',           ic:'⌁', t:'atk', d:()=>`${quakeDmg()} damage to all humans. Ignores armor.`, play(){ S.enemies.forEach(e => damage(e, quakeDmg(), { pierce:true })); S.fx.push({ k:'quake', t:.4, T:.4 }); sfx('altar'); } },
   eclipse: { n:'Eclipse',           ic:'◐', t:'atk', d:()=>'All humans lose 30% of current HP.', play(){ S.enemies.forEach(e => damage(e, Math.ceil(e.hp * .3), { pierce:true })); bigMsg('ECLIPSE'); } },
@@ -737,7 +737,7 @@ function update(dt){
       if (e.cd <= 0) {
         e.cd = 2.5;
         const heal = 5 + S.wave * 1.5; let any = false;
-        S.enemies.forEach(o => { if (o.kind !== 'cle' && o.hp > 0 && o.hp < o.maxHp && dist(o, e) <= 100) { o.hp = Math.min(o.maxHp, o.hp + heal); any = true; } });
+        S.enemies.forEach(o => { if (o.kind !== 'cle' && o.hp > 0 && o.hp < o.maxHp && dist(o, e) <= 100) { const before=o.hp;o.hp = Math.min(o.maxHp, o.hp + heal);feelNumber(o.x,o.y-o.r-10,o.hp-before,'heal');feelImpact(o.x,o.y,'heal'); any = true; } });
         if (any) S.fx.push({ k:'ring', x:e.x, y:e.y, r:100, c:'gold', t:.5, T:.5 });
       }
       const near = S.units.some(u => dist(u, e) < 170);
@@ -771,7 +771,7 @@ function update(dt){
     }
     if (tgt) {
       const d = dist(e, tgt);
-      if (d <= e.r + radius(tgt) + 3) { e.cd -= dt; if (e.cd <= 0) { e.cd = 1; tgt.hp -= e.dmg; tgt.flash = 0.15; e.lunge = .12; S.fx.push({k:'sword',x:(e.x+tgt.x)/2,y:(e.y+tgt.y)/2,angle:Math.atan2(tgt.y-e.y,tgt.x-e.x)+Math.PI,t:.24,T:.24}); burst((e.x + tgt.x) / 2, (e.y + tgt.y) / 2, 'steel', 6, 70); sfx('clash'); } }
+      if (d <= e.r + radius(tgt) + 3) { e.cd -= dt; if (e.cd <= 0) { e.cd = 1; tgt.hp -= e.dmg; tgt.flash = 0.15; feelNumber(tgt.x,tgt.y-radius(tgt)-10,e.dmg,'ally');feelImpact(tgt.x,tgt.y,'steel',tgt,0,e.dmg>=25); e.lunge = .12; S.fx.push({k:'sword',x:(e.x+tgt.x)/2,y:(e.y+tgt.y)/2,angle:Math.atan2(tgt.y-e.y,tgt.x-e.x)+Math.PI,t:.24,T:.24}); burst((e.x + tgt.x) / 2, (e.y + tgt.y) / 2, 'steel', 6, 70); sfx('clash'); } }
       else moveHuman(e, (tgt.x - e.x) / d * sp * dt, (tgt.y - e.y) / d * sp * dt);
     } else if (e.x <= WALL_X + e.r + 2) {
       e.cd -= dt;
@@ -781,7 +781,7 @@ function update(dt){
   const deadE = S.enemies.filter(e => e.hp <= 0);
   if (deadE.length) {
     deadE.forEach(e => {
-      burst(e.x, e.y, 'red', 10, 110); burst(e.x, e.y, 'soul', 4, 50); floatText(e.x, e.y - 16, '+1 soul', 'soul', 11);
+      burst(e.x, e.y, 'red', 10, 110); burst(e.x, e.y, 'soul', 4, 50); floatText(e.x, e.y - 16, '+1 soul', 'soul', 11);feelImpact(e.x,e.y,'death');feelSoul(e.x,e.y);
       // Necromancer: levanta un esqueleto aliado de cada humano que cae en su área
       const n = S.units.find(u => u.type === 'N' && !u.down && u.cd <= 0 && (u.skels || 0) < skelCap(u.lvl) && dist(u, e) <= stats('N', u.lvl, u).range);
       if (n) {
@@ -814,9 +814,12 @@ function update(dt){
 }
 function damage(e, d, o = {}){
   if (e.armor && !o.pierce) d = Math.max(1, d - e.armor);
-  e.hp -= d; if (!o.quiet) e.flash = 0.1;
+  e.hp -= d; if (!o.quiet) {
+    e.flash = 0.1;
+    if(!o.hitFeedback){feelNumber(e.x,e.y-e.r-10,d,e.armor&&!o.pierce?'armor':'damage');feelImpact(e.x,e.y,'spell');}
+  }
 }
-function hitAltar(d){ S.wallHp -= Math.round(d); S.fx.push({ k:'altar', t:0.2, T:0.2 }); S.shake = Math.max(S.shake, 4); burst(WALL_X - 8, rnd(30, WORLD_H - 30), 'soul', 8, 90); sfx('altar'); tip('wall'); }
+function hitAltar(d){ S.wallHp -= Math.round(d);feelNumber(WALL_X+14,30,d,'altar');feelImpact(WALL_X-8,WORLD_H*.42,'altar'); S.fx.push({ k:'altar', t:0.2, T:0.2 }); S.shake = Math.max(S.shake, 4); burst(WALL_X - 8, rnd(30, WORLD_H - 30), 'soul', 8, 90); sfx('altar'); tip('wall'); }
 function zap(e, d, from){
   hitEnemy(e, d, 'soul', { pierce:true, kb:40 });
   const x1 = from ? from.x : WALL_X - 8, y1 = from ? from.y : clamp(e.y, 12, WORLD_H - 12);
@@ -832,11 +835,14 @@ function stepUnit(u, tx, ty, step){
 function burst(x, y, c, n, sp = 90){ for (let i = 0; i < n; i++) { const a = Math.random() * Math.PI * 2, v = rnd(sp * .4, sp); S.parts.push({ x, y, vx:Math.cos(a) * v, vy:Math.sin(a) * v - 30, t:rnd(.25, .5), T:.5, c, s:rnd(2, 3.5) }); } }
 function hitEnemy(e, d, c, o = {}){
   const armored = e.armor && !o.pierce, real = armored ? Math.max(1, d - e.armor) : d;
-  damage(e, d, o);
+  damage(e, d, {...o,hitFeedback:true});
   burst(e.x, e.y, armored ? 'steel' : c, armored ? 5 : 7);
   const kb = o.kb ?? 60;
   if (kb) e.kbv = Math.max(e.kbv || 0, e.boss ? kb * .2 : e.armor ? kb * .5 : kb);
-  floatText(e.x + rnd(-8, 8), e.y - e.r - 10, String(Math.round(real)), armored ? 'muted' : 'cream', 11);
+  const hitX=e.x+rnd(-8,8);
+  feelNumber(hitX,e.y-e.r-10,real,armored?'armor':'damage');
+  const kind=armored?'steel':c==='m'?'fire':c==='a'?'orb':c==='soul'?'lightning':'claw';
+  feelImpact(e.x,e.y,kind==='fire'?'flesh':kind,e,0,real>=25||e.hp<=0);
   if (armored) sfx('clank');
 }
 function landShot(s){
@@ -845,10 +851,10 @@ function landShot(s){
     S.enemies.forEach(e => { if (e.hp > 0 && Math.hypot(e.x - s.tx, e.y - s.ty) <= s.splash) hitEnemy(e, s.dmg, 'm'); });
     S.fx.push({ k:'ring', x:s.tx, y:s.ty, r:s.splash, c:'m', t:.35, T:.35 });
     burst(s.tx, s.ty, 'm', 14, 140); burst(s.tx, s.ty, 'gold', 8, 100);
-    S.shake = Math.max(S.shake, 3); sfx('boom');
+    S.shake = Math.max(S.shake, 3); feelImpact(s.tx,s.ty,'fire',null,Math.max(24,s.splash));sfx('boom');
   } else if (s.k === 'bolt') {
     if (s.altar) hitAltar(s.dmg);
-    else if (s.tgt && s.tgt.hp > 0) { s.tgt.hp -= s.dmg; s.tgt.flash = .15; burst(s.tgt.x, s.tgt.y, 'steel', 5, 60); sfx('clash'); }
+    else if (s.tgt && s.tgt.hp > 0) { s.tgt.hp -= s.dmg; s.tgt.flash = .15; feelNumber(s.tgt.x,s.tgt.y-radius(s.tgt)-10,s.dmg,'ally');feelImpact(s.tgt.x,s.tgt.y,'steel',s.tgt); burst(s.tgt.x, s.tgt.y, 'steel', 5, 60); sfx('clash'); }
   }
 }
 
@@ -991,11 +997,12 @@ function resize(){
   ctx.imageSmoothingEnabled = false;
 }
 function readColors(){ const cs = getComputedStyle(document.documentElement); ['bg','panel','panel-2','line','gold','soul','cream','muted','red','w','a','m','wolf','steel','leaf','stone','water','hill','swamp','m2'].forEach(k => colors[k] = cs.getPropertyValue('--' + k).trim()); }
-function floatText(x, y, text, c, sz){ if (sz && S.floats.length > 40) return; S.floats.push({ x, y, text, c, sz, t:sz ? .8 : 1.2, T:sz ? .8 : 1.2 }); }
+function floatText(x, y, text, c, sz){ if (S.floats.length >= 48) {if(sz)return;S.floats.shift();} S.floats.push({ x, y, text, c, sz, t:sz ? .8 : 1.2, T:sz ? .8 : 1.2 }); }
 let last = performance.now();
 function loop(now){
   let dt = Math.min(0.05, (now - last) / 1000); last = now;
   if (S && !menuOpen && !document.hidden) {
+    feelStep(dt);
     if (S.aim !== null && S.phase === 'fight') dt *= 0.2;
     dt *= S.speed;
     for (let i = 0; i < S.speed; i++) update(dt / S.speed);

@@ -28,7 +28,7 @@ function drawInkReserve(W){
 function draw(){
   const W = worldW(), t = (prefs.reduced || motionPreference.matches) ? 0 : performance.now() / 1000;
   ctx.save();
-  if (!prefs.reduced && !motionPreference.matches && S.shake > 0) ctx.translate(rnd(-1, 1) * S.shake, rnd(-1, 1) * S.shake);
+  const camera=feelCamera();ctx.translate(camera.x,camera.y);
   drawInkBackdrop(W);
   if (S.phase === 'prep') {
     const zm = zoneMax();
@@ -40,6 +40,7 @@ function draw(){
   }
   for (const z of S.zones) { ctx.fillStyle = colors.muted; ctx.globalAlpha = .14 + .06 * Math.sin(t * 12); ctx.beginPath(); ctx.arc(z.x, z.y, z.r, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1; }
 
+  feelDraw('ground');
   drawInkAltar(t);
 
   // Reserve (debajo del campo): 3 lugares; los monsters de acá no pelean.
@@ -78,7 +79,7 @@ function draw(){
   for (const it of ents) {
     if (it.u) {
       const u = it.u, inBench = u.y >= WORLD_H - 6 && !S.units.includes(u), s = inBench ? Math.min(size(u), 44) : size(u) * 1.28, dragging = S.drag && S.drag.u === u, ph = u.ph;
-      const pose = visualPose(u, performance.now() / 1000), phTime = motionPreference.matches ? 0 : t;
+      const pose = feelPose(u,visualPose(u, performance.now() / 1000)), phTime = motionPreference.matches ? 0 : t;
       const lg = !motionPreference.matches && u.lunge > 0 ? (u.lunge / .14) * 4 : 0;
       let ox = (u.lx || 0) * lg, oy = (u.ly || 0) * lg, rot = 0, sy = 1, frame = pose.frame;
       if (!motionPreference.matches) {
@@ -114,7 +115,7 @@ function draw(){
       if (u.pile > 1) { ctx.fillStyle = colors.bg; ctx.fillRect(u.x + s / 2 - 16, u.y - s / 2 - 2, 26, 14); ctx.fillStyle = colors.gold; ctx.font = '600 10px Rubik, sans-serif'; ctx.fillText(`${u.pile}/${S.mods.mergeN}`, u.x + s / 2 - 3, u.y - s / 2 + 5); }
       bar(u.x - 14, u.y - s / 2 - 6, 34, 5, u.hp / u.maxHp, colors.leaf);
     } else {
-      const e = it.e, K = KIND[e.kind], s = (e.r * 2 + 14) * 1.28, pose = visualPose(e, performance.now() / 1000);
+      const e = it.e, K = KIND[e.kind], s = (e.r * 2 + 14) * 1.28, pose = feelPose(e,visualPose(e, performance.now() / 1000));
       const walk = motionPreference.matches ? 0 : e.moving ? Math.abs(Math.sin(t * 10 + e.ph)) * -3 : Math.sin(t * 2 + e.ph) * 1;
       const rot = !motionPreference.matches && e.moving ? Math.sin(t * 10 + e.ph) * .07 : 0;
       if (hovE === e) { ctx.strokeStyle = colors.red; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(e.x, e.y, s / 2 + 6, 0, Math.PI * 2); ctx.stroke(); }
@@ -146,12 +147,14 @@ function draw(){
     }
     ctx.globalAlpha = 1;
   }
+  feelDraw('front');
   for (const p of S.parts) { ctx.globalAlpha = Math.max(0, p.t / p.T); ctx.fillStyle = colors[p.c]; ctx.beginPath();ctx.ellipse(p.x,p.y,p.s*.65,p.s*.35,.6,0,Math.PI*2);ctx.fill(); }
   ctx.globalAlpha = 1;
   for (const shot of S.shots) drawInkShot(shot,t);
   for (const f of S.floats) {
     ctx.globalAlpha = Math.max(0, f.t / f.T); ctx.fillStyle = colors[f.c]; ctx.font = `600 ${f.sz || 13}px Rubik, sans-serif`;
-    ctx.fillText(f.text, f.x, f.y - (1 - f.t / f.T) * 30); ctx.globalAlpha = 1;
+    const fy=f.y-(feelReduced()?0:(1-f.t/f.T)*30);
+    ctx.lineWidth=3;ctx.strokeStyle='#10131d';ctx.lineJoin='round';ctx.strokeText(f.text,f.x,fy);ctx.fillText(f.text,f.x,fy);ctx.globalAlpha=1;
   }
   if (S.aim !== null && S.aimP) {
     const c = CARDS[S.hand[S.aim].id];
@@ -217,4 +220,4 @@ function hybridFX(){
  ctx.restore();}
 
 }
-function renderFrame(){draw();hybridFX();}
+function renderFrame(){draw();ctx.save();const camera=feelCamera();ctx.translate(camera.x,camera.y);hybridFX();ctx.restore();}
