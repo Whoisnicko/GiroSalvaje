@@ -86,3 +86,10 @@
 .sanctuary-art[hidden]{display:none}
 .sanctuary-title,.sanctuary-health,.sanctuary-hp-track,.sanctuary-stat{z-index:1}
 .sanctuary-shell.sanctuary-art-loaded .sanctuary-fallback-icon,.sanctuary-shell.sanctuary-art-loaded .sanctuary-fallback-heart{display:none}
+
+/* v21-alpha.2.1 — stable dialog controls, independent from live stats. */
+.unit-bestiary[open]{right:auto;bottom:auto;pointer-events:auto}
+.bestiary-form{margin:0;display:flex;flex-direction:column;min-width:0;max-height:calc(100dvh - 80px)}
+.bestiary-form #bestiaryBody{min-height:0;overflow:auto;scrollbar-gutter:stable}
+.bestiary-form .bestiary-top,.bestiary-form .bestiary-footer{flex:none}
+.bestiary-form .bestiary-close,.bestiary-form .bestiary-return{pointer-events:auto;touch-action:manipulation;cursor:pointer}

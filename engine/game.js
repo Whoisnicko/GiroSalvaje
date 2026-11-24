@@ -975,7 +975,7 @@ function resolveDrop(){
 }
 function enemyAt(p){ let hit = null; for (const e of S.enemies) if (dist(e, p) <= e.r + 8) hit = e; return hit; }
 cv.addEventListener('pointerdown', ev => {
-  if (!S) return;
+  if (!S || bestiaryDialog().open) return;
   audioInit();
   const p = toWorld(ev);
   if (S.phase === 'fight' && S.aim !== null) { castAim(p); return; }
@@ -1001,8 +1001,9 @@ cv.addEventListener('pointermove', ev => {
   const hov = S.phase === 'prep' && !S.drag && mineAt(p);
   cv.style.cursor = S.aim !== null ? 'crosshair' : S.drag && S.drag.moved ? 'grabbing' : hov ? 'grab' : 'default';
 });
-const endDrag = () => {
+const endDrag = ev => {
   if (!S || !S.drag) return;
+  if(cv.hasPointerCapture(ev.pointerId))cv.releasePointerCapture(ev.pointerId);
   if (!S.drag.moved) { const u = S.drag.u; S.drag = null; tacticalSelect(u); renderIntel(); return; }
   resolveDrop();
 };

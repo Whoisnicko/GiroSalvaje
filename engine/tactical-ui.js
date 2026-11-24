@@ -98,17 +98,21 @@ function openBestiary(e){
  if(!S||menuOpen||!$('#ov').hidden||!$('#ov2').hidden||spinning||!['prep','fight'].includes(S.phase))return;
  const d=bestiaryDialog();bestiaryEntity=e;bestiaryState=S;bestiaryPhase=S.phase;bestiaryMarkup='';
  tacticalHide();S.aimP=null;tacSuppressed=true;updateBestiary();
- if(!d.open)d.showModal();bestiaryPosition();d.querySelector('.bestiary-close').focus();
+ if(!d.open){d.showModal();bestiaryPosition();d.querySelector('.bestiary-close').focus({preventScroll:true});}
+}
+function clearBestiarySelection(){
+ bestiaryEntity=null;bestiaryState=null;bestiaryPhase=null;bestiaryMarkup='';
+ if(S){S.aimP=null;S.sel=null;}tacSuppressed=true;tacticalHide();
 }
 function closeBestiary(){
- const d=bestiaryDialog();if(d.open)d.close();bestiaryEntity=null;bestiaryMarkup='';if(S){S.aimP=null;S.sel=null;}tacSuppressed=true;tacticalHide();
+ const d=bestiaryDialog();if(d.open)d.close();clearBestiarySelection();
 }
 function updateBestiary(){
  if(!bestiaryEntity||bestiaryState!==S||bestiaryPhase!==S.phase||!tacticalAlive(bestiaryEntity)||menuOpen||!$('#ov').hidden||!$('#ov2').hidden){closeBestiary();return;}
  const m=tacticalModel(bestiaryEntity),html=bestiaryHTML(bestiaryEntity,m);
  if(html!==bestiaryMarkup){$('#bestiaryBody').innerHTML=html;bestiaryMarkup=html;}
  $('#bestiaryNotice').textContent=S.phase==='fight'?'Battle continues while reading.':'Preparation · inspect your army';
- if(bestiaryDialog().open)bestiaryPosition();
+ // Keep the modal stationary during live stat updates; resize is handled separately.
 }
 function tacticalHovered(){
  if(!S||menuOpen||document.hidden||bestiaryDialog().open||!$('#ov').hidden||!$('#ov2').hidden||S.drag||S.aim!==null||tacSuppressed||!S.aimP)return null;
@@ -144,10 +148,17 @@ function tacticalTick(now,force=false){
  panel.classList.add('is-compact');panel.classList.remove('is-pinned');panel.classList.toggle('is-enemy',model.enemy);panel.querySelector('.inspect-close').hidden=true;panel.hidden=false;if(!tacticalPosition(panel,entity))tacticalHide();
 }
 const bestiaryEl=bestiaryDialog();
-bestiaryEl.querySelector('.bestiary-close').addEventListener('click',closeBestiary);
-bestiaryEl.querySelector('.bestiary-return').addEventListener('click',closeBestiary);
+// Both controls are native method=dialog submit buttons. A capture-phase handler
+// also closes directly, independent of document-level gameplay click delegation.
+bestiaryEl.addEventListener('click',e=>{
+ const button=e.target.closest?.('.bestiary-close,.bestiary-return');
+ if(button&&bestiaryEl.contains(button)){e.preventDefault();e.stopImmediatePropagation();closeBestiary();return;}
+ if(e.target===bestiaryEl){const r=bestiaryEl.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom){e.preventDefault();e.stopImmediatePropagation();closeBestiary();}}
+},true);
+bestiaryEl.addEventListener('submit',e=>{e.preventDefault();e.stopImmediatePropagation();closeBestiary();});
+bestiaryEl.addEventListener('close',()=>{if(!bestiaryEl.open)clearBestiarySelection();});
 bestiaryEl.addEventListener('cancel',e=>{e.preventDefault();closeBestiary();});
-bestiaryEl.addEventListener('click',e=>{if(e.target===bestiaryEl){const r=bestiaryEl.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)closeBestiary();}});
+window.addEventListener('resize',()=>{if(bestiaryEl.open)bestiaryPosition();});
 document.addEventListener('keydown',e=>{if(!bestiaryEl.open)return;if(e.key==='Escape'){e.preventDefault();closeBestiary();}else if(e.key!=='Tab'&&e.key!=='Enter'&&e.key!==' '){e.preventDefault();}e.stopImmediatePropagation();},true);
 document.querySelector('#unitInspector .inspect-close').addEventListener('click',()=>tacticalClose());
 // Warm the cache; the real image element determines readiness, not this preloader.
