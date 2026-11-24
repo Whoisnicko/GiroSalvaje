@@ -543,6 +543,7 @@ function buyCard(){
   sfx('coin'); renderUI();
 }
 function useCard(i){
+  heroCancelAim();
   if(magicActive())magicCancel('Conjuration canceled: card selected.');
   const c = S.hand[i];
   if (!c || c.used || !usableNow(c.id)) return;
@@ -754,6 +755,7 @@ function update(dt){
     e.root = Math.max(0, e.root - dt);
     e.moving = false;
     e.lunge = Math.max(0, (e.lunge || 0) - dt);
+    heroAdvanceKnockback(e,dt,Wd);
     if (e.kbv > 1) { const nx = e.x + e.kbv * dt; e.x = nx; e.kbv *= Math.pow(.002, dt); }
     let sp = spellEnemyRooted(e) ? 0 : e.sp * spellEnemySpeedFactor(e);
 
@@ -1048,7 +1050,7 @@ function floatText(x, y, text, c, sz){ if (S.floats.length >= 48) {if(sz)return;
 let last = performance.now();
 function loop(now){
   let dt = Math.min(0.05, (now - last) / 1000); last = now;
-  magicFrame(now);
+  heroAimTick();magicFrame(now);
   if (S && !menuOpen && !document.hidden) {
     feelStep(dt);
     if(magicActive())dt*=MAGIC_SLOW;
@@ -1137,7 +1139,7 @@ function showDeck(){
     <button class="go" data-act="closedeck">Close</button></div>`;
   o.hidden = false; o.querySelector('[data-act="closedeck"]').focus();
 }
-function showOv(html){ heroClearKeys();magicCancel();closeBestiary();const o = $('#ov'); o.innerHTML = `<div class="panel">${html}</div>`; o.hidden = false; const b = o.querySelector('button'); if (b) b.focus(); }
+function showOv(html){ heroCancelAim(false);heroClearKeys();magicCancel();closeBestiary();const o = $('#ov'); o.innerHTML = `<div class="panel">${html}</div>`; o.hidden = false; const b = o.querySelector('button'); if (b) b.focus(); }
 function hideOv(){ $('#ov').hidden = true; }
 
 document.addEventListener('click', e => {
@@ -1211,7 +1213,7 @@ function persist(){if(sandboxActive()||!S||spinning||S.drag||S.pendingMerge||S.p
 function restore(v){
  if(!validSave(v))throw Error('Incompatible save format');
  const s=JSON.parse(JSON.stringify(v.state));
- s.hero=heroNormalize(s,v.worldWidth);heroClearKeys();
+ s.hero=heroNormalize(s,v.worldWidth);heroCancelAim(false);heroClearKeys();
  s.artifacts=Array.isArray(s.artifacts)?[...new Set(s.artifacts.filter(id=>Object.hasOwn(SHOP_ARTIFACTS,id)))]:[];
  for(const u of [...s.units,...s.bench.filter(Boolean)])if(!BASE[u.type]||!Number.isFinite(u.x)||!Number.isFinite(u.hp))throw Error('Invalid unit');
  for(const e of s.enemies)if(!KIND[e.kind]||!Number.isFinite(e.hp))throw Error('Invalid enemy');
@@ -1237,7 +1239,7 @@ function restore(v){
 }
 function showRewardRestored(){showOv(`<h2>Choose your reward</h2><div class="offers">${S.offer.map((o,i)=>`<button class="offer" data-act="reward" data-i="${i}"><span class="ic">${rewardArt(o)}</span><span class="nm">${o.n}</span><span class="ds">${o.d}</span></button>`).join('')}</div>`);}
 function showEndRestored(){showOv(`<h2>${S.phase==='win'?'The Altar stands!':'The Altar has fallen'}</h2><p>${S.kills} humans defeated. Choose a card for your next run.</p><div class="cards-row">${S.endOffer.map((id,i)=>cardHTML(id,`data-act="endcard" data-i="${i}"`)).join('')}</div><button class="btn" data-front="scores">View scores</button>`);}
-function front(panel){heroClearKeys();magicCancel();closeBestiary();tacticalHide();$('#front').hidden=false;menuOpen=true;document.querySelector('.wrap').inert=true;$('#ov').inert=true;$('#ov2').inert=true;for(const el of document.querySelectorAll('.front-view'))el.hidden=el.id!==panel;$('#'+panel+' button:not([disabled]),#'+panel+' input')?.focus();}
+function front(panel){heroCancelAim(false);heroClearKeys();magicCancel();closeBestiary();tacticalHide();$('#front').hidden=false;menuOpen=true;document.querySelector('.wrap').inert=true;$('#ov').inert=true;$('#ov2').inert=true;for(const el of document.querySelectorAll('.front-view'))el.hidden=el.id!==panel;$('#'+panel+' button:not([disabled]),#'+panel+' input')?.focus();}
 function closeFront(){menuOpen=false;$('#front').hidden=true;document.querySelector('.wrap').inert=false;$('#ov').inert=false;$('#ov2').inert=false;last=performance.now();resize();if(S)renderPrepUndo();}
 function showHome(){if(spinning)return;if(sandboxActive()){sandboxExit();return;}if(S){cancelDrag();persist();}loadedSave=store.get(SAVE_KEY,null);if(!validSave(loadedSave))loadedSave=null;knowledgeFromSave(loadedSave);knowledgeFromScores();if(knowledgeDirty)knowledgeFlush();knowledgeSummaryRender();$('#playerName').value=profile.name;$('#continueBtn').disabled=!loadedSave;$('#continueInfo').textContent=loadedSave?`${loadedSave.name} · ${heroClass(loadedSave.state).name} · Wave ${Math.min(loadedSave.state.wave,10)} · ${new Date(loadedSave.savedAt).toLocaleString('en')}`:'The invasion awaits.';$('#resumeBtn').hidden=!S;front('homeView');}
 function beginNew(){let name=$('#playerName').value.trim().slice(0,20);if(!name){$('#nameError').textContent='Enter your name (1–20 characters).';$('#playerName').focus();return;}profile.name=name;durableWrite(PROFILE_KEY,profile);heroChoose('campaign');}

@@ -18,7 +18,7 @@ function sandboxEnter(heroId='sorcerer'){
 }
 function sandboxExit(){
  if(!sandboxActive()||spinning||!sandboxParked)return;
- heroClearKeys();magicCancel();
+ heroCancelAim(false);heroClearKeys();magicCancel();
  if(S.drag)cancelDrag();
  const p=sandboxParked;sandboxParked=null;closeBestiary();tacticalHide();S=p.state;sessionRunId=p.runId;runName=p.name;savedWorldWidth=p.width;loadedSave=p.save;
  $('#ov').innerHTML=p.ov;$('#ov').hidden=p.ovHidden;$('#ov2').innerHTML=p.ov2;$('#ov2').hidden=p.ov2Hidden;
