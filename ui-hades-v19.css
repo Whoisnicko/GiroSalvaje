@@ -1,0 +1,14 @@
+/* Directional pixel-art merchant, v19-alpha.11. */
+.hades-portrait{isolation:isolate;overflow:hidden}
+.hades-stage{position:absolute;left:50%;top:47%;width:min(100%,490px);aspect-ratio:1;transform:translate(-50%,-50%);pointer-events:none;opacity:0}
+.hades-portrait.gaze-ready{background:radial-gradient(ellipse at 50% 36%,#164765 0%,#122a40 37%,#101a2a 68%,#0b111d 100%)}
+.gaze-ready .hades-stage{opacity:1}
+.hades-gaze{position:absolute;inset:0;z-index:1;background-image:url("assets/ui/hades-gaze-v19.webp");background-size:300% 300%;background-position:var(--gaze-x,50%) var(--gaze-y,50%);background-repeat:no-repeat;image-rendering:pixelated}
+.hades-aura{position:absolute;inset:8% 3% 0;z-index:0;background:radial-gradient(ellipse,#1678ac3b,transparent 70%);animation:hades-aura 4.2s ease-in-out infinite}
+.hades-flame{position:absolute;left:32%;top:47%;width:17%;height:20%;z-index:2;background:radial-gradient(ellipse,#63e9ff35 0%,#0ba4ff13 40%,transparent 70%);mix-blend-mode:screen;animation:hades-flame 1.9s ease-in-out infinite}
+.hades-caption{position:relative;z-index:4}
+@keyframes hades-aura{0%,100%{opacity:.55}50%{opacity:1}}
+@keyframes hades-flame{0%,100%{opacity:.45;transform:scale(.94)}40%{opacity:.9;transform:scale(1.07)}70%{opacity:.65;transform:scale(.99)}}
+.hades-still .hades-aura,.hades-still .hades-flame{animation:none;opacity:.55}
+@media(max-width:800px){.hades-portrait.gaze-ready{min-height:230px;max-height:260px}.hades-stage{width:min(230px,72%);top:45%;left:50%}.hades-caption{padding:12px 8px 8px}}
+@media(prefers-reduced-motion:reduce){.hades-aura,.hades-flame{animation:none}}
