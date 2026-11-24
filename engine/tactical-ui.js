@@ -51,12 +51,20 @@ function tacticalModel(e){
 }
 const TAC_ICONS={sword:'M4 20l4-4m-3-5 8 8m-5-3L20 4l-1 7-8 8',clock:'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18m0 4v5l4 2',target:'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18m0 5a4 4 0 1 0 0 8a4 4 0 1 0 0-8',boot:'M7 3h7v10l5 3v4H4v-5l3-3Z',shield:'M12 3 4 6v6c0 4 4 7 8 9 4-2 8-5 8-9V6Z',flag:'M5 21V3m0 1h13l-3 4 3 4H5',flame:'M12 21C2 20 4 12 10 6c-1 5 3 6 4-3 8 8 9 17-2 18Z',skull:'M5 13a7 7 0 1 1 14 0l-3 3v4H8v-4Zm4-2h1m4 0h1m-3 4v2',spark:'M12 2l3 7 7 3-7 3-3 7-3-7-7-3 7-3Z'};
 function tacIcon(k){return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+TAC_ICONS[k]+'" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';}
-function tacticalHTML(m,pinned){return '<div class="inspect-kicker">'+(pinned?'PINNED DOSSIER':'FIELD DOSSIER')+' <span>'+(m.enemy?'HUMAN':'GUARDIAN')+'</span></div><div class="inspect-head"><div class="inspect-portrait">'+tacPic(m.portrait)+'</div><div><h3>'+m.name+'</h3><span class="inspect-role">'+m.role+'</span><div class="inspect-stars">'+m.stars+'</div></div></div><div class="inspect-health"><div><span>VITALITY</span><b>'+Math.ceil(m.hp)+' / '+Math.ceil(m.max)+'</b></div><div class="inspect-hp-track"><i style="width:'+Math.max(0,Math.min(100,m.hp/m.max*100))+'%"></i></div></div><div class="inspect-stats">'+m.rows.map(s=>'<div class="inspect-stat">'+tacIcon(s.icon)+'<span>'+s.label+'</span><b>'+s.value+'</b></div>').join('')+'</div><div class="inspect-tags">'+m.tags.map(t=>'<span>'+t+'</span>').join('')+'</div><p class="inspect-note">'+m.note+'</p><div class="inspect-hint">'+(pinned?'Click unit again or Esc to close':'Click to pin dossier')+'</div>';}
+function tacticalCompactHTML(m){
+ const keyLabels={'Attack':'ATK','Attack interval':'INT','Ability interval':'CD','Attack reach':'RNG','Ability radius':'AREA','Reach':'RNG','Move speed':'SPD','Armor':'ARM','Blast radius':'BLAST','Aura bonus':'AURA','Skeletons raised':'SUMMON','Patrol radius':'PATROL','Altar damage':'ALTAR'};
+ const primary=m.rows.filter(r=>['Attack','Attack interval','Ability interval','Attack reach','Ability radius','Reach','Move speed','Armor'].includes(r.label)&&r.value!=='—'&&r.value!=='Stationary'&&(r.label!=='Armor'||r.value!=='0'));
+ const special=m.rows.filter(r=>['Blast radius','Aura bonus','Skeletons raised','Altar damage'].includes(r.label));
+ const rows=[...primary.filter(r=>r.label!=='Move speed'),...special,...primary.filter(r=>r.label==='Move speed')].slice(0,6);
+ const tags=m.tags.filter(t=>/^(Fallen|Temporary|Reserve|Rooted|Banshee|Training|Dragon Roar|Commander|Mist|Final charge)/.test(t)).slice(0,2);
+ return '<div class="hover-title"><strong>'+m.name+'</strong><span>'+m.stars+'</span></div><div class="hover-vitality"><span>HP</span><b>'+Math.ceil(m.hp)+' / '+Math.ceil(m.max)+'</b></div><div class="hover-hp-track"><i style="width:'+Math.max(0,Math.min(100,m.hp/m.max*100))+'%"></i></div><div class="hover-grid">'+rows.map(r=>'<div class="hover-stat"><span>'+keyLabels[r.label]+'</span><b>'+r.value+'</b></div>').join('')+'</div>'+(tags.length?'<div class="hover-buffs">'+tags.map(t=>'<span>'+t+'</span>').join('')+'</div>':'');
+}
+function tacticalHTML(m,pinned){if(!pinned)return tacticalCompactHTML(m);return '<div class="inspect-kicker">'+(pinned?'PINNED DOSSIER':'FIELD DOSSIER')+' <span>'+(m.enemy?'HUMAN':'GUARDIAN')+'</span></div><div class="inspect-head"><div class="inspect-portrait">'+tacPic(m.portrait)+'</div><div><h3>'+m.name+'</h3><span class="inspect-role">'+m.role+'</span><div class="inspect-stars">'+m.stars+'</div></div></div><div class="inspect-health"><div><span>VITALITY</span><b>'+Math.ceil(m.hp)+' / '+Math.ceil(m.max)+'</b></div><div class="inspect-hp-track"><i style="width:'+Math.max(0,Math.min(100,m.hp/m.max*100))+'%"></i></div></div><div class="inspect-stats">'+m.rows.map(s=>'<div class="inspect-stat">'+tacIcon(s.icon)+'<span>'+s.label+'</span><b>'+s.value+'</b></div>').join('')+'</div><div class="inspect-tags">'+m.tags.map(t=>'<span>'+t+'</span>').join('')+'</div><p class="inspect-note">'+m.note+'</p><div class="inspect-hint">'+(pinned?'Click unit again or Esc to close':'Click to pin dossier')+'</div>';}
 function tacticalPosition(panel,e,pinned){
  const rect=cv.getBoundingClientRect(),w=panel.offsetWidth,h=panel.offsetHeight,margin=10,x=rect.left+e.x*scale,y=rect.top+e.y*scale;
  // Pinned cards stay at the opposite edge of the field instead of tracking every step.
- const left=pinned?(x>rect.left+rect.width/2?rect.left+12:rect.right-w-12):(x>innerWidth/2?x-w-32:x+32);
- const top=pinned?Math.max(margin,rect.top+12):y-h*.35;
+ const gap=24;const left=pinned?(x>rect.left+rect.width/2?rect.left+12:rect.right-w-12):(x+w+gap<=innerWidth-margin?x+gap:x-w-gap);
+ const top=pinned?Math.max(margin,rect.top+12):y-h*.55;
  panel.style.left=Math.round(Math.max(margin,Math.min(innerWidth-w-margin,left)))+'px';panel.style.top=Math.round(Math.max(margin,Math.min(innerHeight-h-margin,top)))+'px';
 }
 function tacticalTick(now,force=false){
@@ -68,6 +76,6 @@ function tacticalTick(now,force=false){
  if(!entity){tacticalHide();return;}
  const panel=$('#unitInspector'),model=tacticalModel(entity),markup=tacticalHTML(model,!!pinned);
  if(markup!==tacMarkup){panel.querySelector('.inspect-body').innerHTML=markup;tacMarkup=markup;}
- panel.classList.toggle('is-pinned',!!pinned);panel.classList.toggle('is-enemy',model.enemy);panel.querySelector('.inspect-close').hidden=!pinned;panel.hidden=false;tacticalPosition(panel,entity,!!pinned);
+ panel.classList.toggle('is-compact',!pinned);panel.classList.toggle('is-pinned',!!pinned);panel.classList.toggle('is-enemy',model.enemy);panel.querySelector('.inspect-close').hidden=!pinned;panel.hidden=false;tacticalPosition(panel,entity,!!pinned);
 }
 document.querySelector('#unitInspector .inspect-close').addEventListener('click',()=>tacticalClose());

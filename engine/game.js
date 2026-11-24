@@ -193,7 +193,7 @@ function loadInkImage(src){return new Promise((resolve,reject)=>{const im=new Im
 Object.assign(URL_,GOTHIC_DATA.sprites);
 const artReady=Promise.resolve();
 const img=k=>`<img src="${URL_[k]}" alt="" decoding="async">`;
-const relicArt=r=>`<img src="${GOTHIC_DATA.relics[Math.max(0,RELICS.indexOf(r))]}" alt="" decoding="async">`;
+const relicArt=r=>{const i=Number.isInteger(r.art)&&r.art>=0&&r.art<6?r.art:5;return `<span class="starter-relic-art" style="--relic-x:${(i%3)*50}%;--relic-y:${Math.floor(i/3)*100}%" aria-hidden="true"><span>${r.ic||"◆"}</span></span>`;};
 function rewardArt(o){const id=Object.keys(CARDS).find(k=>CARDS[k].n===o.n);const theme={'Ectoplasm':'niebla','Tough Flesh':'festin','Ancient Fire':'rugido','Soul Harvest':'cosecha','Full Moon':'aullido','Steady Claws':'manos','Fortified Altar':'ofrenda','Necromancy':'huesos'};return `<img src="${GOTHIC_DATA.cards[id||theme[o.n]||'cripta']}" alt="">`;}
 
 function visualPose(u,t){
@@ -284,12 +284,12 @@ function pickKind(table){ const tot = table.reduce((s, t) => s + t[1], 0); let r
 
 /* ================= Artefactos ================= */
 const RELICS = [
-  { n:'Volcano Heart', ic:'✹', d:'Dragons deal +60% damage and have larger explosions.', a:()=>{ S.mods.mageDmg *= 1.6; S.mods.splash = 1.35; } },
-  { n:'Ancient Tomb',     ic:'✝', d:'Start with a ★★ Zombie.', a:()=>{ S.startZombiee = 2; } },
-  { n:'Soul Eye',      ic:'◉', d:'Hold one extra symbol and gain +2 souls per soul line.', a:()=>{ S.holdsMax++; S.mods.coinBonus += 2; } },
-  { n:'Forbidden Grimoire',ic:'▤', d:'Draw 4 cards per wave instead of 3.', a:()=>{ S.handSize = 4; } },
-  { n:'Ancestral Altar',   ic:'⌂', d:'The Altar gains +25 HP and heals 8 after each wave.', a:()=>{ S.wallMax += 25; S.wallHp = S.wallMax; S.mods.wallRegen = 8; } },
-  { n:'Earth Stone (inactive)',ic:'▲', d:'Temporarily disabled while terrain is paused.', disabled:true, a:()=>{} }, // keep legacy save index
+  { n:'Volcano Heart', art:0, ic:'✹', d:'Dragons deal +60% damage and have larger explosions.', a:()=>{ S.mods.mageDmg *= 1.6; S.mods.splash = 1.35; } },
+  { n:'Ancient Tomb', art:1,     ic:'✝', d:'Start with a ★★ Zombie.', a:()=>{ S.startZombiee = 2; } },
+  { n:'Soul Eye', art:2,      ic:'◉', d:'Hold one extra symbol and gain +2 souls per soul line.', a:()=>{ S.holdsMax++; S.mods.coinBonus += 2; } },
+  { n:'Forbidden Grimoire', art:3,ic:'▤', d:'Draw 4 cards per wave instead of 3.', a:()=>{ S.handSize = 4; } },
+  { n:'Ancestral Altar', art:4,   ic:'⌂', d:'The Altar gains +25 HP and heals 8 after each wave.', a:()=>{ S.wallMax += 25; S.wallHp = S.wallMax; S.mods.wallRegen = 8; } },
+  { n:'Earth Stone (inactive)', art:5,ic:'▲', d:'Temporarily disabled while terrain is paused.', disabled:true, a:()=>{} }, // keep legacy save index
 ];
 const BLESS = [
   { n:'Ectoplasm',      ic:'☁', d:'Wraiths fire 40% faster.',            a:()=>S.mods.archSpd *= 1.4 },

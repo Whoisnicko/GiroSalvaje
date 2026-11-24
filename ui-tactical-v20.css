@@ -18,3 +18,19 @@
 @media(min-width:1100px){.wrap{grid-template-columns:minmax(174px,13%) minmax(0,1fr) minmax(192px,16%)}.wrap>.lane{grid-column:2/-1}.wrap>.table{grid-column:2;grid-row:3}.wrap>.intel{grid-column:3;grid-row:3/span 2}.wrap>.cabinet{grid-row:2/span 3}}
 @media(max-width:1099px){.wave-detail-label{display:none}.wrap>.intel{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:620px){.wave-summary{padding:6px;gap:4px}.wave-banner{gap:6px}.wave-heading strong{font-size:16px}.wave-heading small,.wave-count small{font-size:8px}.wave-count b{font-size:17px}.wave-types{flex:1 1 100%;justify-content:flex-start}.wave-type{min-height:27px}.wave-type img{width:23px;height:23px}.wave-progress{flex:1 1 50px}.wrap>.intel{grid-template-columns:1fr}.unit-inspector{padding:8px;width:min(285px,calc(100vw - 20px))}.unit-inspector.is-pinned{width:min(310px,calc(100vw - 20px))}.inspect-head{grid-template-columns:55px minmax(0,1fr)}.inspect-portrait{width:55px;height:55px}.inspect-head h3{font-size:17px}.inspect-stat{padding:4px 0}}
+
+/* v20-alpha.3: compact hover; pinned dossier intentionally unchanged. */
+.unit-inspector.is-compact{width:min(180px,calc(100vw - 20px));padding:7px 8px;border:1px solid #98764d;border-image:none;border-radius:3px;background:linear-gradient(150deg,#212833f5,#111721f7);box-shadow:0 3px 12px #0009;font:11px/1.25 system-ui,sans-serif;overflow:hidden;pointer-events:none}
+.unit-inspector.is-compact.is-enemy{border-color:#a76857}
+.hover-title{display:flex;align-items:baseline;justify-content:space-between;gap:4px;padding-bottom:4px;border-bottom:1px solid #65513c;margin-bottom:4px}.hover-title strong{font:700 12px/1.2 Georgia,serif;color:#f6e2c3;overflow-wrap:anywhere}.hover-title>span{color:#e6ba64;font-size:10px;white-space:nowrap}
+.hover-vitality{display:flex;justify-content:space-between;gap:4px;align-items:center;margin-bottom:3px}.hover-vitality span,.hover-stat span{color:#b6bfcb;font-size:9px;letter-spacing:.04em}.hover-vitality b,.hover-stat b{font-size:10px;color:#f2eee2;font-variant-numeric:tabular-nums;white-space:nowrap}.hover-hp-track{height:4px;background:#080d15;overflow:hidden}.hover-hp-track i{display:block;height:100%;background:var(--inspect-health)}
+.hover-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 7px;margin-top:6px}.hover-stat{display:flex;flex-direction:column;gap:1px;min-width:0}.hover-stat b{white-space:normal;overflow-wrap:anywhere}
+.hover-buffs{display:flex;flex-wrap:wrap;gap:3px;border-top:1px solid #4c4034;margin-top:5px;padding-top:4px}.hover-buffs span{font-size:9px;line-height:1.2;color:var(--inspect-accent)}
+/* Dedicated starter relic artwork; symbols remain visible if the atlas fails. */
+.starter-relic-art{width:100%;height:100%;aspect-ratio:1;position:relative;display:grid;place-items:center;overflow:hidden;background:#111721;isolation:isolate}.starter-relic-art>span{font-size:32px;color:#e7c17f}.starter-relic-art::after{content:"";position:absolute;inset:0;background:url("assets/ui/starter-relics-v20.webp") var(--relic-x) var(--relic-y)/300% 200% no-repeat;image-rendering:pixelated}
+#ov .relic-opt .medal{width:min(100%,100px);height:auto;aspect-ratio:1;border-radius:4px;border:2px solid #9b784a;background:#10151e;box-shadow:inset 0 0 0 1px #1d1510,0 2px 6px #0008}
+#ov .relic-opt .medal::before,.wrap .relic .medal::before{display:none}
+#ov .relic-opt{border-radius:5px;padding:12px 8px;background:linear-gradient(#29313b,#141b25);border-color:#9a784e}
+#ov .relic-opt .rn{font:700 13px Georgia,serif!important;color:#f3d2a0}
+#ov .relic-opt .rd{color:#d4d0c8;font-size:11px}
+.wrap .relic .medal{border-radius:4px;overflow:hidden}
