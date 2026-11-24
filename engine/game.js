@@ -362,6 +362,7 @@ const TIPS = {
 const seen = new Set();
 let coachTimer = 0;
 function tip(key){
+  if (sandboxActive())return;
   if (seen.has(key) || !TIPS[key]) return;
   seen.add(key);
   const c = $('#coach');
@@ -374,8 +375,9 @@ function bigMsg(text){ const d = document.createElement('div'); d.className = 'b
 
 let S, colors = {};
 
-function newGame(){
+function newGame(sandbox=false){
   S = {
+    sandbox:!!sandbox,sandboxGod:!!sandbox,
     wave:1, wallHp:80, wallMax:80, gold:0, spinsPer:3, spinsLeft:3, bought:0, cardBuys:0, holdsMax:2, handSize:3, startZombiee:1, relic:null,
     grid:Array.from({ length:9 }, () => BAG[Math.floor(Math.random() * BAG.length)]), held:new Set(), wins:new Set(),
     units:[], enemies:[], fx:[], floats:[], zones:[], shots:[], parts:[], shake:0, queue:[], spawnT:0, phase:'relic', speed:1, kills:0, spunOnce:false, confirmFight:false, drag:null,
@@ -398,6 +400,7 @@ function startRun(i){
   genTerrain();
   drawHand();
   S.nextQueue = rollWave(S.wave);
+  if(sandboxActive())sandboxInitialize();
   setResult('Prepare your defense', `You have ${S.spinsLeft} spins before wave 1.`);
   hideOv(); renderUI(); tip('spin'); sfx('horn');
 }
@@ -515,7 +518,7 @@ function drawHand(){
   S.aim = null; S.cardBuys = 0;
   if (keep.length && drawn.length) setTimeout(() => tip('keep'), 900);
 }
-const cardCost = () => 5 + S.cardBuys * 3;
+const cardCost = () => sandboxActive()?0:5 + S.cardBuys * 3;
 function buyable(){ return S.deck.map((_, i) => i).filter(i => !S.hand.some(h => h.di === i) && (S.phase === 'prep' || !isPrepCard(S.deck[i]))); }
 function buyCard(){
   if (!(S.phase === 'prep' || S.phase === 'fight')) return;
@@ -532,14 +535,16 @@ function useCard(i){
   const c = S.hand[i];
   if (!c || c.used || !usableNow(c.id)) return;
   const C = CARDS[c.id];
+  if(sandboxActive()&&((c.id==='cripta'&&S.maxUnits>=SANDBOX_MAX_UNITS)||(c.id==='aullido'&&S.units.length>=SANDBOX_MAX_ENTITIES)))return;
   if (C.aim) { S.aim = S.aim === i ? null : i; renderHand(); return; }
   if(S.phase==='prep'){if(spinning||S.drag||S.pendingMerge)return;prepUndoRecord('Play '+C.n);}
-  C.play(); c.used = true; sfx('card'); renderHand();renderPrepUndo();
+  C.play(); c.used = !sandboxActive(); sfx('card'); renderHand();renderPrepUndo();
 }
 function castAim(p){
   const c = S.hand[S.aim];
   if (!c) { S.aim = null; return; }
-  CARDS[c.id].play(p); c.used = true; S.aim = null; sfx('card'); renderHand();
+  if(sandboxActive()&&c.id==='aullido'&&S.units.length>=SANDBOX_MAX_ENTITIES){S.aim=null;renderHand();return;}
+  CARDS[c.id].play(p); c.used = !sandboxActive(); S.aim = null; sfx('card'); renderHand();
 }
 
 /* ================= Máquina ================= */
@@ -600,10 +605,11 @@ function evaluate(){
   renderUI();
 }
 function nearMerge(){ return MERGEABLE.some(t => [1,2].some(l => countOf(t, l) >= 2)); }
-const spinCost = () => 4 + S.bought * 2;
+const spinCost = () => sandboxActive()?0:4 + S.bought * 2;
 /* Ampliar el valle: +1 al límite de monsters en el campo, cada vez más caro (10, 16, 22...). */
-const slotCost = () => 10 + S.slotBuys * 6;
+const slotCost = () => sandboxActive()?0:10 + S.slotBuys * 6;
 function buySlot(){
+  if(sandboxActive()&&S.maxUnits>=SANDBOX_MAX_UNITS)return;
   const cost = slotCost();
   if (S.phase !== 'prep' || S.gold < cost || spinning) return;
   prepUndoRecord('Buy field slot');
@@ -630,7 +636,7 @@ function toggleHold(i){
 /* ================= Combate ================= */
 function startFight(){
   if (S.phase !== 'prep' || spinning) return;
-  if (S.spinsLeft > 0 && !S.confirmFight) {
+  if (!sandboxActive() && S.spinsLeft > 0 && !S.confirmFight) {
     S.confirmFight = true;
     setResult('Are you sure?', `You still have ${S.spinsLeft} unused spin${S.spinsLeft > 1 ? 's' : ''}.`);
     renderUI(); return;
@@ -779,7 +785,7 @@ function update(dt){
     }
     if (tgt) {
       const d = dist(e, tgt);
-      if (d <= e.r + radius(tgt) + 3) { e.cd -= dt; if (e.cd <= 0) { e.cd = 1; tgt.hp -= e.dmg; tgt.flash = 0.15; feelNumber(tgt.x,tgt.y-radius(tgt)-10,e.dmg,'ally');feelImpact(tgt.x,tgt.y,'steel',tgt,0,e.dmg>=25); e.lunge = .12; S.fx.push({k:'sword',x:(e.x+tgt.x)/2,y:(e.y+tgt.y)/2,angle:Math.atan2(tgt.y-e.y,tgt.x-e.x)+Math.PI,t:.24,T:.24}); burst((e.x + tgt.x) / 2, (e.y + tgt.y) / 2, 'steel', 6, 70); sfx('clash'); } }
+      if (d <= e.r + radius(tgt) + 3) { e.cd -= dt; if (e.cd <= 0) { e.cd = 1; const dealt=sandboxGod()?0:e.dmg;tgt.hp -= dealt; tgt.flash = 0.15; if(dealt)feelNumber(tgt.x,tgt.y-radius(tgt)-10,dealt,'ally');feelImpact(tgt.x,tgt.y,'steel',tgt,0,e.dmg>=25); e.lunge = .12; S.fx.push({k:'sword',x:(e.x+tgt.x)/2,y:(e.y+tgt.y)/2,angle:Math.atan2(tgt.y-e.y,tgt.x-e.x)+Math.PI,t:.24,T:.24}); burst((e.x + tgt.x) / 2, (e.y + tgt.y) / 2, 'steel', 6, 70); sfx('clash'); } }
       else moveHuman(e, (tgt.x - e.x) / d * sp * dt, (tgt.y - e.y) / d * sp * dt);
     } else if (e.x <= WALL_X + e.r + 2) {
       e.cd -= dt;
@@ -817,6 +823,7 @@ function update(dt){
     if (dead.some(u => !u.temp)) tip('death');
     if (!S.units.some(u => !u.down) && (S.enemies.length || S.queue.length)) tip('empty');
   }
+  if (S.wallHp <= 0 && sandboxActive()){sandboxResetBattle('Altar defeated. Ready to retry.');return;}
   if (S.wallHp <= 0) { S.wallHp = 0; S.phase = 'over'; renderUI(); return endRun(false); }
   if (!S.queue.length && !S.enemies.length) endWave();
 }
@@ -827,7 +834,7 @@ function damage(e, d, o = {}){
     if(!o.hitFeedback){feelNumber(e.x,e.y-e.r-10,d,e.armor&&!o.pierce?'armor':'damage');feelImpact(e.x,e.y,'spell');}
   }
 }
-function hitAltar(d){ S.wallHp -= Math.round(d);feelNumber(WALL_X+14,30,d,'altar');feelImpact(WALL_X-8,WORLD_H*.42,'altar'); S.fx.push({ k:'altar', t:0.2, T:0.2 }); S.shake = Math.max(S.shake, 4); burst(WALL_X - 8, rnd(30, WORLD_H - 30), 'soul', 8, 90); sfx('altar'); tip('wall'); }
+function hitAltar(d){ if(sandboxGod())return;S.wallHp -= Math.round(d);feelNumber(WALL_X+14,30,d,'altar');feelImpact(WALL_X-8,WORLD_H*.42,'altar'); S.fx.push({ k:'altar', t:0.2, T:0.2 }); S.shake = Math.max(S.shake, 4); burst(WALL_X - 8, rnd(30, WORLD_H - 30), 'soul', 8, 90); sfx('altar'); tip('wall'); }
 function zap(e, d, from){
   hitEnemy(e, d, 'soul', { pierce:true, kb:40 });
   const x1 = from ? from.x : WALL_X - 8, y1 = from ? from.y : clamp(e.y, 12, WORLD_H - 12);
@@ -862,11 +869,12 @@ function landShot(s){
     S.shake = Math.max(S.shake, 3); feelImpact(s.tx,s.ty,'fire',null,Math.max(24,s.splash));sfx('boom');
   } else if (s.k === 'bolt') {
     if (s.altar) hitAltar(s.dmg);
-    else if (s.tgt && s.tgt.hp > 0) { s.tgt.hp -= s.dmg; s.tgt.flash = .15; feelNumber(s.tgt.x,s.tgt.y-radius(s.tgt)-10,s.dmg,'ally');feelImpact(s.tgt.x,s.tgt.y,'steel',s.tgt); burst(s.tgt.x, s.tgt.y, 'steel', 5, 60); sfx('clash'); }
+    else if (s.tgt && s.tgt.hp > 0) { const dealt=sandboxGod()?0:s.dmg;s.tgt.hp -= dealt; s.tgt.flash = .15; if(dealt)feelNumber(s.tgt.x,s.tgt.y-radius(s.tgt)-10,dealt,'ally');feelImpact(s.tgt.x,s.tgt.y,'steel',s.tgt); burst(s.tgt.x, s.tgt.y, 'steel', 5, 60); sfx('clash'); }
   }
 }
 
 function endWave(){
+  if(sandboxActive()){sandboxResetBattle('Wave completed. Ready to repeat.');return;}
   S.units = S.units.filter(u => !u.temp);
   // Los caídos se levantan y todos vuelven a su puesto con la vida completa.
   S.units.forEach(u => { if (u.down) { u.down = false; floatText(u.hx ?? u.x, (u.hy ?? u.y) - 26, 'Revived!', 'leaf', 11); } if (u.hx != null) { u.x = u.hx; u.y = u.hy; } refreshHp(u); });
@@ -943,7 +951,7 @@ function askMergeConfirm(target, src){
 }
 function closeMergeConfirm(ok){
   const pm = S.pendingMerge; S.pendingMerge = null;
-  const cb = $('#noAsk'); if (cb && cb.checked) { askMerge = false; store.set('gs.askMerge', false); }
+  const cb = $('#noAsk'); if (cb && cb.checked && !sandboxActive()) { askMerge = false; store.set('gs.askMerge', false); }
   $('#ov2').hidden = true;
   if (ok && pm && S.phase === 'prep' && allMine().includes(pm.target) && allMine().includes(pm.src)) doMerge(pm.target, pm.src);
   else if (!ok) setResult('Canceled', 'Monsters were not stacked.');
@@ -1038,7 +1046,7 @@ function renderChips(){
   $('#chips').innerHTML = `
     <span class="chip wave-chip"><span class="hud-icon" aria-hidden="true">⚔</span> Wave <b>${Math.min(S.wave, MAX_WAVE)}/${MAX_WAVE}</b></span>
     <span class="chip ${S.wallHp < S.wallMax * 0.35 ? 'bad' : ''}"><span class="hud-icon hp-icon" aria-hidden="true">♥</span> Altar <b>${S.wallHp}/${S.wallMax}</b></span>
-    <span class="chip soul"><img src="${URL_.alma}" alt="" class="hud-gem"> Souls <b>${S.gold}</b></span>
+    <span class="chip soul"><img src="${URL_.alma}" alt="" class="hud-gem"> Souls <b>${sandboxActive()?'∞':S.gold}</b></span>
     <span class="chip minor-chip">Monsters <b>${fieldCount()}/${S.maxUnits}</b></span>
     <span class="chip minor-chip">Reserve <b>${S.bench.filter(Boolean).length}/3</b></span>`;
   tacticalWave();
@@ -1069,15 +1077,16 @@ function renderPay(){
 const FOE_NOTE = { sol:'Melee', bal:'Range: 150 px', cab:'Armor reduces damage per hit', jin:'Very fast', cle:'Heals nearby humans', ant:'Ignores monsters, ×3 Altar damage', com:'Armored boss' };
 function renderIntel(){if(S){tacticalWave();tacticalTick(performance.now(),true);}}
 function renderUI(){
+  if(sandboxActive())sandboxRefill();
   renderChips(); renderHand(); renderIntel(); renderArtifactShelf();
   const prep = S.phase === 'prep';
   $('#reels').innerHTML = S.grid.map((k, i) => `<button class="cell ${S.held.has(i) ? 'held' : ''} ${S.wins.has(i) ? 'win' : ''}" data-cell="${i}" ${prep && !spinning ? '' : 'disabled'} aria-label="${SYM[k].n}${S.held.has(i) ? ', held' : ''}">${cellHTML(k)}</button>`).join('');
   $('#result').innerHTML = `${S.result}<small>${S.resultSub}</small>`;
   const cost = spinCost(), canBuy = prep && S.gold >= cost && !spinning;
   $('#btns').innerHTML = `
-    <button class="btn spin ${prep && !S.spunOnce && S.spinsLeft > 0 ? 'nudge' : ''}" data-act="spin" ${prep && S.spinsLeft > 0 && !spinning ? '' : 'disabled'}>SPIN</button><div class="spin-counter" aria-live="polite">⟳ <b>${S.spinsLeft}</b> ${S.spinsLeft === 1 ? "spin" : "spins"} remaining</div>
+    <button class="btn spin ${prep && !S.spunOnce && S.spinsLeft > 0 ? 'nudge' : ''}" data-act="spin" ${prep && S.spinsLeft > 0 && !spinning ? '' : 'disabled'}>SPIN</button><div class="spin-counter" aria-live="polite">⟳ <b>${sandboxActive()?"∞":S.spinsLeft}</b> ${S.spinsLeft === 1 ? "spin" : "spins"} remaining</div>
     <button class="btn ${prep && S.spinsLeft === 0 && canBuy ? 'nudge' : ''}" data-act="buy" ${canBuy ? '' : 'disabled'}>Buy spin · <span class="s">${cost} souls</span></button>
-    <button class="btn" data-act="slot" ${prep && S.gold >= slotCost() && !spinning ? '' : 'disabled'} title="Increase field capacity">+1 slot (${S.maxUnits}→${S.maxUnits + 1}) · <span class="s">${slotCost()} souls</span></button>
+    <button class="btn" data-act="slot" ${prep && S.gold >= slotCost() && !spinning && (!sandboxActive()||S.maxUnits<SANDBOX_MAX_UNITS) ? '' : 'disabled'} title="Increase field capacity">+1 slot (${S.maxUnits}→${S.maxUnits + 1}) · <span class="s">${slotCost()} souls</span></button>
     <button class="btn fight ${S.confirmFight ? 'warn' : ''} ${prep && S.spinsLeft === 0 && !canBuy ? 'nudge' : ''}" data-act="fight" ${prep && !spinning ? '' : 'disabled'}>${S.confirmFight ? 'DEFEND ANYWAY' : 'DEFEND!'}</button>`;
   const groups = {};
   allMine().forEach(u => { const k = u.type + u.lvl; groups[k] = groups[k] || { u, n:0 }; groups[k].n += u.pile; });
@@ -1088,6 +1097,7 @@ function renderUI(){
   $('#speedBtn').textContent = '×' + S.speed;
   renderPrepUndo();
   renderRunePracticeAccess();
+  renderSandbox();
 }
 function showDeck(){
   const inRun = S && S.phase !== 'relic', deck = inRun ? S.deck : META.deck;
@@ -1126,7 +1136,7 @@ document.addEventListener('click', e => {
   else if (a === 'sfx') setSfx(!AU.sfx);
   else if (a === 'speed') { S.speed = S.speed === 1 ? 2 : S.speed === 2 ? 4 : 1; renderUI(); }
   else if (a === 'relic') startRun(+b.dataset.i);
-  else if (a === 'endcard') { const id = S.endOffer[+b.dataset.i]; META.deck.push(id); saveMeta(); hideOv(); showHome(); }
+  else if (a === 'endcard') { if(sandboxActive())return;const id = S.endOffer[+b.dataset.i]; META.deck.push(id); saveMeta(); hideOv(); showHome(); }
   else if (a === 'reward') { S.offer[+b.dataset.i].a(); allMine().forEach(refreshHp); S.phase = 'prep'; hideOv(); renderUI(); tip('layout'); }
 });
 document.addEventListener('keydown', e => {
@@ -1160,13 +1170,13 @@ const escapeHTML=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>'
 function durableWrite(k,v){try{localStorage.setItem(k,JSON.stringify(v));storageOK=true;return true;}catch(e){storageOK=false;$('#saveStatus').textContent='The browser blocked saving. Export your save from the menu.';return false;}}
 function savePrefs(){durableWrite(SETTINGS_KEY,prefs);document.body.classList.toggle('reduce-motion',prefs.reduced);if(AU.master)AU.master.gain.value=prefs.volume;}
 function snapshot(){
- if(!S)return null;
+ if(!S||sandboxActive())return null;
  const refs=[...S.units,...S.bench.filter(Boolean),...S.enemies];
  const state={...S,held:[...S.held],wins:[...S.wins],ter:[...S.ter],seenKinds:[...S.seenKinds],sel:null,drag:null,pendingMerge:null,aim:null,aimP:null,shots:S.shots.map(s=>({...s,tgt:undefined,targetIndex:refs.indexOf(s.tgt)})),relicIndex:RELICS.indexOf(S.relic),relic:null,offer:S.offer.map(o=>({n:o.n,kind:o.kind})),fx:[],parts:[],floats:[],shake:0};
  return {version:14,runId:sessionRunId,name:runName,savedAt:Date.now(),worldWidth:worldW(),state};
 }
-function validSave(v){return !!(v&&v.version===14&&v.state&&['prep','fight','reward','win','over'].includes(v.state.phase)&&Array.isArray(v.state.units)&&Array.isArray(v.state.enemies)&&Array.isArray(v.state.ter)&&Array.isArray(v.state.bench)&&v.state.wave>=1&&v.state.wave<=11);}
-function persist(){if(!S||spinning||S.drag||S.pendingMerge||S.phase==='relic')return false;const v=snapshot();loadedSave=v;const ok=durableWrite(SAVE_KEY,v);if(ok)$('#saveStatus').textContent='Autosaved · '+new Date(v.savedAt).toLocaleTimeString('en',{hour:'2-digit',minute:'2-digit'});return ok;}
+function validSave(v){return !!(v&&v.version===14&&v.state&&!v.state.sandbox&&['prep','fight','reward','win','over'].includes(v.state.phase)&&Array.isArray(v.state.units)&&Array.isArray(v.state.enemies)&&Array.isArray(v.state.ter)&&Array.isArray(v.state.bench)&&v.state.wave>=1&&v.state.wave<=11);}
+function persist(){if(sandboxActive()||!S||spinning||S.drag||S.pendingMerge||S.phase==='relic')return false;const v=snapshot();loadedSave=v;const ok=durableWrite(SAVE_KEY,v);if(ok)$('#saveStatus').textContent='Autosaved · '+new Date(v.savedAt).toLocaleTimeString('en',{hour:'2-digit',minute:'2-digit'});return ok;}
 function restore(v){
  if(!validSave(v))throw Error('Incompatible save format');
  const s=JSON.parse(JSON.stringify(v.state));
@@ -1197,18 +1207,18 @@ function showRewardRestored(){showOv(`<h2>Choose your reward</h2><div class="off
 function showEndRestored(){showOv(`<h2>${S.phase==='win'?'The Altar stands!':'The Altar has fallen'}</h2><p>${S.kills} humans defeated. Choose a card for your next run.</p><div class="cards-row">${S.endOffer.map((id,i)=>cardHTML(id,`data-act="endcard" data-i="${i}"`)).join('')}</div><button class="btn" data-front="scores">View scores</button>`);}
 function front(panel){closeBestiary();tacticalHide();$('#front').hidden=false;menuOpen=true;document.querySelector('.wrap').inert=true;$('#ov').inert=true;$('#ov2').inert=true;for(const el of document.querySelectorAll('.front-view'))el.hidden=el.id!==panel;$('#'+panel+' button:not([disabled]),#'+panel+' input')?.focus();}
 function closeFront(){menuOpen=false;$('#front').hidden=true;document.querySelector('.wrap').inert=false;$('#ov').inert=false;$('#ov2').inert=false;last=performance.now();resize();if(S)renderPrepUndo();}
-function showHome(){if(S){cancelDrag();persist();}loadedSave=store.get(SAVE_KEY,null);if(!validSave(loadedSave))loadedSave=null;$('#playerName').value=profile.name;$('#continueBtn').disabled=!loadedSave;$('#continueInfo').textContent=loadedSave?`${loadedSave.name} · oleada ${Math.min(loadedSave.state.wave,10)} · ${new Date(loadedSave.savedAt).toLocaleString('en')}`:'The invasion awaits.';$('#resumeBtn').hidden=!S;front('homeView');}
+function showHome(){if(spinning)return;if(sandboxActive()){sandboxExit();return;}if(S){cancelDrag();persist();}loadedSave=store.get(SAVE_KEY,null);if(!validSave(loadedSave))loadedSave=null;$('#playerName').value=profile.name;$('#continueBtn').disabled=!loadedSave;$('#continueInfo').textContent=loadedSave?`${loadedSave.name} · oleada ${Math.min(loadedSave.state.wave,10)} · ${new Date(loadedSave.savedAt).toLocaleString('en')}`:'The invasion awaits.';$('#resumeBtn').hidden=!S;front('homeView');}
 function beginNew(){let name=$('#playerName').value.trim().slice(0,20);if(!name){$('#nameError').textContent='Enter your name (1–20 characters).';$('#playerName').focus();return;}profile.name=name;durableWrite(PROFILE_KEY,profile);if(validSave(loadedSave)){front('confirmView');return;}launchNew();}
 function launchNew(){runName=profile.name;sessionRunId=uid();loadedSave=null;try{localStorage.removeItem(SAVE_KEY);}catch(e){}savedWorldWidth=null;closeFront();newGame();S.runId=sessionRunId;$('#saveStatus').textContent='Choose a relic to create your first save.';}
 function scores(){const v=store.get(SCORES_KEY,[]);return Array.isArray(v)?v:[];}
-function recordScore(won){const list=scores();if(list.some(r=>r.runId===sessionRunId))return;const wave=won?10:Math.max(0,S.wave-1);const r={runId:sessionRunId,name:runName,kills:S.kills,wave,won,score:wave*100+S.kills*10+(won?500:0),date:Date.now()};list.push(r);durableWrite(SCORES_KEY,list.sort((a,b)=>b.score-a.score).slice(0,50));}
+function recordScore(won){if(sandboxActive())return;const list=scores();if(list.some(r=>r.runId===sessionRunId))return;const wave=won?10:Math.max(0,S.wave-1);const r={runId:sessionRunId,name:runName,kills:S.kills,wave,won,score:wave*100+S.kills*10+(won?500:0),date:Date.now()};list.push(r);durableWrite(SCORES_KEY,list.sort((a,b)=>b.score-a.score).slice(0,50));}
 function scoreRows(rows){return rows.length?rows.slice(0,20).map((r,i)=>`<tr><td>${i+1}</td><td>${escapeHTML(r.name)}</td><td>${Number(r.score)||0}</td><td>${Number(r.wave)||0}/10</td></tr>`).join(''):'<tr><td colspan="4">No scores yet.</td></tr>';}
 function showScores(){front('scoresView');$('#scoreRows').innerHTML=scoreRows(scores());$('#scoreScope').textContent='Local scores';$('#publishScore').disabled=!scores().length;$('#cloudStatus').textContent='Local scores work offline. Online ranking requires the server.';}
 async function cloudScores(){try{const r=await fetch('/api/scores',{signal:AbortSignal.timeout(6000)});if(!r.ok)throw Error();const j=await r.json();if(!Array.isArray(j.scores))throw Error();$('#scoreRows').innerHTML=scoreRows(j.scores);$('#scoreScope').textContent='Online leaderboard';$('#cloudStatus').textContent='Public scores for this edition.';}catch(e){$('#cloudStatus').textContent='Online ranking is unavailable. Your scores are saved locally.';}}
 async function publishScore(){const r=scores()[0];if(!r)return;$('#publishScore').disabled=true;try{const res=await fetch('/api/scores',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(r),signal:AbortSignal.timeout(6000)});if(!res.ok)throw Error();await cloudScores();$('#cloudStatus').textContent='Your best score was published as '+r.name+'.';}catch(e){$('#cloudStatus').textContent='Publishing failed. Your local score is safe; retry when the server is online.';}finally{$('#publishScore').disabled=false;}}
-function exportSave(){persist();const v=snapshot()||loadedSave;if(!validSave(v)){alert('Start a run and choose a relic first.');return;}const url=URL.createObjectURL(new Blob([JSON.stringify(v)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='StopHumans-save.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),2000);}
+function exportSave(){if(sandboxActive())return;persist();const v=snapshot()||loadedSave;if(!validSave(v)){alert('Start a run and choose a relic first.');return;}const url=URL.createObjectURL(new Blob([JSON.stringify(v)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='StopHumans-save.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),2000);}
 function showSettings(){front('settingsView');$('#volume').value=Math.round(prefs.volume*100);$('#musicOpt').checked=AU.music;$('#soundOpt').checked=AU.sfx;$('#motionOpt').checked=prefs.reduced;$('#effectsOpt').value=prefs.effects;}
-const oldEndRun=endRun;endRun=function(won){recordScore(won);oldEndRun(won);persist();};
+const oldEndRun=endRun;endRun=function(won){if(sandboxActive()){sandboxResetBattle('Test complete. Ready to retry.');return;}recordScore(won);oldEndRun(won);persist();};
 const oldStartRun=startRun;startRun=function(i){oldStartRun(i);persist();};
 const oldRenderUI=renderUI;renderUI=function(){oldRenderUI();if(S&&S.phase!=='relic')persist();};
 let savedWorldWidth=null;
@@ -1225,6 +1235,7 @@ $('#importFile').addEventListener('change',async ev=>{const f=ev.target.files[0]
 window.addEventListener('pagehide',persist);document.addEventListener('visibilitychange',()=>{if(document.hidden)persist();});
 setInterval(()=>{if(!menuOpen&&!document.hidden)persist();},5000);
 savePrefs();
+initSandboxControls();
 
 artReady.then(buildHybridArt).then(()=>{
  readColors(); resize(); renderPay(); renderSnd();
