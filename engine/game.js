@@ -532,6 +532,7 @@ function buyCard(){
   sfx('coin'); renderUI();
 }
 function useCard(i){
+  if(magicActive())magicCancel('Conjuration canceled: card selected.');
   const c = S.hand[i];
   if (!c || c.used || !usableNow(c.id)) return;
   const C = CARDS[c.id];
@@ -643,7 +644,7 @@ function startFight(){
   }
   if (S.drag) { cancelDrag(); }
   prepUndoClear();
-  S.phase = 'fight'; S.held.clear(); S.wins.clear(); S.confirmFight = false; S.drag = null; S.aim = null; S.sel = null;
+  S.phase = 'fight'; magicResetWave(); S.held.clear(); S.wins.clear(); S.confirmFight = false; S.drag = null; S.aim = null; S.sel = null;
   S.buff = { haste:0, slow:0 }; S.zones = []; S.fightT = 0; S.charge = false;
   const W = waveInfo(S.wave);
   S.units.forEach(u => { u.hx = u.x; u.hy = u.y; u.skels = 0; u.cd = Math.min(u.cd, .3); });
@@ -663,6 +664,7 @@ function moveHuman(e,dx,dy){ e.x += dx; e.y += dy; e.moving = true; }
 function invasionX(W){return Math.min(W-18,Math.max(zoneMax()+100,W*.86));}
 function update(dt){
   if (S.phase !== 'fight') return;
+  magicAdvance(dt);
   const Wd = worldW();
   S.buff.haste = Math.max(0, S.buff.haste - dt); S.buff.slow = Math.max(0, S.buff.slow - dt);
   S.fightT += dt;
@@ -874,6 +876,7 @@ function landShot(s){
 }
 
 function endWave(){
+  magicResetWave();
   if(sandboxActive()){sandboxResetBattle('Wave completed. Ready to repeat.');return;}
   S.units = S.units.filter(u => !u.temp);
   // Los caídos se levantan y todos vuelven a su puesto con la vida completa.
@@ -1031,10 +1034,11 @@ function floatText(x, y, text, c, sz){ if (S.floats.length >= 48) {if(sz)return;
 let last = performance.now();
 function loop(now){
   let dt = Math.min(0.05, (now - last) / 1000); last = now;
+  magicFrame(now);
   if (S && !menuOpen && !document.hidden) {
     feelStep(dt);
-    if (S.aim !== null && S.phase === 'fight') dt *= 0.2;
-    dt *= S.speed;
+    if(magicActive())dt*=MAGIC_SLOW;
+    else {if (S.aim !== null && S.phase === 'fight') dt *= 0.2;dt *= S.speed;}
     for (let i = 0; i < S.speed; i++) update(dt / S.speed);
     const fdt = dt / Math.max(1, S.speed);
     S.fx.forEach(f => f.t -= fdt); S.fx = S.fx.filter(f => f.t > 0);
@@ -1043,6 +1047,7 @@ function loop(now){
     if (S.parts.length > 400) S.parts.splice(0, S.parts.length - 400);
     S.shake = Math.max(0, S.shake - fdt * 14);
     renderFrame();
+    magicDraw(now);
     tacticalTick(now);
     if (S.phase === 'fight' && now-lastAutosave>150) { renderChips(); renderBuyCard(); lastAutosave=now; }
   } else tacticalHide();
@@ -1107,6 +1112,7 @@ function renderUI(){
   renderPrepUndo();
   renderRunePracticeAccess();
   renderSandbox();
+  magicRender();
 }
 function showDeck(){
   const inRun = S && S.phase !== 'relic', deck = inRun ? S.deck : META.deck;
@@ -1116,7 +1122,7 @@ function showDeck(){
     <button class="go" data-act="closedeck">Close</button></div>`;
   o.hidden = false; o.querySelector('[data-act="closedeck"]').focus();
 }
-function showOv(html){ closeBestiary();const o = $('#ov'); o.innerHTML = `<div class="panel">${html}</div>`; o.hidden = false; const b = o.querySelector('button'); if (b) b.focus(); }
+function showOv(html){ magicCancel();closeBestiary();const o = $('#ov'); o.innerHTML = `<div class="panel">${html}</div>`; o.hidden = false; const b = o.querySelector('button'); if (b) b.focus(); }
 function hideOv(){ $('#ov').hidden = true; }
 
 document.addEventListener('click', e => {
@@ -1214,7 +1220,7 @@ function restore(v){
 }
 function showRewardRestored(){showOv(`<h2>Choose your reward</h2><div class="offers">${S.offer.map((o,i)=>`<button class="offer" data-act="reward" data-i="${i}"><span class="ic">${rewardArt(o)}</span><span class="nm">${o.n}</span><span class="ds">${o.d}</span></button>`).join('')}</div>`);}
 function showEndRestored(){showOv(`<h2>${S.phase==='win'?'The Altar stands!':'The Altar has fallen'}</h2><p>${S.kills} humans defeated. Choose a card for your next run.</p><div class="cards-row">${S.endOffer.map((id,i)=>cardHTML(id,`data-act="endcard" data-i="${i}"`)).join('')}</div><button class="btn" data-front="scores">View scores</button>`);}
-function front(panel){closeBestiary();tacticalHide();$('#front').hidden=false;menuOpen=true;document.querySelector('.wrap').inert=true;$('#ov').inert=true;$('#ov2').inert=true;for(const el of document.querySelectorAll('.front-view'))el.hidden=el.id!==panel;$('#'+panel+' button:not([disabled]),#'+panel+' input')?.focus();}
+function front(panel){magicCancel();closeBestiary();tacticalHide();$('#front').hidden=false;menuOpen=true;document.querySelector('.wrap').inert=true;$('#ov').inert=true;$('#ov2').inert=true;for(const el of document.querySelectorAll('.front-view'))el.hidden=el.id!==panel;$('#'+panel+' button:not([disabled]),#'+panel+' input')?.focus();}
 function closeFront(){menuOpen=false;$('#front').hidden=true;document.querySelector('.wrap').inert=false;$('#ov').inert=false;$('#ov2').inert=false;last=performance.now();resize();if(S)renderPrepUndo();}
 function showHome(){if(spinning)return;if(sandboxActive()){sandboxExit();return;}if(S){cancelDrag();persist();}loadedSave=store.get(SAVE_KEY,null);if(!validSave(loadedSave))loadedSave=null;$('#playerName').value=profile.name;$('#continueBtn').disabled=!loadedSave;$('#continueInfo').textContent=loadedSave?`${loadedSave.name} · oleada ${Math.min(loadedSave.state.wave,10)} · ${new Date(loadedSave.savedAt).toLocaleString('en')}`:'The invasion awaits.';$('#resumeBtn').hidden=!S;front('homeView');}
 function beginNew(){let name=$('#playerName').value.trim().slice(0,20);if(!name){$('#nameError').textContent='Enter your name (1–20 characters).';$('#playerName').focus();return;}profile.name=name;durableWrite(PROFILE_KEY,profile);if(validSave(loadedSave)){front('confirmView');return;}launchNew();}
@@ -1246,6 +1252,7 @@ window.addEventListener('pagehide',persist);document.addEventListener('visibilit
 setInterval(()=>{if(!menuOpen&&!document.hidden)persist();},5000);
 savePrefs();
 initSandboxControls();
+initMagicControls();
 
 artReady.then(buildHybridArt).then(()=>{
  readColors(); resize(); renderPay(); renderSnd();

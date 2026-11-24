@@ -18,6 +18,7 @@ function sandboxEnter(){
 }
 function sandboxExit(){
  if(!sandboxActive()||spinning||!sandboxParked)return;
+ magicCancel();
  if(S.drag)cancelDrag();
  const p=sandboxParked;sandboxParked=null;closeBestiary();tacticalHide();S=p.state;sessionRunId=p.runId;runName=p.name;savedWorldWidth=p.width;loadedSave=p.save;
  $('#ov').innerHTML=p.ov;$('#ov').hidden=p.ovHidden;$('#ov2').innerHTML=p.ov2;$('#ov2').hidden=p.ov2Hidden;
@@ -26,6 +27,7 @@ function sandboxExit(){
 function sandboxHeal(){S.wallHp=S.wallMax;for(const u of [...S.units,...S.bench.filter(Boolean)]){u.down=false;u.gone=false;refreshHp(u);}}
 function sandboxResetBattle(message='Battle reset.'){
  if(!sandboxActive())return;
+ magicResetWave();
  closeBestiary();S.units=S.units.filter(u=>!u.temp);for(const u of S.units){if(u.hx!=null){u.x=u.hx;u.y=u.hy;}delete u.hx;delete u.hy;u.skels=0;}
  S.phase='prep';S.enemies=[];S.queue=[];S.curQueue=[];S.shots=[];S.zones=[];S.fx=[];S.parts=[];S.floats=[];S.shake=0;S.buff={haste:0,slow:0};S.aim=null;S.aimP=null;S.sel=null;S.charge=false;S.confirmFight=false;S.fightT=0;S.spawnT=0;
  sandboxHeal();sandboxCards();prepUndoClear();setResult('Sandbox',message);sandboxStatus(message);renderUI();
@@ -50,12 +52,14 @@ function sandboxAction(a){
  else if(a==='enemy'){const kind=sbEl('sbEnemy').value;if(!Object.hasOwn(KIND,kind))return;const q=prep?S.nextQueue:S.queue;const n=Math.min(Number(sbEl('sbCount').value)||1,Math.max(0,SANDBOX_MAX_ENEMIES-q.length-(prep?0:S.enemies.length)));for(let i=0;i<n;i++)q.push(sandboxEnemy(kind,S.wave));if(!prep)S.spawnT=0;msg=n+' enemies added to '+(prep?'next wave.':'spawn queue.');}
  else if(a==='clearEnemies'){if(prep){S.nextQueue=[];msg='Wave queue cleared.';}else{sandboxResetBattle('Enemies cleared. Ready for another test.');return;}}
  else if(a==='cards'){prepUndoClear();sandboxCards();msg='All cards refilled.';}
+ else if(a==='magicMana'||a==='magicCooldown'||a==='magicRefill'){magicSandboxAction(a);msg='Magic lab settings updated.';}
  else return;
  setResult('Sandbox',msg);sandboxStatus(msg);renderUI();
 }
 function renderSandbox(){
  const p=sbEl('sandboxPanel'),on=sandboxActive();p.hidden=!on;if(!on)return;
  const prep=S.phase==='prep',ready=prep||S.phase==='fight';
+ magicRenderSandbox();
  sbEl('sbGod').textContent='God mode: '+(S.sandboxGod?'ON':'OFF');sbEl('sbGod').setAttribute('aria-pressed',String(S.sandboxGod));
  for(const b of p.querySelectorAll('[data-sb]')){const a=b.dataset.sb;b.disabled=spinning||!ready||(['wave','fight','unit','clearUnits'].includes(a)&&!prep);}
 }
