@@ -37,7 +37,7 @@ function noise(dur, vol = .2, freq = 1200, when = 0, dest, type = 'lowpass'){
 }
 function sfx(name){
   if (!AU.ctx || !AU.sfx) return;
-  const now = AU.ctx.currentTime, gap = { hit:.05, arrow:.06, fire:.12, enemyHit:.07, claw:.06, bite:.06, orb:.05, orbHit:.05, fireLaunch:.1, boom:.1, clank:.07, clash:.07, bolt:.08, grunt:.08, zap:.15, raise:.2, wail:1.5 }[name] || 0;
+  const now = AU.ctx.currentTime, gap = { hit:.05, arrow:.06, fire:.12, enemyHit:.07, claw:.06, bite:.06, orb:.05, orbHit:.05, fireLaunch:.1, boom:.1, clank:.07, clash:.07, bolt:.08, grunt:.08, zap:.15, raise:.2, wail:1.5, arcaneBlock:.10, arcaneBreak:.15 }[name] || 0;
   if (gap && AU.last[name] && now - AU.last[name] < gap) return;
   AU.last[name] = now;
   switch (name) {
@@ -63,6 +63,11 @@ function sfx(name){
     case 'line': [0, 4, 7, 12].forEach((n, i) => tone(mtof(72 + n), .14, 'triangle', .14, i * .07)); break;
     case 'miss': tone(220, .12, 'triangle', .08); tone(196, .16, 'triangle', .08, .1); break;
     case 'fusion': [0, 4, 7, 12, 16, 19, 24].forEach((n, i) => tone(mtof(67 + n), .18, 'square', .07, i * .05)); noise(.5, .08, 6000, .1, null, 'highpass'); break;
+    case 'arcaneFire': noise(.45,.30,650,0,null,'lowpass');tone(125,.45,'sine',.32,0,null,40);tone(340,.19,'triangle',.10,0,null,90);break;
+    case 'arcaneShield': [392,587,784].forEach((f,i)=>tone(f,.34,'sine',.095,i*.045));break;
+    case 'arcaneBlock': tone(1240,.10,'sine',.10,0,null,420);break;
+    case 'arcaneBreak': noise(.19,.20,5000,0,null,'highpass');tone(970,.24,'triangle',.10,0,null,160);break;
+    case 'arcaneLightning': noise(.28,.22,5800,0,null,'highpass');[1800,1300,880].forEach((f,i)=>tone(f,.13,'square',.045,i*.055,null,180));break;
     case 'card': noise(.25, .14, 3000, 0, null, 'bandpass'); tone(300, .2, 'sine', .12, 0, null, 900); break;
     case 'death': tone(320, .35, 'sawtooth', .1, 0, null, 70); break;
     case 'altar': tone(80, .25, 'sine', .45); noise(.12, .2, 300); break;
@@ -684,7 +689,7 @@ function update(dt){
   const banshees = S.units.filter(u => u.type === 'B' && !u.down);
   for (const u of S.units) {
     u.flash = Math.max(0, u.flash - dt); u.lunge = Math.max(0, u.lunge - dt); u.moving = false;
-    if (u.down) continue;                                   // caído: queda en el piso hasta la próxima oleada
+    if (u.down||u.hp<=0) continue;                                   // caído: queda en el piso hasta la próxima oleada
     const st = stats(u.type, u.lvl, u);
     // Aura de la Banshee: +30/50/80% de daño y velocidad de ataque a los monsters cercanos
     const buff = bansheeOn(u);
@@ -787,7 +792,7 @@ function update(dt){
     }
     if (tgt) {
       const d = dist(e, tgt);
-      if (d <= e.r + radius(tgt) + 3) { e.cd -= dt; if (e.cd <= 0) { e.cd = 1; const dealt=sandboxGod()?0:e.dmg;tgt.hp -= dealt; tgt.flash = 0.15; if(dealt)feelNumber(tgt.x,tgt.y-radius(tgt)-10,dealt,'ally');feelImpact(tgt.x,tgt.y,'steel',tgt,0,e.dmg>=25); e.lunge = .12; S.fx.push({k:'sword',x:(e.x+tgt.x)/2,y:(e.y+tgt.y)/2,angle:Math.atan2(tgt.y-e.y,tgt.x-e.x)+Math.PI,t:.24,T:.24}); burst((e.x + tgt.x) / 2, (e.y + tgt.y) / 2, 'steel', 6, 70); sfx('clash'); } }
+      if (d <= e.r + radius(tgt) + 3) { e.cd -= dt; if (e.cd <= 0) { e.cd = 1; const dealt=spellDamageAlly(tgt,e.dmg); tgt.flash = 0.15; if(dealt)feelNumber(tgt.x,tgt.y-radius(tgt)-10,dealt,'ally');feelImpact(tgt.x,tgt.y,'steel',tgt,0,e.dmg>=25); e.lunge = .12; S.fx.push({k:'sword',x:(e.x+tgt.x)/2,y:(e.y+tgt.y)/2,angle:Math.atan2(tgt.y-e.y,tgt.x-e.x)+Math.PI,t:.24,T:.24}); burst((e.x + tgt.x) / 2, (e.y + tgt.y) / 2, 'steel', 6, 70); sfx('clash'); } }
       else moveHuman(e, (tgt.x - e.x) / d * sp * dt, (tgt.y - e.y) / d * sp * dt);
     } else if (e.x <= WALL_X + e.r + 2) {
       e.cd -= dt;
@@ -871,7 +876,7 @@ function landShot(s){
     S.shake = Math.max(S.shake, 3); feelImpact(s.tx,s.ty,'fire',null,Math.max(24,s.splash));sfx('boom');
   } else if (s.k === 'bolt') {
     if (s.altar) hitAltar(s.dmg);
-    else if (s.tgt && s.tgt.hp > 0) { const dealt=sandboxGod()?0:s.dmg;s.tgt.hp -= dealt; s.tgt.flash = .15; if(dealt)feelNumber(s.tgt.x,s.tgt.y-radius(s.tgt)-10,dealt,'ally');feelImpact(s.tgt.x,s.tgt.y,'steel',s.tgt); burst(s.tgt.x, s.tgt.y, 'steel', 5, 60); sfx('clash'); }
+    else if (s.tgt && s.tgt.hp > 0) { const dealt=spellDamageAlly(s.tgt,s.dmg); s.tgt.flash = .15; if(dealt)feelNumber(s.tgt.x,s.tgt.y-radius(s.tgt)-10,dealt,'ally');feelImpact(s.tgt.x,s.tgt.y,'steel',s.tgt); burst(s.tgt.x, s.tgt.y, 'steel', 5, 60); sfx('clash'); }
   }
 }
 

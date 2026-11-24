@@ -55,6 +55,7 @@ function tacticalModel(e){
   add('boot','Move speed',base.move?tacNum(base.move,0)+' px/s':'Stationary');add('shield','Armor','0');
   if(base.guard)add('flag','Patrol radius',tacNum(guardOf(e),0)+' px');if(st.splash)add('flame','Blast radius',tacNum(st.splash,0)+' px');
   if(e.type==='N')add('skull','Skeletons raised',(e.skels||0)+' / '+skelCap(e.lvl));if(e.type==='B')add('spark','Aura bonus','+'+Math.round(bansheeBuff(e.lvl)*100)+'%');
+  if(e.arcaneShield>0&&e.arcaneShieldTime>0&&!e.down)tags.push('Soul Barrier '+tacNum(e.arcaneShield,0)+' HP · '+tacNum(e.arcaneShieldTime)+'s');
   if(e.pile>1)tags.push('Stack '+e.pile+'/'+S.mods.mergeN);if(e.train)tags.push('Training +'+e.train*50+'% HP/ATK');if(bf)tags.push('Banshee +'+Math.round(bf*100)+'%');if(haste>1&&!support)tags.push('Dragon Roar ×2');if(e.temp)tags.push('Temporary');tags.push(e.down?'Fallen':bench?'Reserve':'Active');
   for(const id of (S.artifacts||[])){if(id==='bloodfang'&&!support||id==='boneplate'||id==='hourglass'&&!support||id==='lens'&&base.ranged)tags.push(SHOP_ARTIFACTS[id].name);}
  }
