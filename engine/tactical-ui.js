@@ -71,11 +71,15 @@ function tacticalCompactHTML(m){
  const hp=Math.max(0,Math.min(100,m.hp/m.max*100));
  return '<div class="sanctuary-shell"><div class="sanctuary-title"><strong>'+m.name+'</strong><span>'+m.stars+'</span></div><div class="sanctuary-health"><span class="sanctuary-fallback-heart" aria-hidden="true">♥</span><b>'+Math.ceil(m.hp)+' / '+Math.ceil(m.max)+'</b></div><div class="sanctuary-hp-track" role="meter" aria-label="Health" aria-valuemin="0" aria-valuemax="'+Math.ceil(m.max)+'" aria-valuenow="'+Math.ceil(Math.min(m.hp,m.max))+'"><i style="width:'+hp+'%"></i></div>'+sanctuaryStats(m).map((s,i)=>'<div class="sanctuary-stat sanctuary-stat-'+i+'" title="'+s.title+'"><span class="sanctuary-fallback-icon" aria-hidden="true">'+s.icon+'</span><span>'+s.label+'</span><b>'+s.value+'</b></div>').join('')+'</div>'+(tags.length?'<div class="sanctuary-buffs">'+tags.map(t=>'<span>'+t+'</span>').join('')+'</div>':'');
 }
-function tacticalHTML(m,pinned){if(!pinned)return tacticalCompactHTML(m);return '<div class="inspect-kicker">'+(pinned?'PINNED DOSSIER':'FIELD DOSSIER')+' <span>'+(m.enemy?'HUMAN':'GUARDIAN')+'</span></div><div class="inspect-head"><div class="inspect-portrait">'+tacPic(m.portrait)+'</div><div><h3>'+m.name+'</h3><span class="inspect-role">'+m.role+'</span><div class="inspect-stars">'+m.stars+'</div></div></div><div class="inspect-health"><div><span>VITALITY</span><b>'+Math.ceil(m.hp)+' / '+Math.ceil(m.max)+'</b></div><div class="inspect-hp-track"><i style="width:'+Math.max(0,Math.min(100,m.hp/m.max*100))+'%"></i></div></div><div class="inspect-stats">'+m.rows.map(s=>'<div class="inspect-stat">'+tacIcon(s.icon)+'<span>'+s.label+'</span><b>'+s.value+'</b></div>').join('')+'</div><div class="inspect-tags">'+m.tags.map(t=>'<span>'+t+'</span>').join('')+'</div><p class="inspect-note">'+m.note+'</p><div class="inspect-hint">'+(pinned?'Click unit again or Esc to close':'Click to pin dossier')+'</div>';}
+// Both inspection modes use the identical artwork and live stat markup.
+function tacticalHTML(m,pinned){return tacticalCompactHTML(m);}
+let tacPinnedEntity=null,tacPinnedState=null,tacPinnedSide=null;
 function tacticalPosition(panel,e,pinned){
  const rect=cv.getBoundingClientRect(),w=panel.offsetWidth,h=panel.offsetHeight,margin=10,x=rect.left+e.x*scale,y=rect.top+e.y*scale;
- // Pinned cards stay at the opposite edge of the field instead of tracking every step.
- const gap=24;const left=pinned?(x>rect.left+rect.width/2?rect.left+12:rect.right-w-12):(x+w+gap<=innerWidth-margin?x+gap:x-w-gap);
+ // Choose the pinned side once per selection; a moving unit cannot make the card jump.
+ if(!pinned){tacPinnedEntity=null;tacPinnedSide=null;}
+ else if(tacPinnedEntity!==e||tacPinnedState!==S){tacPinnedEntity=e;tacPinnedState=S;tacPinnedSide=x>rect.left+rect.width/2?'left':'right';}
+ const gap=24;const left=pinned?(tacPinnedSide==='left'?rect.left+12:rect.right-w-12):(x+w+gap<=innerWidth-margin?x+gap:x-w-gap);
  const top=pinned?Math.max(margin,rect.top+12):y-h*.55;
  panel.style.left=Math.round(Math.max(margin,Math.min(innerWidth-w-margin,left)))+'px';panel.style.top=Math.round(Math.max(margin,Math.min(innerHeight-h-margin,top)))+'px';
 }
@@ -88,7 +92,7 @@ function tacticalTick(now,force=false){
  if(!entity){tacticalHide();return;}
  const panel=$('#unitInspector'),model=tacticalModel(entity),markup=tacticalHTML(model,!!pinned);
  if(markup!==tacMarkup){panel.querySelector('.inspect-body').innerHTML=markup;tacMarkup=markup;}
- panel.classList.toggle('is-compact',!pinned);panel.classList.toggle('is-pinned',!!pinned);panel.classList.toggle('is-enemy',model.enemy);panel.querySelector('.inspect-close').hidden=!pinned;panel.hidden=false;tacticalPosition(panel,entity,!!pinned);
+ panel.classList.add('is-compact');panel.classList.toggle('is-pinned',!!pinned);panel.classList.toggle('is-enemy',model.enemy);panel.querySelector('.inspect-close').hidden=!pinned;panel.hidden=false;tacticalPosition(panel,entity,!!pinned);
 }
 document.querySelector('#unitInspector .inspect-close').addEventListener('click',()=>tacticalClose());
 // Preload once. The fallback is readable immediately, including if the asset fails.
