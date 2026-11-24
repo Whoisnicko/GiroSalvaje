@@ -4,17 +4,26 @@ let runeIndex=0,runeGuideOn=true,runeStroke=[],runePointer=null,runeResult=null,
 const runePracticeRecords=Object.fromEntries(RUNE_DEFS.map(d=>[d.id,{attempts:0,correct:0,streak:0}]));
 function renderRunePracticeAccess(){runeEl('runePracticeBtn').disabled=!(S&&S.phase==='prep'&&!spinning);}
 function runeGlyph(d){const path=d.points.map((p,i)=>(i?'L':'M')+(p[0]*100).toFixed(1)+' '+(p[1]*100).toFixed(1)).join(' ');return '<svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="44" fill="none" stroke="#746143" stroke-dasharray="2 4"/><path d="'+path+'" fill="none" stroke="'+d.color+'" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/></svg>';}
-function runeKnowledge(id){return S?.sandbox&&!menuOpen?'Sandbox access':knowledgeLearned(id)?'Learned · Tier I':'Sealed in campaign';}
+function runeKnowledge(id){return S?.sandbox&&!menuOpen?'Sandbox access':knowledgeLearned(id)?'Learned · Tier '+masteryRecord(id).tier:'Sealed in campaign';}
 function runePracticeStats(){const rec=runePracticeRecords[RUNE_DEFS[runeIndex].id];runeEl('runeAttempts').textContent=rec.attempts+' attempts · '+rec.correct+' correct';runeEl('runeBest').textContent='Streak '+rec.streak;}
 function runeCatalogRender(){
- const selected=RUNE_DEFS[runeIndex],lore=GRIMOIRE_LORE[selected.id],spell=SPELL_DATA[selected.id],props=grimoireProperties(selected.id,spell,!menuOpen&&S?S.wave:1);
+ const selected=RUNE_DEFS[runeIndex],lore=GRIMOIRE_LORE[selected.id],spell=masterySpell(selected.id,masteryTier(selected.id)),props=grimoireProperties(selected.id,spell,!menuOpen&&S?S.wave:1);
  runeEl('runeCatalog').innerHTML=RUNE_DEFS.map((d,i)=>'<button type="button" class="rune-entry" data-rune-index="'+i+'" aria-pressed="'+(i===runeIndex)+'" style="--ink:'+GRIMOIRE_LORE[d.id].ink+'">'+runeGlyph(d)+'<b>'+d.name+'</b><small class="grimoire-index-state">'+(S?.sandbox&&!menuOpen?'Test':knowledgeLearned(d.id)?'Learned':'Sealed')+'</small></button>').join('');
  runeEl('runeName').textContent=selected.name;runeEl('runeSchool').textContent=lore.school;runeEl('runeKnowledge').textContent=runeKnowledge(selected.id);runeEl('runeKnowledge').dataset.learned=String(knowledgeLearned(selected.id)||!!S?.sandbox&&!menuOpen);runeEl('runeUnlock').textContent=(S?.sandbox&&!menuOpen?'Sandbox access does not unlock campaign knowledge. ':'')+knowledgeHint(selected.id);
  runeEl('runeLore').textContent=lore.lore;runeEl('runeIllustration').innerHTML=grimoireEngraving(selected.id)+'<div class="grimoire-rune-seal">'+runeGlyph(selected)+'</div>';
  runeEl('runeStats').innerHTML=props.stats.map(([label,value])=>'<div><small>'+label+'</small><b>'+value+'</b></div>').join('');
  runeEl('runeEffect').textContent=props.effect;runeEl('runeDescription').textContent=selected.hint;runeEl('runePageNumber').textContent=['I','II','III','IV','V','VI'][runeIndex]+' / VI';
- runeDialog.style.setProperty('--spell-ink',lore.ink);runePracticeStats();
+ runeDialog.style.setProperty('--spell-ink',lore.ink);runePracticeStats();runeMasteryRender(selected.id);
 }
+function runeMasteryRender(id){
+ const rec=masteryRecord(id),tier=masteryTier(id),next=MASTERY_RULES[rec.tier+1],test=!!S?.sandbox&&!menuOpen,learned=knowledgeLearned(id);
+ runeEl('runeMastery').innerHTML=[1,2,3].map(n=>'<span class="'+((learned||test)&&n<=tier?'mastery-owned':'')+'">'+['Ⅰ','Ⅱ','Ⅲ'][n-1]+' · '+((learned||test)&&n<=tier?'Ready':'Sealed')+'</span>').join('');
+ runeEl('runeXp').textContent=test?'Sandbox Tier '+tier+' · no permanent XP':learned?'XP '+rec.xp+' / '+(next?.xp||20)+' · max 3 per spell per wave':'Learn the spell to earn XP.';
+ runeEl('runeEvolution').textContent=(tier>=2?MASTERY_EVOLUTIONS[id][2]+(tier===3?' · '+MASTERY_EVOLUTIONS[id][3]:' · Next: '+MASTERY_EVOLUTIONS[id][3]):'Next: '+MASTERY_EVOLUTIONS[id][2]);
+ const b=runeEl('runeRitual');b.hidden=test||!learned||!next||menuOpen||S?.phase!=='prep';b.disabled=!masteryCanRitual(id);if(next)b.textContent='Tier '+(rec.tier+1)+' ritual · '+next.cost+' souls';
+ runeEl('runeRitualStatus').textContent=test?'Set test tier in Magic Lab.':next?'Requires '+next.xp+' total XP. Permanent; cannot undo.':'Maximum mastery achieved.';
+}
+runeEl('runeRitual').addEventListener('click',()=>{const id=RUNE_DEFS[runeIndex].id;if(masteryRitual(id))runeCatalogRender();else runeEl('runeRitualStatus').textContent='Ritual not completed. Check XP, souls and browser storage.';});
 function runeFeedback(text,kind='neutral'){const f=runeEl('runeFeedback');f.textContent=text;f.dataset.result=kind;}
 function runeResetStroke(){const pointer=runePointer;runePointer=null;if(pointer!==null&&runeCanvas.hasPointerCapture(pointer))runeCanvas.releasePointerCapture(pointer);runeStroke=[];runeResult=null;runeFeedback('Draw the selected rune in one continuous stroke.');runeDraw();}
 function runeSelect(i){runeIndex=(i+RUNE_DEFS.length)%RUNE_DEFS.length;runeResetStroke();runeCatalogRender();}

@@ -10,7 +10,7 @@ const GRIMOIRE_LORE=Object.freeze({
 function grimoireProperties(id,d,wave=1){
  const stats=[['Mana',d.mana+' MP'],['Cooldown',d.cd+' s'],['Target',d.target==='ally'?'Guardian':d.target==='enemy'?'Human':'Area']];
  let effect='';
- if(id==='fire'){const dmg=d.damage+d.perTwoWaves*Math.floor(Math.max(0,wave-1)/2);stats.push(['Radius',d.r+' px'],['Damage',dmg+''],['Armor','Ignored']);effect='Instant damage to humans in the circle. No friendly fire. Damage increases by '+d.perTwoWaves+' every two waves.';}
+ if(id==='fire'){const dmg=masteryFireDamage(d,wave);stats.push(['Radius',d.r+' px'],['Damage',dmg+''],['Armor','Ignored']);effect='Instant damage to humans in the circle. No friendly fire. Damage increases by '+d.perTwoWaves+' every two waves.';}
  if(id==='barrier'){stats.push(['Absorption',Math.round(d.hpFraction*100)+'% max HP'],['Duration',d.duration+' s'],['Recast','Refresh']);effect='A shield absorbs incoming melee and projectile damage before health. Recasting replaces the shield.';}
  if(id==='lightning'){stats.push(['Damage',d.damage.join(' / ')],['Max targets',String(d.damage.length)],['Jump range',d.r+' px']);effect='Strikes the chosen human and jumps to nearby living enemies. Ignores physical armor. No repeat targets.';}
  if(id==='grasp'){stats.push(['Radius',d.r+' px'],['Root',d.duration+' s'],['Damage','None']);effect='Prevents movement, not attacks or healing. Forced displacement remains possible.';}

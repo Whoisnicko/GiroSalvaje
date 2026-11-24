@@ -3,19 +3,26 @@
    visual events use the existing transient S.fx queue. */
 function spellClearWave(){
  if(!S)return;
- for(const u of [...S.units,...S.bench.filter(Boolean)]){delete u.arcaneShield;delete u.arcaneShieldTime;delete u.arcaneShieldMax;}
- for(const foe of S.enemies||[]){delete foe.arcaneGraspUntil;delete foe.arcaneFrostUntil;delete foe.arcaneHarvestUntil;delete foe.arcaneHarvestId;}
- S.arcaneHarvestCasts={};S.arcaneHarvestSeq=0;
+ for(const u of [...S.units,...S.bench.filter(Boolean)]){delete u.arcaneShield;delete u.arcaneShieldTime;delete u.arcaneShieldMax;delete u.arcaneShieldToken;}
+ for(const foe of S.enemies||[]){delete foe.arcaneGraspUntil;delete foe.arcaneFrostUntil;delete foe.arcaneHarvestUntil;delete foe.arcaneHarvestId;delete foe.arcaneAfterSlowUntil;delete foe.arcaneFreezeUntil;}
+ S.arcaneHarvestCasts={};S.arcaneHarvestSeq=0;S.arcaneBurns=[];masteryClearWave();
  S.fx=S.fx.filter(f=>!String(f.k).startsWith('arcane'));
 }
 function spellAdvance(dt){
+ spellBurnAdvance(dt);
  // Fight-time deadlines persist across saves; retain a cast through its expiry tick for death accounting.
  if(S.arcaneHarvestCasts)for(const [id,cast] of Object.entries(S.arcaneHarvestCasts))if(cast.until<S.fightT)delete S.arcaneHarvestCasts[id];
  for(const u of S.units){
   if(!(u.arcaneShield>0&&u.arcaneShieldTime>0))continue;
   u.arcaneShieldTime=Math.max(0,u.arcaneShieldTime-dt);
-  if(u.arcaneShieldTime<=0||u.down||u.hp<=0){delete u.arcaneShield;delete u.arcaneShieldTime;delete u.arcaneShieldMax;}
+  if(u.arcaneShieldTime<=0||u.down||u.hp<=0){delete u.arcaneShield;delete u.arcaneShieldTime;delete u.arcaneShieldMax;delete u.arcaneShieldToken;}
  }
+}
+function spellBurnAdvance(dt){
+ const burns=S.arcaneBurns||[];if(!burns.length)return;
+ for(const foe of S.enemies){if(foe.hp<=0)continue;const active=burns.filter(b=>b.left>0&&Math.hypot(foe.x-b.x,foe.y-b.y)<=b.r).sort((a,b)=>b.dps-a.dps);
+ if(active.length){const b=active[0],amount=b.dps*Math.min(dt,b.left);if(amount>0){damage(foe,amount,{quiet:true,pierce:true});masteryCredit('fire',b.token);}}}
+ for(const b of burns)b.left-=dt;S.arcaneBurns=burns.filter(b=>b.left>0);
 }
 function spellEvent(kind,x,y,duration,extra={}){
  // Cap only this module's transient effects; never remove other combat effects.
@@ -28,9 +35,9 @@ function spellDamageAlly(u,amount){
  let remaining=amount;
  // God mode protects HP, but shields still absorb hits so testers can validate depletion.
  if(u.arcaneShield>0&&u.arcaneShieldTime>0){
-  const blocked=Math.min(remaining,u.arcaneShield);remaining-=blocked;u.arcaneShield-=blocked;
+  const blocked=Math.min(remaining,u.arcaneShield);remaining-=blocked;u.arcaneShield-=blocked;if(blocked>0)masteryCredit('barrier',u.arcaneShieldToken);
   spellEvent('arcaneBlock',u.x,u.y,.30,{r:radius(u)+9});floatText(u.x,u.y-radius(u)-17,'Blocked '+Math.ceil(blocked),'soul',11);
-  if(u.arcaneShield<=1e-6){delete u.arcaneShield;delete u.arcaneShieldTime;delete u.arcaneShieldMax;spellEvent('arcaneBreak',u.x,u.y,.48,{r:radius(u)+9});sfx('arcaneBreak');}
+  if(u.arcaneShield<=1e-6){delete u.arcaneShield;delete u.arcaneShieldTime;delete u.arcaneShieldMax;delete u.arcaneShieldToken;spellEvent('arcaneBreak',u.x,u.y,.48,{r:radius(u)+9});sfx('arcaneBreak');}
   else sfx('arcaneBlock');
  }
  const dealt=sandboxGod()?0:remaining;
@@ -48,8 +55,8 @@ function spellChain(first,d=SPELL_DATA.lightning){
  return chain;
 }
 function spellTimeLeft(until){return Number.isFinite(until)?Math.max(0,until-(S.fightT||0)):0;}
-function spellEnemyRooted(e){return e.root>0||spellTimeLeft(e.arcaneGraspUntil)>0;}
-function spellEnemySpeedFactor(e){return Math.min(S.buff.slow>0?.4:1,spellTimeLeft(e.arcaneFrostUntil)>0?1-SPELL_DATA.frost.slow:1);}
+function spellEnemyRooted(e){return e.root>0||spellTimeLeft(e.arcaneGraspUntil)>0||spellTimeLeft(e.arcaneFreezeUntil)>0;}
+function spellEnemySpeedFactor(e){return Math.min(S.buff.slow>0?.4:1,spellTimeLeft(e.arcaneFrostUntil)>0?1-SPELL_DATA.frost.slow:1,spellTimeLeft(e.arcaneGraspUntil)<=0&&spellTimeLeft(e.arcaneAfterSlowUntil)>0?.65:1);}
 function spellArea(target,r){return S.enemies.filter(e=>e.hp>0&&Math.hypot(e.x-target.x,e.y-target.y)<=r);}
 function spellHarvestActive(e){
  const cast=S.arcaneHarvestCasts?.[e.arcaneHarvestId];
@@ -59,50 +66,50 @@ function spellHarvestDeath(e){
  const cast=S.arcaneHarvestCasts?.[e.arcaneHarvestId];
  if(!cast||cast.left<=0||!Number.isFinite(e.arcaneHarvestUntil)||e.arcaneHarvestUntil<(S.fightT||0))return 0;
  // Consume the mark before granting the reward; one bonus per enemy even if processed twice.
- delete e.arcaneHarvestId;delete e.arcaneHarvestUntil;cast.left--;S.gold++;
+ delete e.arcaneHarvestId;delete e.arcaneHarvestUntil;cast.left--;S.gold++;masteryCredit('harvest',cast.token);
  spellEvent('arcaneSoul',e.x,e.y,.70,{r:16});burst(e.x,e.y,'leaf',9,85);feelSoul(e.x,e.y);sfx('arcaneSoul');return 1;
 }
 function spellExecute(id,target){
- const d=SPELL_DATA[id];
+ const d=masterySpell(id),token=masteryCastToken();
  if(!d?.implemented)return 'preview only (no combat effect).';
  if(id==='fire'){
-  const dmg=d.damage+d.perTwoWaves*Math.floor(Math.max(0,S.wave-1)/2);
+  const dmg=masteryFireDamage(d,S.wave);
   const targets=S.enemies.filter(e=>e.hp>0&&Math.hypot(e.x-target.x,e.y-target.y)<=d.r);
-  targets.forEach(e=>hitEnemy(e,dmg,'m',{pierce:true,kb:30}));
+  targets.forEach(e=>hitEnemy(e,dmg,'m',{pierce:true,kb:30}));if(targets.length)masteryCredit('fire',token);
+  if(d.burnDuration){S.arcaneBurns||=[];S.arcaneBurns.push({x:target.x,y:target.y,r:d.r,left:d.burnDuration,dps:d.burnDps,token});if(S.arcaneBurns.length>12)S.arcaneBurns.shift();}
   spellEvent('arcaneFire',target.x,target.y,.88,{r:d.r});
   burst(target.x,target.y,'m',24,140);burst(target.x,target.y,'gold',15,110);S.shake=Math.max(S.shake,3);
-  sfx('arcaneFire');return targets.length+' enemies hit · '+dmg+' damage each.';
+  sfx('arcaneFire');return targets.length+' enemies hit · '+dmg+' damage each.'+(d.burnDuration?' Burning field '+d.burnDuration+'s.':'');
  }
  if(id==='barrier'){
   const u=target.entity,capacity=Math.max(1,Math.round(u.maxHp*d.hpFraction));
-  u.arcaneShield=capacity;u.arcaneShieldMax=capacity;u.arcaneShieldTime=d.duration;
-  spellEvent('arcaneShield',u.x,u.y,.55,{r:radius(u)+9});
-  floatText(u.x,u.y-radius(u)-16,'+'+capacity+' shield','soul',12);sfx('arcaneShield');
-  return capacity+' shield HP · '+d.duration+'s.';
+  const apply=(ally,n)=>{if((ally.arcaneShield||0)>n&&ally.arcaneShieldTime>0)return false;ally.arcaneShield=n;ally.arcaneShieldMax=n;ally.arcaneShieldTime=d.duration;ally.arcaneShieldToken=token;spellEvent('arcaneShield',ally.x,ally.y,.55,{r:radius(ally)+9});floatText(ally.x,ally.y-radius(ally)-16,'+'+n+' shield','soul',12);return true;};
+  apply(u,capacity);let nearby=0;if(d.splashShield)for(const ally of S.units){if(ally!==u&&!ally.down&&ally.hp>0&&Math.hypot(ally.x-u.x,ally.y-u.y)<=d.splashRange&&apply(ally,Math.max(1,Math.round(ally.maxHp*d.splashShield))))nearby++;}
+  sfx('arcaneShield');return capacity+' shield HP · '+d.duration+'s.'+(nearby?' '+nearby+' nearby guardians shielded.':'');
  }
  if(id==='lightning'){
   const chain=spellChain(target.entity,d);
   // Freeze endpoints before damage; no repeated targets or distance from original instead of last.
   const points=chain.map(e=>({x:e.x,y:e.y}));
   chain.forEach((e,i)=>{hitEnemy(e,d.damage[i],'soul',{pierce:true,kb:0});burst(e.x,e.y,'soul',8,80);});
-  if(points.length)spellEvent('arcaneLightning',points[0].x,points[0].y,.52,{points});
+  if(points.length){masteryCredit('lightning',token);spellEvent('arcaneLightning',points[0].x,points[0].y,.52,{points});}
   sfx('arcaneLightning');return chain.length+' enemies struck · '+d.damage.slice(0,chain.length).join(' / ')+' damage.';
  }
  if(id==='grasp'||id==='frost'||id==='harvest'){
   const targets=spellArea(target,d.r),until=(S.fightT||0)+d.duration;
   if(id==='grasp'){
-   for(const foe of targets)foe.arcaneGraspUntil=Math.max(foe.arcaneGraspUntil||0,until);
+   let effective=false;for(const foe of targets){if(until>(foe.arcaneGraspUntil||0)){effective=true;foe.arcaneGraspUntil=until;}if(d.afterDuration)foe.arcaneAfterSlowUntil=Math.max(foe.arcaneAfterSlowUntil||0,foe.arcaneGraspUntil+d.afterDuration);}if(effective)masteryCredit('grasp',token);
    spellEvent('arcaneGrasp',target.x,target.y,.75,{r:d.r});burst(target.x,target.y,'a',14,85);sfx('arcaneGrasp');
    return targets.length+' enemies rooted · '+d.duration+'s.';
   }
   if(id==='frost'){
-   for(const foe of targets)foe.arcaneFrostUntil=Math.max(foe.arcaneFrostUntil||0,until);
+   let effective=false;for(const foe of targets){if(until>(foe.arcaneFrostUntil||0)){effective=true;foe.arcaneFrostUntil=until;}if(d.freezeDuration){const end=(S.fightT||0)+(foe.boss?d.bossFreezeDuration:d.freezeDuration);if(end>(foe.arcaneFreezeUntil||0))effective=true;foe.arcaneFreezeUntil=Math.max(foe.arcaneFreezeUntil||0,end);}}if(effective)masteryCredit('frost',token);
    spellEvent('arcaneFrost',target.x,target.y,.80,{r:d.r});burst(target.x,target.y,'soul',18,120);sfx('arcaneFrost');
    return targets.length+' enemies slowed · '+Math.round(d.slow*100)+'% · '+d.duration+'s.';
   }
   if(targets.length){
    S.arcaneHarvestCasts ||= {};S.arcaneHarvestSeq=(S.arcaneHarvestSeq||0)+1;
-   const castId=String(S.arcaneHarvestSeq);S.arcaneHarvestCasts[castId]={left:d.bonusCap,until};
+   const castId=String(S.arcaneHarvestSeq);S.arcaneHarvestCasts[castId]={left:d.bonusCap,until,token};
    for(const foe of targets){foe.arcaneHarvestId=castId;foe.arcaneHarvestUntil=until;}
   }
   spellEvent('arcaneHarvest',target.x,target.y,.8,{r:d.r});burst(target.x,target.y,'leaf',14,90);sfx('arcaneHarvest');
@@ -117,6 +124,8 @@ function spellDraw(){
  const circle=(x,y,r)=>{ctx.beginPath();ctx.arc(x,y,Math.max(0,r),0,Math.PI*2);};
  const glow=(x,y,r,color,opacity)=>{const gr=ctx.createRadialGradient(x,y,0,x,y,Math.max(1,r));gr.addColorStop(0,color);gr.addColorStop(1,'transparent');ctx.save();ctx.globalAlpha=opacity;ctx.fillStyle=gr;ctx.fillRect(x-r,y-r,2*r,2*r);ctx.restore();};
  const t=reduced?0:performance.now()/1000;
+ // Persistent burn fields use saved gameplay state.
+ for(const b of S.arcaneBurns||[]){ctx.save();ctx.globalAlpha=.5;ctx.fillStyle='rgba(194,61,24,.20)';ctx.strokeStyle='#f3a24a';ctx.lineWidth=2;circle(b.x,b.y,b.r);ctx.fill();ctx.stroke();if(!minimal){for(let i=0;i<12;i++){const ang=i*2.399963,rr=b.r*(.2+.7*(i%5)/5),x=b.x+Math.cos(ang)*rr,y=b.y+Math.sin(ang)*rr;ctx.fillStyle='#f2a447';ctx.fillRect(x-2,y-5-(reduced?0:Math.sin(t*8+i)*3),4,8);}}ctx.restore();}
  // Barrier stays attached to its guardian; the small meter reports remaining absorption.
  for(const u of S.units){
   if(u.down||u.hp<=0||!(u.arcaneShield>0&&u.arcaneShieldTime>0))continue;
@@ -129,8 +138,8 @@ function spellDraw(){
  for(const foe of S.enemies){
   if(foe.hp<=0)continue;
   const x=foe.x,y=foe.y,r=foe.r+6;
-  const root=spellTimeLeft(foe.arcaneGraspUntil),frost=spellTimeLeft(foe.arcaneFrostUntil),mark=spellHarvestActive(foe);
-  if(!root&&!frost&&!mark)continue;ctx.save();
+  const root=spellTimeLeft(foe.arcaneGraspUntil),frost=spellTimeLeft(foe.arcaneFrostUntil),freeze=spellTimeLeft(foe.arcaneFreezeUntil),after=spellTimeLeft(foe.arcaneAfterSlowUntil),mark=spellHarvestActive(foe);
+  if(!root&&!frost&&!mark&&!freeze&&!after)continue;ctx.save();if(freeze){ctx.strokeStyle='#c4f6ff';ctx.lineWidth=2;ctx.strokeRect(x-r,y-r,r*2,r*2);}if(after&&!root){ctx.strokeStyle='#9075c0';ctx.setLineDash([3,4]);circle(x,y,r);ctx.stroke();ctx.setLineDash([]);}
   if(root){ctx.strokeStyle='#b49af1';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(x,y+foe.r*.65,r,6,0,0,Math.PI*2);ctx.stroke();if(!minimal){for(const side of [-1,1]){const xx=x+side*(r-3),yy=y+foe.r*.55;ctx.fillStyle='#7150a4';ctx.strokeStyle='#d3b8ff';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(xx-3,yy+5);ctx.lineTo(xx-5,yy-7);ctx.lineTo(xx-3,yy-13);ctx.lineTo(xx,yy-8);ctx.lineTo(xx+2,yy-16);ctx.lineTo(xx+4,yy-9);ctx.lineTo(xx+5,yy-12);ctx.lineTo(xx+6,yy+4);ctx.closePath();ctx.fill();ctx.stroke();}}}
   if(frost){ctx.strokeStyle='#83e0ff';ctx.lineWidth=1.5;ctx.beginPath();ctx.ellipse(x,y+foe.r*.70,r+3,8,0,0,Math.PI*2);ctx.stroke();if(!minimal){for(let i=0;i<4;i++){const a=i*Math.PI/2+(reduced?0:t*.6);const xx=x+Math.cos(a)*(r+1),yy=y+Math.sin(a)*r*.58;ctx.fillStyle='#b7edff';ctx.fillRect(xx-1,yy-3,2,6);ctx.fillRect(xx-3,yy-1,6,2);}}}
   if(mark){const yy=y-foe.r-13;ctx.fillStyle='#89ebac';ctx.strokeStyle='#203d31';ctx.lineWidth=1.3;ctx.beginPath();ctx.moveTo(x,yy-5);ctx.lineTo(x+5,yy);ctx.lineTo(x,yy+5);ctx.lineTo(x-5,yy);ctx.closePath();ctx.fill();ctx.stroke();}

@@ -13,7 +13,7 @@ const SPELL_UNLOCKS=Object.freeze({
 let spellKnowledge={version:KNOWLEDGE_VERSION,learned:['fire']},knowledgeDirty=false,knowledgeLoaded=false;
 function knowledgeNormalize(value){
  const ids=value?.version===KNOWLEDGE_VERSION&&Array.isArray(value.learned)?value.learned:[];
- return {version:KNOWLEDGE_VERSION,learned:Object.keys(SPELL_UNLOCKS).filter(id=>id==='fire'||ids.includes(id))};
+ const learned=Object.keys(SPELL_UNLOCKS).filter(id=>id==='fire'||ids.includes(id));return {version:KNOWLEDGE_VERSION,learned,mastery:masteryNormalize(value?.mastery,learned),practiceCaps:masteryCapsNormalize(value?.practiceCaps)};
 }
 function knowledgeRead(){try{return knowledgeNormalize(JSON.parse(localStorage.getItem(KNOWLEDGE_KEY)));}catch{return knowledgeNormalize(null);}}
 function knowledgeInit(){if(knowledgeLoaded)return;spellKnowledge=knowledgeRead();knowledgeLoaded=true;}
@@ -21,7 +21,7 @@ function knowledgeLearned(id){knowledgeInit();return spellKnowledge.learned.incl
 function knowledgeFlush(){
  knowledgeInit();
  // Monotonic merge preserves unlocks written by another browser tab.
- const disk=knowledgeRead(),merged=knowledgeNormalize({version:KNOWLEDGE_VERSION,learned:[...disk.learned,...spellKnowledge.learned]});
+ const disk=knowledgeRead(),merged=masteryMergeProfiles(disk,spellKnowledge);
  spellKnowledge=merged;
  try{localStorage.setItem(KNOWLEDGE_KEY,JSON.stringify(merged));knowledgeDirty=false;return true;}
  catch{knowledgeDirty=true;return false;}
@@ -29,7 +29,7 @@ function knowledgeFlush(){
 function knowledgeGrant(ids){
  knowledgeInit();
  const fresh=ids.filter(id=>Object.hasOwn(SPELL_UNLOCKS,id)&&!spellKnowledge.learned.includes(id));
- if(fresh.length){spellKnowledge=knowledgeNormalize({version:KNOWLEDGE_VERSION,learned:[...spellKnowledge.learned,...fresh]});knowledgeDirty=true;knowledgeFlush();}
+ if(fresh.length){spellKnowledge=knowledgeNormalize({...spellKnowledge,learned:[...spellKnowledge.learned,...fresh]});knowledgeDirty=true;knowledgeFlush();}
  return fresh;
 }
 function knowledgeWaveIds(completed){return Object.keys(SPELL_UNLOCKS).filter(id=>SPELL_UNLOCKS[id].kind==='wave'&&completed>=SPELL_UNLOCKS[id].wave);}
@@ -41,7 +41,7 @@ function knowledgeFromSave(v,includeBackup=false){
  // Only recognized scroll identifiers can be recovered; the debit was saved before the unlock.
  if(Array.isArray(state.paidSpellScrolls))for(const id of state.paidSpellScrolls)if(SPELL_UNLOCKS[id]?.kind==='scroll')ids.push(id);
  if(includeBackup)ids.push(...knowledgeNormalize(v.spellKnowledge).learned);
- return knowledgeGrant(ids);
+ const fresh=knowledgeGrant(ids);if(includeBackup&&v.spellKnowledge){spellKnowledge=masteryMergeProfiles(spellKnowledge,knowledgeNormalize(v.spellKnowledge));knowledgeDirty=true;knowledgeFlush();}masteryRecover(state);return fresh;
 }
 function knowledgeFromScores(){
  const list=scores(),completed=list.reduce((max,row)=>Math.max(max,Math.min(10,Number(row.wave)||0)),0);
