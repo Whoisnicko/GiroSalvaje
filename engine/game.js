@@ -379,7 +379,7 @@ function newGame(){
     wave:1, wallHp:80, wallMax:80, gold:0, spinsPer:3, spinsLeft:3, bought:0, cardBuys:0, holdsMax:2, handSize:3, startZombiee:1, relic:null,
     grid:Array.from({ length:9 }, () => BAG[Math.floor(Math.random() * BAG.length)]), held:new Set(), wins:new Set(),
     units:[], enemies:[], fx:[], floats:[], zones:[], shots:[], parts:[], shake:0, queue:[], spawnT:0, phase:'relic', speed:1, kills:0, spunOnce:false, confirmFight:false, drag:null,
-    deck:META.deck.slice(), hand:[], aim:null, aimP:null, buff:{ haste:0, slow:0 }, ter:new Map(),
+    deck:META.deck.slice(), artifacts:[], hand:[], aim:null, aimP:null, buff:{ haste:0, slow:0 }, ter:new Map(),
     bench:[null, null, null], sel:null, nextQueue:[], seenKinds:new Set(), maxUnits:8, slotBuys:0,
     mods:{ archSpd:1, warHp:1, mageDmg:1, splash:1, coin:1, coinBonus:0, mergeN:3, wallRegen:0 }, offer:[], endOffer:[], result:'', resultSub:'',
   };
@@ -417,6 +417,10 @@ function stats(type, lvl, u){
   if (type === 'L') { hp = b.hp + 10 * S.wave; dmg = b.dmg + 2 * S.wave; }
   if (u && u.train) { hp *= 1 + .5 * u.train; dmg *= 1 + .5 * u.train; } // entrenamiento en la reserva: +50% por oleada
   if (u && u.pile > 1) { hp *= u.pile; dmg *= u.pile; } // una pila de 2 pelea como 2 monsters juntos
+  if(artifactOwned("bloodfang")) dmg*=1.2;
+  if(artifactOwned("boneplate")) hp*=1.25;
+  if(artifactOwned("hourglass") && !b.support) cd/=1.2;
+  if(artifactOwned("lens") && b.ranged) range*=1.15;
   return { hp:Math.round(hp), dmg:Math.round(dmg), cd, range, splash };
 }
 const size = u => u.type === 'L' ? 36 : u.type === 'K' ? Math.round(32 * [1, 1.3, 1.6][(u.nl || 1) - 1]) : u.type === 'M' ? 40 + (u.lvl - 1) * 9 : 34 + (u.lvl - 1) * 9;
@@ -641,6 +645,8 @@ function startFight(){
 /* Unobstructed movement while terrain is disabled. */
 function moveHuman(e,dx,dy){ e.x += dx; e.y += dy; e.moving = true; }
 
+// Keep an entry gap beyond the deployment zone; never spawn inside it.
+function invasionX(W){return Math.min(W-18,Math.max(zoneMax()+100,W*.86));}
 function update(dt){
   if (S.phase !== 'fight') return;
   const Wd = worldW();
@@ -651,7 +657,7 @@ function update(dt){
   if (S.queue.length && S.spawnT <= 0) {
     const q = S.queue.shift();
     let y = rnd(30, WORLD_H - 28);
-    S.enemies.push({ ...q, maxHp:q.hp, x:Wd + 20, y, cd:0, flash:0, root:0, ph:Math.random() * 6 });
+    S.enemies.push({ ...q, maxHp:q.hp, x:invasionX(Wd), y, cd:0, flash:0, root:0, ph:Math.random() * 6 });
     tip('k_' + q.kind);
     S.spawnT = q.kind === 'jin' ? 0.45 : 0.7;
   }
@@ -896,7 +902,7 @@ function dropPlan(u){
   if (u.y < WORLD_H && u.x < WALL_X + 4) return { kind:'sell', value:sellValue(u) };
   if (u.y >= WORLD_H - 6) {
     let slot = 0, bd = 1e9; for (let i = 0; i < 3; i++) { const d = Math.abs(benchSlot(i).x - u.x); if (d < bd) { bd = d; slot = i; } }
-    if (bd > 40) return { kind:'bad', msg:'Soltalo sobre un lugar de la reserva.' };
+    if (bd > 40) return { kind:'bad', msg:'Drop onto a reserve slot.' };
     const t = S.bench[slot];
     if (!t || t === u) return { kind:'bench', slot };
     if (mergeable(t, u)) return { kind:'merge', target:t };
@@ -1081,7 +1087,7 @@ function renderIntel(){
       <div class="unit-stat-lines"><span>♥ Health <b>${Math.ceil(u.hp)} / ${Math.ceil(u.maxHp)}</b></span>${BASE[u.type].support ? "" : `<span>⚔ Attack <b>${st.dmg}${bf ? ` <em>→ ${Math.round(st.dmg * (1 + bf))}</em>` : ""}</b></span><span>⏱ Interval <b>${st.cd.toFixed(1)}s${bf ? ` <em>→ ${(st.cd/(1+bf)).toFixed(1)}s</em>` : ""}</b></span>`}<span>◎ Reach <b>${reach}</b></span>${BASE[u.type].move ? `<span>➟ Move speed <b>${BASE[u.type].move}</b></span>` : ""}</div><span class="fx">${role}${tags ? " · " + tags : ""}</span></div>`;
 }
 function renderUI(){
-  renderChips(); renderHand(); renderIntel();
+  renderChips(); renderHand(); renderIntel(); renderArtifactShelf();
   const prep = S.phase === 'prep';
   $('#reels').innerHTML = S.grid.map((k, i) => `<button class="cell ${S.held.has(i) ? 'held' : ''} ${S.wins.has(i) ? 'win' : ''}" data-cell="${i}" ${prep && !spinning ? '' : 'disabled'} aria-label="${SYM[k].n}${S.held.has(i) ? ', held' : ''}">${cellHTML(k)}</button>`).join('');
   $('#result').innerHTML = `${S.result}<small>${S.resultSub}</small>`;
@@ -1124,6 +1130,9 @@ document.addEventListener('click', e => {
   else if (a === 'slot') buySlot();
   else if (a === 'buycard') buyCard();
   else if (a === 'fight') startFight();
+  else if (a === 'shop') showShop();
+  else if (a === 'artifactbuy') buyArtifact(b.dataset.id);
+  else if (a === 'shopclose') $('#ov2').hidden = true;
   else if (a === 'deck') showDeck();
   else if (a === 'closedeck') $('#ov2').hidden = true;
   else if (a === 'mergeYes') closeMergeConfirm(true);
@@ -1143,7 +1152,7 @@ document.addEventListener('keydown', e => {
   if (/^[1-6]$/.test(e.key)) { useCard(+e.key - 1); return; }
   if (S.phase === 'prep' && e.code === 'Space' && !e.target.closest('button')) { e.preventDefault(); spin(); }
 });
-window.addEventListener('resize', () => { resize(); if (S) { const zm = zoneMax(); S.units.forEach(u => u.x = Math.min(u.x, zm)); S.bench.forEach((u, i) => { if (u) Object.assign(u, benchSlot(i)); }); renderFrame(); } });
+window.addEventListener('resize', () => { resize(); if (S) { const zm = zoneMax(); if(S.phase==='prep') S.units.forEach(u => u.x = Math.min(u.x, zm)); S.bench.forEach((u, i) => { if (u) Object.assign(u, benchSlot(i)); }); renderFrame(); } });
 
 const BATTLEFIELD_ART='assets/battlefield.png';
 const HYBRID_ATLAS='assets/hybrid-atlas.png';
@@ -1174,6 +1183,7 @@ function persist(){if(!S||spinning||S.drag||S.pendingMerge||S.phase==='relic')re
 function restore(v){
  if(!validSave(v))throw Error('Incompatible save format');
  const s=JSON.parse(JSON.stringify(v.state));
+ s.artifacts=Array.isArray(s.artifacts)?[...new Set(s.artifacts.filter(id=>Object.hasOwn(SHOP_ARTIFACTS,id)))]:[];
  for(const u of [...s.units,...s.bench.filter(Boolean)])if(!BASE[u.type]||!Number.isFinite(u.x)||!Number.isFinite(u.hp))throw Error('Invalid unit');
  for(const e of s.enemies)if(!KIND[e.kind]||!Number.isFinite(e.hp))throw Error('Invalid enemy');
  if(!Array.isArray(s.hand)||!Array.isArray(s.deck)||!s.hand.every(c=>Object.hasOwn(CARDS,c.id)||RETIRED_TERRAIN_CARDS.has(c.id))||!s.deck.every(id=>Object.hasOwn(CARDS,id)||RETIRED_TERRAIN_CARDS.has(id)))throw Error('Invalid cards');
@@ -1189,9 +1199,10 @@ function restore(v){
  s.held=new Set(s.held);s.wins=new Set(s.wins);s.seenKinds=new Set(s.seenKinds);s.ter=new Map();s.relic=RELICS[s.relicIndex]||null;
  const refs=[...s.units,...s.bench.filter(Boolean),...s.enemies];s.shots=s.shots.map(q=>({...q,tgt:refs[q.targetIndex]||null}));
  s.offer=s.offer.map(o=>{const legacyNames={"Ectoplasma":"Ectoplasm","Carne dura":"Tough Flesh","Fuego antiguo":"Ancient Fire","Cosecha de almas":"Soul Harvest","Luna llena":"Full Moon","Garras firmes":"Steady Claws","Altar reforzado":"Fortified Altar","Necromancia":"Necromancy","Rugido del dragón":"Dragon Roar","Manos de la tierra":"Earth Hands","Lluvia de huesos":"Bone Rain","Festín":"Feast","Aullido":"Howl","Ofrenda":"Offering","Niebla":"Mist","Temblor":"Earthquake","Murciélagos":"Bats","Cripta ampliada":"Expanded Crypt","Cosecha":"Harvest","Lago maldito":"Cursed Lake","Colina":"Hill","Pantano":"Swamp","Bendición":"Blessing","Carta para esta partida":"Card for this run","Carta":"Card"};o={...o,n:legacyNames[o.n]||o.n,kind:legacyNames[o.kind]||o.kind};let b=BLESS.find(b=>b.n===o.n);if(o.kind==='Blessing'&&b)return {...b,kind:o.kind};let id=Object.keys(CARDS).find(id=>CARDS[id].n===o.n);if(!id && ['Cursed Lake','Hill','Swamp'].includes(o.n))id='cripta';if(!id)throw Error('Invalid reward');return {n:CARDS[id].n,ic:CARDS[id].ic,d:CARDS[id].d(),kind:o.kind,a:()=>S.deck.push(id)};});
+ savedWorldWidth=Number.isFinite(v.worldWidth)&&v.worldWidth>=420?v.worldWidth:null;
  S=s;sessionRunId=v.runId||uid();runName=String(v.name||'Anonymous').slice(0,20);hideOv();$('#ov2').hidden=true;closeFront();renderUI();
  // Keep the original logical battlefield width across displays; pointer mapping uses the same scale.
- if(v.worldWidth){savedWorldWidth=v.worldWidth;resize();}
+ resize();
  if(S.phase==='reward')showRewardRestored();if(['win','over'].includes(S.phase))showEndRestored();
  persist();
 }
@@ -1215,7 +1226,7 @@ const oldStartRun=startRun;startRun=function(i){oldStartRun(i);persist();};
 const oldRenderUI=renderUI;renderUI=function(){oldRenderUI();if(S&&S.phase!=='relic')persist();};
 let savedWorldWidth=null;
 const oldWorldW=worldW;worldW=function(){return savedWorldWidth||oldWorldW();};
-resize=function(){const dpr=Math.min(2,window.devicePixelRatio||1);const w=cv.clientWidth;const logicalW=savedWorldWidth||Math.max(420,w/(460/LOGIC_H));savedWorldWidth=logicalW;cv.style.height=(w/logicalW*LOGIC_H)+'px';scale=w/logicalW;cv.width=Math.round(w*dpr);cv.height=Math.round(cv.clientHeight*dpr);ctx.setTransform(scale*dpr,0,0,scale*dpr,0,0);ctx.imageSmoothingEnabled=false;};
+resize=function(){const dpr=Math.min(2,window.devicePixelRatio||1);const w=cv.clientWidth;const targetH=window.innerWidth>=1100?Math.min(600,Math.max(460,window.innerHeight*.68)):Math.min(460,Math.max(280,window.innerHeight*.55));const logicalW=savedWorldWidth||Math.max(420,w/(targetH/LOGIC_H));savedWorldWidth=logicalW;cv.style.height=(w/logicalW*LOGIC_H)+'px';scale=w/logicalW;cv.width=Math.round(w*dpr);cv.height=Math.round(cv.clientHeight*dpr);ctx.setTransform(scale*dpr,0,0,scale*dpr,0,0);ctx.imageSmoothingEnabled=false;};
 document.addEventListener('click',ev=>{const b=ev.target.closest('[data-front]');if(!b||b.disabled)return;ev.preventDefault();const a=b.dataset.front;
  if(a==='home')showHome();if(a==='new')beginNew();if(a==='confirm')launchNew();if(a==='back')showHome();if(a==='resume')closeFront();
  if(a==='continue'){try{restore(loadedSave);}catch(e){$('#nameError').textContent='Could not restore this run. Start a new one or import a backup.';}}

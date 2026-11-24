@@ -1,0 +1,4 @@
+# Stop Humans! v19-alpha.9
+
+Expanded desktop canvas across two columns; dossier and artifact shelf below the field. New runs target up to 600px canvas height (old saves retain logical world width). Humans spawn at 86% of width or at least 100 logical units beyond deployment, capped 18 from edge. Existing enemies not moved. Vertical spell cards with existing artwork. Soul Shop: six unique run-wide artifacts, purchases during preparation only, prices 8/8/10/9/10/14 souls; Bloodfang damage +20%, Boneplate max HP +25%, Crypt Hourglass attack rate +20%, Spectral Lens ranged reach +15%, Altar Stone +20 max/current altar HP, Fortune Charm +1 current and future prep spins. Effects persist across fusions and save/restore. No item equipment or shop rotation yet. JS syntax and isolated purchase/stat tests passed, browser QA pending. Production: https://stophumans.pages.dev/
+Repository: https://github.com/Whoisnicko/StopHumans

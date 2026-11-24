@@ -1,0 +1,30 @@
+/* v19-alpha.9 — expanded battlefield, vertical spell cards, Soul Shop. */
+@media(min-width:1100px){
+ .wrap{grid-template-columns:minmax(166px,12%) minmax(0,1fr) minmax(200px,17%);grid-template-rows:auto auto auto auto auto}
+ .wrap>.lane{grid-column:2/-1;grid-row:2}
+ .wrap>.cabinet{grid-column:1;grid-row:2/span 3}
+ .wrap>.table{grid-column:2;grid-row:3}
+ .wrap>.intel{grid-column:3;grid-row:3/span 2}
+ .wrap>.save-line{grid-column:2;grid-row:4}
+ .wrap>.coach{grid-column:1/-1;grid-row:5}
+}
+.wrap .lane{min-width:0}.wrap .lane canvas{width:100%;max-width:100%;display:block}
+.wrap .hand{align-items:stretch;padding-top:9px;gap:10px}
+.wrap .hand .card{flex:0 0 clamp(132px,11vw,172px);display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(90px,1fr) minmax(70px,auto);align-items:stretch;min-height:218px;aspect-ratio:5/7;padding:7px;border:3px double var(--edge,#c69a59);border-radius:7px!important;box-shadow:inset 0 0 0 2px #11151e,0 4px 0 #080b11;gap:5px}
+.wrap .hand .card .cn{grid-column:1;grid-row:1;text-align:center;padding:5px 3px;min-height:31px;display:grid;place-items:center;border:1px solid var(--edge);background:linear-gradient(#28323e,#141a24);font-size:13px;line-height:1.2}
+.wrap .hand .card .art{grid-column:1;grid-row:2;width:100%;height:auto;min-height:92px;background:radial-gradient(ellipse at center,var(--cc),#0b111b);border:1px solid var(--edge);box-shadow:inset 0 0 12px #0009}
+.wrap .hand .card .art img{width:100%;height:100%;max-height:125px;object-fit:contain;image-rendering:pixelated}
+.wrap .hand .card .cd{grid-column:1;grid-row:3;align-self:stretch;padding:7px 5px;min-height:70px;font-size:11px;line-height:1.35;background:#101620;border:1px solid var(--edge)}
+.wrap .hand .card .ty{text-align:center;padding:0 0 5px;letter-spacing:.12em}
+.wrap .hand .card .tag{font-size:8px;top:-7px;right:4px}
+.wrap .hand .card.buy{display:flex;justify-content:center;align-items:center;aspect-ratio:5/7;min-height:218px;padding:9px}
+.wrap .hand .card.later{opacity:.78}.wrap .hand .card.used{opacity:.24}
+.wrap .shop-entry{padding:5px 9px;font:700 12px Georgia,serif!important;color:#ffe2a3;background:linear-gradient(#604629,#251b17);border-color:#cda469!important;white-space:nowrap}
+.wrap .shop-entry:disabled{opacity:.48;cursor:default}
+.artifact-owned{display:grid;grid-template-columns:minmax(0,1fr);gap:4px}.artifact-owned>span{display:flex;align-items:center;gap:6px;background:#101721;border:1px solid #5c4936;padding:4px;font-size:11px;color:#e1d2bc}.artifact-owned i{font-style:normal;font-size:19px;color:#e6b65f;width:24px;text-align:center}.artifact-owned .artifact-empty{background:none;border:0;color:#a9b0be}
+.soul-shop.panel{width:min(860px,100%);max-width:860px;max-height:calc(100dvh - 32px);overflow:auto;border:10px solid transparent;border-image:url("assets/ui/frame-bronze-v19.svg") 12 stretch;background:linear-gradient(145deg,#262d39,#111721 60%);padding:16px;gap:14px}
+.shop-top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.shop-top h2{margin:0;text-align:left;color:#f6d49a}.shop-top p{margin:3px 0 0;color:#c4c4c8}.shop-balance{font-weight:700;color:#8ee9ff;border:1px solid #7c6749;background:#101721;padding:10px}
+.shop-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.shop-item{display:grid;grid-template-rows:70px 1fr auto;gap:8px;min-width:0;padding:9px;background:linear-gradient(#282c38,#141923);border:2px solid #9a7648;box-shadow:inset 0 0 0 2px #191923;border-radius:4px}
+.shop-art{display:grid;place-items:center;background:radial-gradient(ellipse,#51422e,#151a25);border:1px solid #8c704c;color:#f8ce83;font-size:42px;text-shadow:0 2px #382919,0 0 12px #e8ba5966}.shop-item-info small{color:#8ed9e8;font-size:10px;text-transform:uppercase}.shop-item h3{font:700 15px Georgia,serif;color:#f2d3a0;margin:3px 0}.shop-item p{font-size:12px;line-height:1.4;margin:0;color:#dedbd3}.shop-item .shop-buy{min-height:36px;color:#9de9ff;font:700 12px system-ui!important;background:linear-gradient(#384f60,#19242d)}.shop-item .shop-buy:disabled{opacity:.48;cursor:default}.soul-shop>.go{justify-self:center;min-width:180px}
+@media(max-width:700px){.shop-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.soul-shop.panel{padding:9px}.shop-item{padding:6px}.wrap .hand .card{flex-basis:140px;min-height:210px}.wrap>.intel{grid-template-columns:1fr}}
+@media(max-width:370px){.shop-grid{grid-template-columns:1fr}}
