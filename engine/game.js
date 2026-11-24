@@ -330,7 +330,7 @@ function cardHTML(id, attrs = '', extra = '', note = ''){
   const C = CARDS[id];
   const tag = isPrepCard(id) ? '<span class="tag prep">PREPARATION</span>' : C.aim ? '<span class="tag">AIM</span>' : '';
   const TY = { atk:'ATTACK', ctl:'CONTROL', sup:'SUPPORT', sum:'SUMMON' };
-  return `<button class="card ${C.t} ${extra}" ${attrs}>${tag}<span class="cn">${C.n}${note}</span><span class="art">${`<img src="${GOTHIC_DATA.cards[id]}" alt="" decoding="async">`}</span><span class="cd"><span class="ty">${TY[C.t]}</span>${C.d()}</span></button>`;
+  return `<button class="card ${C.t} ${extra}" ${attrs}>${tag}<span class="cn">${C.n}${note}</span><span class="art">${`<img src="${GOTHIC_DATA.cards[id]}" alt="" decoding="async">`}</span><span class="cd"><span class="ty">${TY[C.t]}</span><span class="card-rules">${C.d()}</span></span></button>`;
 }
 
 /* ================= Tips ================= */

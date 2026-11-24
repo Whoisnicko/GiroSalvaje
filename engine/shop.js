@@ -7,18 +7,27 @@ const SHOP_ARTIFACTS=Object.freeze({
  altarstone:{name:'Altar Stone',icon:'✧',price:10,kind:'Altar',desc:'Altar gains 20 maximum health and restores 20 health.',apply(){S.wallMax+=20;S.wallHp=Math.min(S.wallMax,S.wallHp+20);}},
  spincharm:{name:'Fortune Charm',icon:'⟳',price:14,kind:'Economy',desc:'Gain 1 extra spin now and each future preparation phase.',apply(){S.spinsPer++;S.spinsLeft++;}}
 });
+const ARTIFACT_ART_ORDER=['bloodfang','boneplate','hourglass','lens','altarstone','spincharm'];
+function artifactArt(id){
+ const a=SHOP_ARTIFACTS[id],i=ARTIFACT_ART_ORDER.indexOf(id);
+ return '<span class="artifact-thumb" style="--atlas-x:'+((i%3)*50)+'%;--atlas-y:'+Math.floor(i/3)*100+'%" aria-hidden="true"><span>'+a.icon+'</span></span>';
+}
 function artifactOwned(id){return Array.isArray(S?.artifacts)&&S.artifacts.includes(id);}
 function shopAvailable(){return !!S&&S.phase==='prep'&&!spinning&&!S.drag&&!S.pendingMerge&&!menuOpen;}
 function renderArtifactShelf(){
  const box=$('#artifactShelf');if(!box)return;
  const ids=(S.artifacts||[]).filter(id=>Object.hasOwn(SHOP_ARTIFACTS,id));
- box.innerHTML='<h3>Artifacts <b>'+ids.length+'/6</b></h3><div class="artifact-owned">'+(ids.length?ids.map(id=>{const a=SHOP_ARTIFACTS[id];return '<span title="'+a.desc+'"><i>'+a.icon+'</i><b>'+a.name+'</b></span>';}).join(''):'<span class="artifact-empty">No artifacts yet.</span>')+'</div><button class="btn shop-entry" data-act="shop" '+(shopAvailable()?'':'disabled')+'>⚒ Soul Shop</button>';
+ box.innerHTML='<h3>Artifacts <b>'+ids.length+'/6</b></h3><div class="artifact-owned">'+(ids.length?ids.map(id=>{const a=SHOP_ARTIFACTS[id];return '<span title="'+a.desc+'">'+artifactArt(id)+'<b>'+a.name+'</b></span>';}).join(''):'<span class="artifact-empty">No artifacts yet.</span>')+'</div><button class="btn shop-entry" data-act="shop" '+(shopAvailable()?'':'disabled')+'>⚒ Soul Shop</button>';
  document.querySelectorAll('[data-act="shop"]').forEach(b=>b.disabled=!shopAvailable());
 }
 function showShop(){
  if(!shopAvailable())return;
  const o=$('#ov2');
- o.innerHTML='<div class="panel soul-shop" role="dialog" aria-modal="true" aria-labelledby="shopTitle"><div class="shop-top"><div><h2 id="shopTitle">Soul Shop</h2><p>Permanent upgrades for this run. One of each.</p></div><span class="shop-balance">◆ '+S.gold+' souls</span></div><div class="shop-grid">'+Object.entries(SHOP_ARTIFACTS).map(([id,a])=>{const owned=artifactOwned(id),ok=!owned&&S.gold>=a.price;return '<article class="shop-item"><div class="shop-art">'+a.icon+'</div><div class="shop-item-info"><small>'+a.kind+'</small><h3>'+a.name+'</h3><p>'+a.desc+'</p></div><button class="btn shop-buy" data-act="artifactbuy" data-id="'+id+'" '+(ok?'':'disabled')+'>'+(owned?'OWNED':'◆ '+a.price+' souls')+'</button></article>';}).join('')+'</div><button class="go" data-act="shopclose">Return to battle</button></div>';
+ const entries=Object.entries(SHOP_ARTIFACTS).map(([id,a])=>{
+  const owned=artifactOwned(id),ok=!owned&&S.gold>=a.price;
+  return '<article class="shop-item relic-'+id+'"><div class="shop-art">'+artifactArt(id)+'</div><div class="shop-item-info"><h3>'+a.name+'</h3><small>'+a.kind+' · run upgrade</small><p>'+a.desc+'</p></div><button class="btn shop-buy" data-act="artifactbuy" data-id="'+id+'" '+(ok?'':'disabled')+'>'+(owned?'✓ OWNED':'<span aria-hidden="true">◆</span> '+a.price+' souls')+'</button></article>';
+ }).join('');
+ o.innerHTML='<div class="panel soul-shop hades-shop" role="dialog" aria-modal="true" aria-labelledby="shopTitle"><div class="hades-portrait"><div class="hades-caption"><strong>HADES</strong><span>Lord of the Underworld</span><p>“Power has a price, guardian.”</p></div></div><div class="shop-content"><header class="shop-top"><div><h2 id="shopTitle">Soul Shop</h2><p>Relics from the Underworld · one of each per run</p></div><span class="shop-balance">◆ '+S.gold+' souls</span></header><div class="shop-grid">'+entries+'</div><footer class="shop-foot"><span>Permanent upgrades · Preparation only</span><button class="go" data-act="shopclose">Return to battle</button></footer></div></div>';
  o.hidden=false;o.querySelector('[data-act="shopclose"]').focus();
 }
 function buyArtifact(id){
