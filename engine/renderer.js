@@ -1,6 +1,13 @@
 /* v19 renderer: canvas presentation, shared state from game core. Classic script; loaded before core. */
 function drawInkAltar(t){
  const hurt=S.fx.some(f=>f.k==='altar'),glow=S.fx.some(f=>f.k==='altarGlow');
+ // The illustrated backdrop already contains the crystal altar. Only the dynamic overlay is drawn here.
+ if(battlefieldArt){
+  const W=worldW(),x=W*(79/1100),y=WORLD_H*(198/500),bw=Math.min(68,W*.12),by=WORLD_H*.27;
+  ctx.save();
+  if(hurt||glow){const r=Math.max(18,W*.065),g=ctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,hurt?'rgba(255,80,68,.48)':'rgba(97,224,255,.42)');g.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=g;ctx.fillRect(x-r,y-r,r*2,r*2);}
+  ctx.fillStyle='#121821';ctx.fillRect(x-bw/2-2,by-2,bw+4,9);ctx.strokeStyle='#a58b61';ctx.lineWidth=1;ctx.strokeRect(x-bw/2-2,by-2,bw+4,9);bar(x-bw/2,by,bw,5,S.wallHp/S.wallMax,hurt?colors.red:colors.soul);ctx.restore();return;
+ }
  ctx.save();ctx.fillStyle=hurt?'#753c48':'#29232f';ctx.fillRect(0,0,WALL_X-3,WORLD_H);
  ctx.strokeStyle='#b4a080';ctx.lineWidth=1;
  for(const x of [3,WALL_X-9]){ctx.fillStyle='#574957';ctx.fillRect(x,0,5,WORLD_H);ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,WORLD_H);ctx.stroke();}

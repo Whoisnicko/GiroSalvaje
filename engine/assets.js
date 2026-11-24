@@ -10,9 +10,10 @@ function atlasFrame(src,state,f,name){
  g.drawImage(src,x,y);
  return c;
 }
+const FULL_BATTLEFIELD_ART='assets/battlefield-full-v19.webp';
 let battlefieldArt=null;
 async function buildHybridArt(){
- try{battlefieldArt=await loadInkImage('assets/battlefield-v19.png');if(battlefieldArt.width!==704||battlefieldArt.height!==320)throw Error('Invalid battlefield dimensions');}catch(e){battlefieldArt=null;console.warn('Backdrop fallback active',e);}
+ try{battlefieldArt=await loadInkImage(FULL_BATTLEFIELD_ART);if(battlefieldArt.width!==1100||battlefieldArt.height!==500)throw Error('Invalid battlefield dimensions');}catch(e){battlefieldArt=null;console.warn('Backdrop fallback active',e);}
  let atlas=null;try{atlas=await loadInkImage(ILLUSTRATED_ATLAS);if(atlas.width!==384||atlas.height!==384)throw Error('Incorrect atlas size');}catch(e){atlas=null;console.warn('Illustrated atlas unavailable; fallback enabled',e);}
  HYBRID.names.forEach((name,i)=>{
   try{
