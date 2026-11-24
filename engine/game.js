@@ -1087,6 +1087,7 @@ function renderUI(){
   }).join('');
   $('#speedBtn').textContent = '×' + S.speed;
   renderPrepUndo();
+  renderRunePracticeAccess();
 }
 function showDeck(){
   const inRun = S && S.phase !== 'relic', deck = inRun ? S.deck : META.deck;
