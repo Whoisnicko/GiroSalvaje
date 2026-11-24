@@ -962,9 +962,11 @@ cv.addEventListener('pointerdown', ev => {
   audioInit();
   const p = toWorld(ev);
   if (S.phase === 'fight' && S.aim !== null) { castAim(p); return; }
-  const u = mineAt(p);
-  if (S.phase !== 'prep') { S.sel = u || null; renderIntel(); return; }
-  if (!u) { if (S.sel) { S.sel = null; renderIntel(); } return; }
+  const u = S.phase === 'prep' ? mineAt(p) : (unitAt(p)||mineAt(p));
+  tacticalAllowHover();
+  if (S.phase !== 'prep') { tacticalSelect(u||enemyAt(p)); renderIntel(); return; }
+  tacticalClearEnemy();
+  if (!u) { tacticalSelect(null); renderIntel(); return; }
   S.drag = { u, dx:u.x - p.x, dy:u.y - p.y, ox:u.x, oy:u.y, sx:p.x, sy:p.y, moved:false, from:S.bench.includes(u) ? 'bench' : 'field' };
   cv.setPointerCapture(ev.pointerId);
 });
@@ -972,6 +974,7 @@ cv.addEventListener('pointermove', ev => {
   if (!S) return;
   const p = toWorld(ev);
   S.aimP = p;
+  tacticalAllowHover();
   if (S.drag) {
     const d = S.drag;
     if (!d.moved && Math.hypot(p.x - d.sx, p.y - d.sy) > 5) { d.moved = true; S.sel = d.u; }
@@ -982,7 +985,7 @@ cv.addEventListener('pointermove', ev => {
 });
 const endDrag = () => {
   if (!S || !S.drag) return;
-  if (!S.drag.moved) { const u = S.drag.u; S.drag = null; S.sel = S.sel === u ? null : u; renderIntel(); return; }
+  if (!S.drag.moved) { const u = S.drag.u; S.drag = null; tacticalSelect(u); renderIntel(); return; }
   resolveDrop();
 };
 cv.addEventListener('pointerup', endDrag); cv.addEventListener('pointercancel', () => { if (S && S.drag) { cancelDrag(); renderUI(); } });
@@ -1013,8 +1016,9 @@ function loop(now){
     if (S.parts.length > 400) S.parts.splice(0, S.parts.length - 400);
     S.shake = Math.max(0, S.shake - fdt * 14);
     renderFrame();
+    tacticalTick(now);
     if (S.phase === 'fight' && now-lastAutosave>150) { renderChips(); renderBuyCard(); lastAutosave=now; }
-  }
+  } else tacticalHide();
   requestAnimationFrame(loop);
 }
 
@@ -1027,12 +1031,7 @@ function renderChips(){
     <span class="chip soul"><img src="${URL_.alma}" alt="" class="hud-gem"> Souls <b>${S.gold}</b></span>
     <span class="chip minor-chip">Monsters <b>${fieldCount()}/${S.maxUnits}</b></span>
     <span class="chip minor-chip">Reserve <b>${S.bench.filter(Boolean).length}/3</b></span>`;
-  const b = $('#banner');
-  if (S.phase === 'fight') { b.hidden = false; b.innerHTML = !S.units.length ? '<b>No defenders! Use your cards</b>' : `Humans remaining: <b>${S.queue.length + S.enemies.length}</b>`; }
-  else if (S.phase === 'prep' && S.wave <= MAX_WAVE) {
-    const boss = S.nextQueue.some(q => q.boss);
-    b.hidden = false; b.innerHTML = `Next: wave ${S.wave} · <b>${S.nextQueue.length} humans${boss ? ' with COMMANDER' : ''}</b> · see enemy details`;
-  } else b.hidden = true;
+  tacticalWave();
 }
 function renderBuyCard(){
   const b = document.querySelector('[data-act="buycard"]'); if (!b) return;
@@ -1058,41 +1057,7 @@ function renderPay(){
     <div><b>Merge:</b> during preparation, drop a monster onto another of the same type and level. With <b>3 stacked</b> they merge (★★, ★★★). Pay for everything with <b style="color:var(--soul)">souls</b>.</div>`;
 }
 const FOE_NOTE = { sol:'Melee', bal:'Range: 150 px', cab:'Armor reduces damage per hit', jin:'Very fast', cle:'Heals nearby humans', ant:'Ignores monsters, ×3 Altar damage', com:'Armored boss' };
-function renderIntel(){
-  if (!S) return;
-  // Incoming wave (o la actual durante el combate)
-  const q = S.phase === 'fight' ? null : S.nextQueue;
-  const wb = $('#waveBox');
-  if (S.phase === 'relic' || S.phase === 'win' || S.phase === 'over' || (!q && S.phase !== 'fight')) { wb.innerHTML = '<h3>Incoming wave</h3><span class="empty">Choose a relic to begin.</span>'; }
-  else {
-    const src = q || S.curQueue || [];
-    const groups = {};
-    src.forEach(e => { (groups[e.kind] = groups[e.kind] || []).push(e); });
-    const order = ['com','sol','cab','bal','cle','jin','ant'].filter(k => groups[k]);
-    const total = src.length;
-    wb.innerHTML = `<h3><span>${S.phase === 'fight' ? 'Current wave' : 'Incoming wave'} <b>${Math.min(S.wave, MAX_WAVE)}</b></span><span>${total} humans</span></h3>
-      <div class="foes">${order.map(k => {
-        const g = groups[k], e = g[0], sp = Math.round(g.reduce((s, x) => s + x.sp, 0) / g.length), isNew = !S.seenKinds.has(k);
-        return `<div class="foe" title="${FOE_NOTE[k]}"><img src="${URL_[KIND[k].spr]}" alt=""><span class="fn">${KIND[k].n} <b>×${g.length}</b>${isNew ? '<span class="new">NEW</span>' : ''}</span>
-          <span class="fs">♥ ${Math.round(e.hp)} · ⚔ ${e.dmg ? Math.round(e.dmg * 10) / 10 : '—'} · speed ${sp}${e.armor ? ' · armor ' + e.armor : ''}</span><span class="fx">${FOE_NOTE[k]}</span></div>`;
-      }).join('')}</div>`;
-  }
-  // Selected monster
-  const ub = $('#unitBox'), u = S.sel && (S.units.includes(S.sel) || S.bench.includes(S.sel)) ? S.sel : null;
-  if (!u) { ub.innerHTML = `<h3>Monster dossier</h3><div class="unit-empty"><img src="${URL_.espectro}" alt=""><b>Select a monster</b><span>Click a guardian to inspect its abilities and stats.</span></div>`; return; }
-  const st = stats(u.type, u.lvl, u), inBench = S.bench.includes(u);
-  const role = { W:'Patrols and stops humans', A:'Ranged attacker', M:'Area fire', N:`Raises up to ${skelCap(u.lvl)} skeletons per wave`, B:`Aura: +${Math.round(bansheeBuff(u.lvl) * 100)}% damage and speed to nearby allies`, L:'Temporary, this wave only', K:'Temporary, this wave only' }[u.type];
-  const bf = bansheeOn(u);
-  const tags = [inBench ? 'reserve' : '', u.down ? 'fallen' : '', u.train ? `trained +${u.train * 50}%` : '', bf ? `<b class="bns">Banshee +${Math.round(bf * 100)}%</b>` : ''].filter(Boolean).join(' · ');
-  const reach = BASE[u.type].guard ? `patrol ${Math.round(guardOf(u))}` : BASE[u.type].support ? `area ${Math.round(st.range)}` : `range ${Math.round(st.range)}`;
-  const up = v => `<b class="bns">${v}</b>`;
-  const atk = BASE[u.type].support ? '' : bf
-    ? ` · ⚔ ${st.dmg} → ${up(Math.round(st.dmg * (1 + bf)))} · 1 every ${st.cd.toFixed(1)} → ${up((st.cd / (1 + bf)).toFixed(1))} s`
-    : ` · ⚔ ${st.dmg} · 1 every ${st.cd.toFixed(1)} s`;
-  ub.innerHTML = `<h3>Monster dossier</h3>
-    <div class="foe mine${bf ? ' buffed' : ''}"><img src="${URL_[USPR[u.type]]}" alt=""><span class="fn">${NAMES[u.type]} <b>${u.temp ? '' : '★'.repeat(u.lvl)}</b>${u.pile > 1 ? `<span class="new">${u.pile}/${S.mods.mergeN}</span>` : ''}</span>
-      <div class="unit-stat-lines"><span>♥ Health <b>${Math.ceil(u.hp)} / ${Math.ceil(u.maxHp)}</b></span>${BASE[u.type].support ? "" : `<span>⚔ Attack <b>${st.dmg}${bf ? ` <em>→ ${Math.round(st.dmg * (1 + bf))}</em>` : ""}</b></span><span>⏱ Interval <b>${st.cd.toFixed(1)}s${bf ? ` <em>→ ${(st.cd/(1+bf)).toFixed(1)}s</em>` : ""}</b></span>`}<span>◎ Reach <b>${reach}</b></span>${BASE[u.type].move ? `<span>➟ Move speed <b>${BASE[u.type].move}</b></span>` : ""}</div><span class="fx">${role}${tags ? " · " + tags : ""}</span></div>`;
-}
+function renderIntel(){if(S){tacticalWave();tacticalTick(performance.now(),true);}}
 function renderUI(){
   renderChips(); renderHand(); renderIntel(); renderArtifactShelf();
   const prep = S.phase === 'prep';
@@ -1156,6 +1121,7 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && !$('#ov2').hidden) { if (S.pendingMerge) closeMergeConfirm(false); else $('#ov2').hidden = true; return; }
   if (!$('#ov').hidden || !$('#ov2').hidden) return;
   if (e.key === 'Escape' && S.aim !== null) { S.aim = null; renderHand(); return; }
+  if (e.key === 'Escape' && tacticalClose()) { e.preventDefault(); return; }
   if (/^[1-6]$/.test(e.key)) { useCard(+e.key - 1); return; }
   if (S.phase === 'prep' && e.code === 'Space' && !e.target.closest('button')) { e.preventDefault(); spin(); }
 });
@@ -1215,7 +1181,7 @@ function restore(v){
 }
 function showRewardRestored(){showOv(`<h2>Choose your reward</h2><div class="offers">${S.offer.map((o,i)=>`<button class="offer" data-act="reward" data-i="${i}"><span class="ic">${rewardArt(o)}</span><span class="nm">${o.n}</span><span class="ds">${o.d}</span></button>`).join('')}</div>`);}
 function showEndRestored(){showOv(`<h2>${S.phase==='win'?'The Altar stands!':'The Altar has fallen'}</h2><p>${S.kills} humans defeated. Choose a card for your next run.</p><div class="cards-row">${S.endOffer.map((id,i)=>cardHTML(id,`data-act="endcard" data-i="${i}"`)).join('')}</div><button class="btn" data-front="scores">View scores</button>`);}
-function front(panel){$('#front').hidden=false;menuOpen=true;document.querySelector('.wrap').inert=true;$('#ov').inert=true;$('#ov2').inert=true;for(const el of document.querySelectorAll('.front-view'))el.hidden=el.id!==panel;$('#'+panel+' button:not([disabled]),#'+panel+' input')?.focus();}
+function front(panel){tacticalHide();$('#front').hidden=false;menuOpen=true;document.querySelector('.wrap').inert=true;$('#ov').inert=true;$('#ov2').inert=true;for(const el of document.querySelectorAll('.front-view'))el.hidden=el.id!==panel;$('#'+panel+' button:not([disabled]),#'+panel+' input')?.focus();}
 function closeFront(){menuOpen=false;$('#front').hidden=true;document.querySelector('.wrap').inert=false;$('#ov').inert=false;$('#ov2').inert=false;last=performance.now();resize();}
 function showHome(){if(S){cancelDrag();persist();}loadedSave=store.get(SAVE_KEY,null);if(!validSave(loadedSave))loadedSave=null;$('#playerName').value=profile.name;$('#continueBtn').disabled=!loadedSave;$('#continueInfo').textContent=loadedSave?`${loadedSave.name} · oleada ${Math.min(loadedSave.state.wave,10)} · ${new Date(loadedSave.savedAt).toLocaleString('en')}`:'The invasion awaits.';$('#resumeBtn').hidden=!S;front('homeView');}
 function beginNew(){let name=$('#playerName').value.trim().slice(0,20);if(!name){$('#nameError').textContent='Enter your name (1–20 characters).';$('#playerName').focus();return;}profile.name=name;durableWrite(PROFILE_KEY,profile);if(validSave(loadedSave)){front('confirmView');return;}launchNew();}

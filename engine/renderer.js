@@ -71,7 +71,7 @@ function draw(){
     if (plan.kind === 'bad') { ctx.strokeStyle = colors.red; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(dragU.x, dragU.y, radius(dragU) + 6, 0, Math.PI * 2); ctx.stroke(); }
   }
 
-  const hovU = S.aimP && !S.drag && S.aim === null ? unitAt(S.aimP) : null;
+  const hovU = S.aimP && !S.drag && S.aim === null ? (unitAt(S.aimP)||mineAt(S.aimP)) : null;
   const hovE = S.aimP && !hovU && S.aim === null ? enemyAt(S.aimP) : null;
 
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -118,7 +118,7 @@ function draw(){
       const e = it.e, K = KIND[e.kind], s = (e.r * 2 + 14) * 1.28, pose = feelPose(e,visualPose(e, performance.now() / 1000));
       const walk = motionPreference.matches ? 0 : e.moving ? Math.abs(Math.sin(t * 10 + e.ph)) * -3 : Math.sin(t * 2 + e.ph) * 1;
       const rot = !motionPreference.matches && e.moving ? Math.sin(t * 10 + e.ph) * .07 : 0;
-      if (hovE === e) { ctx.strokeStyle = colors.red; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(e.x, e.y, s / 2 + 6, 0, Math.PI * 2); ctx.stroke(); }
+      if (hovE === e || tacticalEnemySelected(e)) { ctx.strokeStyle = colors.red; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(e.x, e.y, s / 2 + 6, 0, Math.PI * 2); ctx.stroke(); }
       sprite(K.spr, e.x - (!motionPreference.matches && e.lunge > 0 ? e.lunge / .12 * 6 : 0), e.y + walk, e.kind === 'jin' ? s * 1.15 : s, { flash:e.flash > 0, rot, frame:pose.frame });
       if (e.kind === 'ant') { ctx.fillStyle = colors.m; ctx.globalAlpha = .5 + .5 * Math.sin(t * 20 + e.ph); ctx.beginPath(); ctx.arc(e.x - s * .34, e.y - s * .45 + walk, 3, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1; }
       if (e.root > 0) { ctx.strokeStyle = colors.leaf; ctx.lineWidth = 3; ctx.strokeRect(e.x - s / 2 - 2, e.y - s / 2 - 2, s + 4, s + 4); }
@@ -162,16 +162,6 @@ function draw(){
     ctx.beginPath(); ctx.arc(S.aimP.x, S.aimP.y, c.aim, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
   }
   if (S.aim !== null) { ctx.fillStyle = colors.soul; ctx.font = '600 12px Rubik, sans-serif'; ctx.fillText('Click the field to cast · time slowed', W / 2, 38); }
-  // Ficha al pasar el cursor
-  const info = hovU ? `${NAMES[hovU.type]}${hovU.type !== 'L' ? ' ' + '★'.repeat(hovU.lvl) : ''} · ♥ ${Math.ceil(hovU.hp)}/${hovU.maxHp}`
-             : hovE ? `${KIND[hovE.kind].n} · ♥ ${Math.ceil(hovE.hp)}/${Math.ceil(hovE.maxHp)}${hovE.armor ? ' · armor ' + hovE.armor : ''}${hovE.kind === 'cle' ? ' · heals' : ''}${hovE.kind === 'ant' ? ' · rushes Altar' : ''}` : '';
-  if (info) {
-    const ent = hovU || hovE; ctx.font = '600 12px Rubik, sans-serif';
-    const tw = ctx.measureText(info).width + 14, bx = clamp(ent.x, tw / 2 + 4, W - tw / 2 - 4), by = Math.max(16, ent.y - 40);
-    ctx.fillStyle = colors.bg; ctx.globalAlpha = .9; ctx.fillRect(bx - tw / 2, by - 11, tw, 22); ctx.globalAlpha = 1;
-    ctx.strokeStyle = hovU ? colors.soul : colors.red; ctx.lineWidth = 1; ctx.strokeRect(bx - tw / 2, by - 11, tw, 22);
-    ctx.fillStyle = colors.cream; ctx.fillText(info, bx, by + 1);
-  }
   ctx.restore();
 }
 function bar(x, y, w, h, p, c){ ctx.fillStyle = colors.bg; ctx.fillRect(x, y, w, h); ctx.fillStyle = c; ctx.fillRect(x, y, w * clamp(p, 0, 1), h); }
