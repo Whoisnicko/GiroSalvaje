@@ -436,7 +436,7 @@ function stats(type, lvl, u){
   return { hp:Math.round(hp), dmg:Math.round(dmg), cd, range, splash };
 }
 const size = u => u.type === 'L' ? 36 : u.type === 'K' ? Math.round(32 * [1, 1.3, 1.6][(u.nl || 1) - 1]) : u.type === 'M' ? 40 + (u.lvl - 1) * 9 : 34 + (u.lvl - 1) * 9;
-const radius = u => Math.min(size(u), 34 + u.lvl * 6) / 2 - 2;
+const radius = u => heroIsTarget(u)?HERO_CLASSES.warlord.radius:Math.min(size(u), 34 + u.lvl * 6) / 2 - 2;
 function makeUnit(type, lvl){ const st = stats(type, lvl); return { type, lvl, pile:1, train:0, hp:st.hp, maxHp:st.hp, cd:Math.random() * st.cd, x:0, y:0, flash:0, lunge:0, lx:1, ly:0, ph:Math.random() * 6 }; }
 const refreshHp = u => { u.hp = u.maxHp = stats(u.type, u.lvl, u).hp; };
 /* Tu zona termina justo en el borde de una casilla, así el terreno nunca queda cruzando la línea. */
@@ -661,7 +661,7 @@ function startFight(){
   S.queue = S.nextQueue.map(q => ({ ...q })); S.curQueue = S.nextQueue;
   S.queue.forEach(q => S.seenKinds.add(q.kind));
   S.spawnT = 0;
-  setResult(`Wave ${S.wave}${W.boss ? ' · COMMANDER' : ''}`, 'Your monsters fight automatically. Time your cards carefully.');
+  setResult(`Wave ${S.wave}${W.boss ? ' · COMMANDER' : ''}`, heroUsesMagic(S)?'Your monsters fight automatically. Time your cards carefully.':'Press Q to deploy the Warlord. WASD / arrows to move; basic attacks are automatic.');
   $('#coach').hidden = true;
   sfx('horn'); renderUI(); tip('cards');
 }
@@ -689,6 +689,7 @@ function update(dt){
   for (const z of S.zones) { z.t -= dt; S.enemies.forEach(e => { if (dist(e, z) <= z.r + e.r) damage(e, z.dps * dt, { quiet:true, pierce:true }); }); }
   S.zones = S.zones.filter(z => z.t > 0);
 
+  heroAdvance(dt);
   const alive = S.enemies.filter(e => e.hp > 0);
   const banshees = S.units.filter(u => u.type === 'B' && !u.down);
   for (const u of S.units) {
@@ -765,13 +766,13 @@ function update(dt){
         S.enemies.forEach(o => { if (o.kind !== 'cle' && o.hp > 0 && o.hp < o.maxHp && dist(o, e) <= 100) { const before=o.hp;o.hp = Math.min(o.maxHp, o.hp + heal);feelNumber(o.x,o.y-o.r-10,o.hp-before,'heal');feelImpact(o.x,o.y,'heal'); any = true; } });
         if (any) S.fx.push({ k:'ring', x:e.x, y:e.y, r:100, c:'gold', t:.5, T:.5 });
       }
-      const near = S.units.some(u => dist(u, e) < 170);
+      const near = heroTargets().some(u => !u.down&&u.hp>0&&dist(u, e) < 170);
       if (!near && e.x > zoneMax() + 50) moveHuman(e, -sp * dt, 0);
       continue;
     }
     if (e.kind === 'bal') {
       let tgt = null, best = 1e9; const rng = e.range;
-      for (const u of S.units) { if (u.down) continue; const d = dist(e, u); if (d <= rng && d < best) { best = d; tgt = u; } }
+      for (const u of heroTargets()) { if (u.down||u.hp<=0) continue; const d = dist(e, u); if (d <= rng && d < best) { best = d; tgt = u; } }
       const altarInRange = e.x - WALL_X <= rng;
       if (tgt || altarInRange) {
         e.cd -= dt;
@@ -787,16 +788,16 @@ function update(dt){
     let tgt = null;
     if (e.kind !== 'ant') {
       let best = 1e9;
-      for (const u of S.units) {
-        if (u.down) continue;
-        const dx = e.x - u.x, dy = Math.abs(u.y - e.y);
-        if (dx < -10 || dy > 60 || dx > 150) continue;
-        const d = dx + dy * 1.5; if (d < best) { best = d; tgt = u; }
+      for (const u of heroTargets()) {
+        if (u.down||u.hp<=0) continue;
+        const dx = e.x - u.x, dy = Math.abs(u.y - e.y),hero=heroIsTarget(u);
+        if ((hero?Math.abs(dx)>150:dx < -10 || dx > 150) || dy > 60) continue;
+        const d = (hero?Math.abs(dx):dx) + dy * 1.5; if (d < best) { best = d; tgt = u; }
       }
     }
     if (tgt) {
       const d = dist(e, tgt);
-      if (d <= e.r + radius(tgt) + 3) { e.cd -= dt; if (e.cd <= 0) { e.cd = 1; const dealt=spellDamageAlly(tgt,e.dmg); tgt.flash = 0.15; if(dealt)feelNumber(tgt.x,tgt.y-radius(tgt)-10,dealt,'ally');feelImpact(tgt.x,tgt.y,'steel',tgt,0,e.dmg>=25); e.lunge = .12; S.fx.push({k:'sword',x:(e.x+tgt.x)/2,y:(e.y+tgt.y)/2,angle:Math.atan2(tgt.y-e.y,tgt.x-e.x)+Math.PI,t:.24,T:.24}); burst((e.x + tgt.x) / 2, (e.y + tgt.y) / 2, 'steel', 6, 70); sfx('clash'); } }
+      if (d <= e.r + radius(tgt) + 3) { e.cd -= dt; if (e.cd <= 0) { e.cd = 1; const dealt=heroDamageTarget(tgt,e.dmg); tgt.flash = 0.15; if(dealt)feelNumber(tgt.x,tgt.y-radius(tgt)-10,dealt,'ally');feelImpact(tgt.x,tgt.y,'steel',tgt,0,e.dmg>=25); e.lunge = .12; S.fx.push({k:'sword',x:(e.x+tgt.x)/2,y:(e.y+tgt.y)/2,angle:Math.atan2(tgt.y-e.y,tgt.x-e.x)+Math.PI,t:.24,T:.24}); burst((e.x + tgt.x) / 2, (e.y + tgt.y) / 2, 'steel', 6, 70); sfx('clash'); } }
       else moveHuman(e, (tgt.x - e.x) / d * sp * dt, (tgt.y - e.y) / d * sp * dt);
     } else if (e.x <= WALL_X + e.r + 2) {
       e.cd -= dt;
@@ -881,7 +882,7 @@ function landShot(s){
     S.shake = Math.max(S.shake, 3); feelImpact(s.tx,s.ty,'fire',null,Math.max(24,s.splash));sfx('boom');
   } else if (s.k === 'bolt') {
     if (s.altar) hitAltar(s.dmg);
-    else if (s.tgt && s.tgt.hp > 0) { const dealt=spellDamageAlly(s.tgt,s.dmg); s.tgt.flash = .15; if(dealt)feelNumber(s.tgt.x,s.tgt.y-radius(s.tgt)-10,dealt,'ally');feelImpact(s.tgt.x,s.tgt.y,'steel',s.tgt); burst(s.tgt.x, s.tgt.y, 'steel', 5, 60); sfx('clash'); }
+    else if (s.tgt && s.tgt.hp > 0) { const dealt=heroDamageTarget(s.tgt,s.dmg); s.tgt.flash = .15; if(dealt)feelNumber(s.tgt.x,s.tgt.y-radius(s.tgt)-10,dealt,'ally');feelImpact(s.tgt.x,s.tgt.y,'steel',s.tgt); burst(s.tgt.x, s.tgt.y, 'steel', 5, 60); sfx('clash'); }
   }
 }
 
@@ -1060,7 +1061,7 @@ function loop(now){
     renderFrame();
     magicDraw(now);
     tacticalTick(now);
-    if (S.phase === 'fight' && now-lastAutosave>150) { renderChips(); renderBuyCard(); lastAutosave=now; }
+    if (S.phase === 'fight' && now-lastAutosave>150) { renderChips(); renderBuyCard(); heroRender();lastAutosave=now; }
   } else tacticalHide();
   requestAnimationFrame(loop);
 }
@@ -1134,7 +1135,7 @@ function showDeck(){
     <button class="go" data-act="closedeck">Close</button></div>`;
   o.hidden = false; o.querySelector('[data-act="closedeck"]').focus();
 }
-function showOv(html){ magicCancel();closeBestiary();const o = $('#ov'); o.innerHTML = `<div class="panel">${html}</div>`; o.hidden = false; const b = o.querySelector('button'); if (b) b.focus(); }
+function showOv(html){ heroClearKeys();magicCancel();closeBestiary();const o = $('#ov'); o.innerHTML = `<div class="panel">${html}</div>`; o.hidden = false; const b = o.querySelector('button'); if (b) b.focus(); }
 function hideOv(){ $('#ov').hidden = true; }
 
 document.addEventListener('click', e => {
@@ -1199,7 +1200,7 @@ function durableWrite(k,v){try{localStorage.setItem(k,JSON.stringify(v));storage
 function savePrefs(){durableWrite(SETTINGS_KEY,prefs);document.body.classList.toggle('reduce-motion',prefs.reduced);if(AU.master)AU.master.gain.value=prefs.volume;}
 function snapshot(){
  if(!S||sandboxActive())return null;
- const refs=[...S.units,...S.bench.filter(Boolean),...S.enemies];
+ const refs=[...S.units,...S.bench.filter(Boolean),...S.enemies,...heroRefs(S)];
  const state={...S,held:[...S.held],wins:[...S.wins],ter:[...S.ter],seenKinds:[...S.seenKinds],sel:null,drag:null,pendingMerge:null,aim:null,aimP:null,shots:S.shots.map(s=>({...s,tgt:undefined,targetIndex:refs.indexOf(s.tgt)})),relicIndex:RELICS.indexOf(S.relic),relic:null,offer:S.offer.map(o=>({n:o.n,kind:o.kind})),fx:[],parts:[],floats:[],shake:0};
  return {version:14,runId:sessionRunId,name:runName,savedAt:Date.now(),worldWidth:worldW(),state};
 }
@@ -1208,7 +1209,7 @@ function persist(){if(sandboxActive()||!S||spinning||S.drag||S.pendingMerge||S.p
 function restore(v){
  if(!validSave(v))throw Error('Incompatible save format');
  const s=JSON.parse(JSON.stringify(v.state));
- s.hero=heroNormalize(s);
+ s.hero=heroNormalize(s,v.worldWidth);heroClearKeys();
  s.artifacts=Array.isArray(s.artifacts)?[...new Set(s.artifacts.filter(id=>Object.hasOwn(SHOP_ARTIFACTS,id)))]:[];
  for(const u of [...s.units,...s.bench.filter(Boolean)])if(!BASE[u.type]||!Number.isFinite(u.x)||!Number.isFinite(u.hp))throw Error('Invalid unit');
  for(const e of s.enemies)if(!KIND[e.kind]||!Number.isFinite(e.hp))throw Error('Invalid enemy');
@@ -1223,7 +1224,7 @@ function restore(v){
  s.freeHill=false;
  if(typeof s.resultSub==='string')s.resultSub=s.resultSub.replace('Terrain changed. ','');
  s.held=new Set(s.held);s.wins=new Set(s.wins);s.seenKinds=new Set(s.seenKinds);s.ter=new Map();s.relic=RELICS[s.relicIndex]||null;
- const refs=[...s.units,...s.bench.filter(Boolean),...s.enemies];s.shots=s.shots.map(q=>({...q,tgt:refs[q.targetIndex]||null}));
+ const refs=[...s.units,...s.bench.filter(Boolean),...s.enemies,...heroRefs(s)];s.shots=s.shots.map(q=>({...q,tgt:refs[q.targetIndex]||null}));
  s.offer=s.offer.map(o=>{const legacyNames={"Ectoplasma":"Ectoplasm","Carne dura":"Tough Flesh","Fuego antiguo":"Ancient Fire","Cosecha de almas":"Soul Harvest","Luna llena":"Full Moon","Garras firmes":"Steady Claws","Altar reforzado":"Fortified Altar","Necromancia":"Necromancy","Rugido del dragón":"Dragon Roar","Manos de la tierra":"Earth Hands","Lluvia de huesos":"Bone Rain","Festín":"Feast","Aullido":"Howl","Ofrenda":"Offering","Niebla":"Mist","Temblor":"Earthquake","Murciélagos":"Bats","Cripta ampliada":"Expanded Crypt","Cosecha":"Harvest","Lago maldito":"Cursed Lake","Colina":"Hill","Pantano":"Swamp","Bendición":"Blessing","Carta para esta partida":"Card for this run","Carta":"Card"};o={...o,n:legacyNames[o.n]||o.n,kind:legacyNames[o.kind]||o.kind};let b=BLESS.find(b=>b.n===o.n);if(o.kind==='Blessing'&&b)return {...b,kind:o.kind};let id=Object.keys(CARDS).find(id=>CARDS[id].n===o.n);if(!id && ['Cursed Lake','Hill','Swamp'].includes(o.n))id='cripta';if(!id)throw Error('Invalid reward');return {n:CARDS[id].n,ic:CARDS[id].ic,d:CARDS[id].d(),kind:o.kind,a:()=>S.deck.push(id)};});
  savedWorldWidth=Number.isFinite(v.worldWidth)&&v.worldWidth>=420?v.worldWidth:null;
  S=s;knowledgeFromSave(v,true);sessionRunId=v.runId||uid();runName=String(v.name||'Anonymous').slice(0,20);hideOv();$('#ov2').hidden=true;closeFront();renderUI();
@@ -1234,7 +1235,7 @@ function restore(v){
 }
 function showRewardRestored(){showOv(`<h2>Choose your reward</h2><div class="offers">${S.offer.map((o,i)=>`<button class="offer" data-act="reward" data-i="${i}"><span class="ic">${rewardArt(o)}</span><span class="nm">${o.n}</span><span class="ds">${o.d}</span></button>`).join('')}</div>`);}
 function showEndRestored(){showOv(`<h2>${S.phase==='win'?'The Altar stands!':'The Altar has fallen'}</h2><p>${S.kills} humans defeated. Choose a card for your next run.</p><div class="cards-row">${S.endOffer.map((id,i)=>cardHTML(id,`data-act="endcard" data-i="${i}"`)).join('')}</div><button class="btn" data-front="scores">View scores</button>`);}
-function front(panel){magicCancel();closeBestiary();tacticalHide();$('#front').hidden=false;menuOpen=true;document.querySelector('.wrap').inert=true;$('#ov').inert=true;$('#ov2').inert=true;for(const el of document.querySelectorAll('.front-view'))el.hidden=el.id!==panel;$('#'+panel+' button:not([disabled]),#'+panel+' input')?.focus();}
+function front(panel){heroClearKeys();magicCancel();closeBestiary();tacticalHide();$('#front').hidden=false;menuOpen=true;document.querySelector('.wrap').inert=true;$('#ov').inert=true;$('#ov2').inert=true;for(const el of document.querySelectorAll('.front-view'))el.hidden=el.id!==panel;$('#'+panel+' button:not([disabled]),#'+panel+' input')?.focus();}
 function closeFront(){menuOpen=false;$('#front').hidden=true;document.querySelector('.wrap').inert=false;$('#ov').inert=false;$('#ov2').inert=false;last=performance.now();resize();if(S)renderPrepUndo();}
 function showHome(){if(spinning)return;if(sandboxActive()){sandboxExit();return;}if(S){cancelDrag();persist();}loadedSave=store.get(SAVE_KEY,null);if(!validSave(loadedSave))loadedSave=null;knowledgeFromSave(loadedSave);knowledgeFromScores();if(knowledgeDirty)knowledgeFlush();knowledgeSummaryRender();$('#playerName').value=profile.name;$('#continueBtn').disabled=!loadedSave;$('#continueInfo').textContent=loadedSave?`${loadedSave.name} · ${heroClass(loadedSave.state).name} · Wave ${Math.min(loadedSave.state.wave,10)} · ${new Date(loadedSave.savedAt).toLocaleString('en')}`:'The invasion awaits.';$('#resumeBtn').hidden=!S;front('homeView');}
 function beginNew(){let name=$('#playerName').value.trim().slice(0,20);if(!name){$('#nameError').textContent='Enter your name (1–20 characters).';$('#playerName').focus();return;}profile.name=name;durableWrite(PROFILE_KEY,profile);heroChoose('campaign');}
@@ -1268,6 +1269,7 @@ setInterval(()=>{if(!menuOpen&&!document.hidden)persist();},5000);
 savePrefs();
 initSandboxControls();
 initMagicControls();
+initHeroControls();
 knowledgeInit();
 
 artReady.then(buildHybridArt).then(()=>{

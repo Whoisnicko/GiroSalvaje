@@ -18,13 +18,13 @@ function sandboxEnter(heroId='sorcerer'){
 }
 function sandboxExit(){
  if(!sandboxActive()||spinning||!sandboxParked)return;
- magicCancel();
+ heroClearKeys();magicCancel();
  if(S.drag)cancelDrag();
  const p=sandboxParked;sandboxParked=null;closeBestiary();tacticalHide();S=p.state;sessionRunId=p.runId;runName=p.name;savedWorldWidth=p.width;loadedSave=p.save;
  $('#ov').innerHTML=p.ov;$('#ov').hidden=p.ovHidden;$('#ov2').innerHTML=p.ov2;$('#ov2').hidden=p.ov2Hidden;
  $('#saveStatus').textContent=p.status;renderSandbox();heroRender();if(S){resize();renderUI();}else magicRender();showHome();
 }
-function sandboxHeal(){S.wallHp=S.wallMax;for(const u of [...S.units,...S.bench.filter(Boolean)]){u.down=false;u.gone=false;refreshHp(u);}}
+function sandboxHeal(){heroHeal();S.wallHp=S.wallMax;for(const u of [...S.units,...S.bench.filter(Boolean)]){u.down=false;u.gone=false;refreshHp(u);}}
 function sandboxResetBattle(message='Battle reset.'){
  if(!sandboxActive())return;
  heroResetWave();magicResetWave();
@@ -43,7 +43,7 @@ function sandboxAction(a){
  const prep=S.phase==='prep';let msg='';
  if(a==='exit'){sandboxExit();return;}
  if(a==='god'){S.sandboxGod=!S.sandboxGod;if(S.sandboxGod)sandboxHeal();msg='God mode '+(S.sandboxGod?'enabled.':'disabled.');}
- else if(a==='heal'){sandboxHeal();msg='Army and altar healed.';}
+ else if(a==='heal'){sandboxHeal();msg='Army, altar and deployed hero healed.';}
  else if(a==='stop'){sandboxResetBattle();return;}
  else if(a==='wave'&&prep){S.wave=Math.max(1,Math.min(MAX_WAVE,Number(sbEl('sbWave').value)||1));S.nextQueue=rollWave(S.wave);sandboxHeal();prepUndoClear();msg='Wave '+S.wave+' loaded.';}
  else if(a==='fight'&&prep){if(!S.nextQueue.length){sandboxStatus('Add enemies or load a wave first.');return;}startFight();return;}

@@ -82,8 +82,9 @@ function draw(){
   const hovE = hovered&&S.enemies.includes(hovered)?hovered:null;
 
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  const ents = [...S.units.map(u => ({ u })), ...S.bench.filter(Boolean).map(u => ({ u })), ...S.enemies.map(e => ({ e }))].sort((a, b) => (a.u || a.e).y - (b.u || b.e).y);
+  const ents = [...S.units.map(u => ({ u })), ...S.bench.filter(Boolean).map(u => ({ u })), ...S.enemies.map(e => ({ e })),...(heroActive()?[{hero:S.hero}]:[])].sort((a, b) => (a.u || a.e || a.hero).y - (b.u || b.e || b.hero).y);
   for (const it of ents) {
+    if(it.hero){heroDraw(it.hero,t);continue;}
     if (it.u) {
       const u = it.u, inBench = u.y >= WORLD_H - 6 && !S.units.includes(u), s = inBench ? Math.min(size(u), 44) : size(u) * 1.28, dragging = S.drag && S.drag.u === u, ph = u.ph;
       const pose = feelPose(u,visualPose(u, performance.now() / 1000)), phTime = motionPreference.matches ? 0 : t;
