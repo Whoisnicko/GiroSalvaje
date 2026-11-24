@@ -217,7 +217,7 @@ function drawV18Field(W){
  for(let i=0;i<W*1.2;i++){let x=42+rnd()*(W-42),y=rnd()*WORLD_H;if(y>py-8&&y<py+77)continue;rect(x,y,2,3,rnd()<.5?'#354c32':'#98a05d');if(rnd()<.08)rect(x+2,y,2,2,'#c9aa68');}
  }ctx.drawImage(bgCache,0,0);
 }
-function drawInkBackdrop(W){drawV18Field(W);}
+function drawInkBackdrop(W){if(!battlefieldArt){drawV18Field(W);return;}ctx.save();ctx.imageSmoothingEnabled=false;ctx.drawImage(battlefieldArt,0,0,W,WORLD_H);ctx.restore();}
 function drawInkShot(s,t){
  ctx.save();ctx.translate(Math.round(s.x),Math.round(s.y));ctx.rotate(s.ang||0);
  const pal=HYBRID.palette[s.k==='fire'?'fire':'orb'];
