@@ -2,10 +2,10 @@
 const MAGIC_MAX=100,MAGIC_REGEN=2,MAGIC_SLOW=.3,MAGIC_DRAW_MS=4000,MAGIC_AIM_MS=2000,MAGIC_RECOVERY_MS=3000;
 const SPELL_DATA=Object.freeze({
  fire:{mana:25,cd:8,r:72,target:'area',damage:28,perTwoWaves:2,implemented:true},barrier:{mana:30,cd:18,r:28,target:'ally',hpFraction:.5,duration:5,implemented:true},
- lightning:{mana:20,cd:6,r:90,target:'enemy',damage:[24,18,12],implemented:true},grasp:{mana:20,cd:12,r:62,target:'area'},
- frost:{mana:30,cd:14,r:80,target:'area'},harvest:{mana:35,cd:25,r:75,target:'area'}
+ lightning:{mana:20,cd:6,r:90,target:'enemy',damage:[24,18,12],implemented:true},grasp:{mana:20,cd:12,r:62,target:'area',duration:2.5,implemented:true},
+ frost:{mana:30,cd:14,r:80,target:'area',duration:4,slow:.5,implemented:true},harvest:{mana:35,cd:25,r:75,target:'area',duration:5,bonusCap:4,implemented:true}
 });
-let magicOwner=null,magicMode='idle',magicDeadline=0,magicReadyAt=0,magicStroke=[],magicPointer=null,magicAim=null,magicRune=null,magicPulse=null,magicMessage='Draw runes in combat. Fire, Barrier and Lightning are functional.',magicLastHud=-Infinity,magicHudKey='',magicMatch=null;
+let magicOwner=null,magicMode='idle',magicDeadline=0,magicReadyAt=0,magicStroke=[],magicPointer=null,magicAim=null,magicRune=null,magicPulse=null,magicMessage='Draw runes in combat. All six spells functional in Sandbox.',magicLastHud=-Infinity,magicHudKey='',magicMatch=null;
 const magicEl=id=>document.getElementById(id);
 const magicDef=id=>RUNE_DEFS.find(d=>d.id===id);
 function magicNewData(old={},sandbox=false){
@@ -16,7 +16,7 @@ function magicNewData(old={},sandbox=false){
 function magicData(){if(!S)return null;if(!S.magic||magicOwner!==S){S.magic=magicNewData(S.magic||{},!!S.sandbox);}return S.magic;}
 function magicSync(){
  if(magicOwner===S)return;
- magicRelease();magicOwner=S;magicMode='idle';magicDeadline=0;magicReadyAt=0;magicStroke=[];magicAim=null;magicRune=null;magicPulse=null;magicMatch=null;magicMessage='Draw runes in combat. Fire, Barrier and Lightning are functional.';magicHudKey='';magicLastHud=-Infinity;
+ magicRelease();magicOwner=S;magicMode='idle';magicDeadline=0;magicReadyAt=0;magicStroke=[];magicAim=null;magicRune=null;magicPulse=null;magicMatch=null;magicMessage='Draw runes in combat. All six spells functional in Sandbox.';magicHudKey='';magicLastHud=-Infinity;
  if(S)S.magic=magicNewData(S.magic||{},!!S.sandbox);
 }
 function magicActive(){return !!S&&magicOwner===S&&magicMode!=='idle'&&S.phase==='fight';}
@@ -34,7 +34,7 @@ function magicCancel(message='Conjuration canceled.'){
 function magicResetWave(){
  magicSync();magicCancel();if(!S)return;
  const m=magicData();m.mana=MAGIC_MAX;for(const id of Object.keys(SPELL_DATA))m.cooldowns[id]=0;
- magicReadyAt=0;magicPulse=null;spellClearWave();magicMessage='Draw runes in combat. Fire, Barrier and Lightning are functional.';magicRender();
+ magicReadyAt=0;magicPulse=null;spellClearWave();magicMessage='Draw runes in combat. All six spells functional in Sandbox.';magicRender();
 }
 function magicAdvance(dt){const m=magicData();if(!m)return;spellAdvance(dt);m.mana=m.infinite?MAGIC_MAX:Math.min(MAGIC_MAX,m.mana+MAGIC_REGEN*dt);for(const id of Object.keys(SPELL_DATA))m.cooldowns[id]=Math.max(0,m.cooldowns[id]-dt);}
 function magicBegin(now=performance.now()){

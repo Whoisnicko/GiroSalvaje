@@ -44,8 +44,8 @@ function tacticalModel(e){
   if(cleric)note+=' Heals '+tacNum(5+S.wave*1.5)+' HP every 2.5s while supporting.';
   add('sword','Attack',tacNum(e.dmg));add('clock','Attack interval',cleric?'1s melee / 2.5s heal':ranged?'1.6 s':'1 s');add('target','Reach',ranged?tacNum(e.range,0)+' px':cleric?'100 px heal':'Contact');
   const rate=ranged?1/1.6:1;combat={damage:e.dmg,attackRate:rate,dps:e.dmg*rate,range:ranged?e.range:cleric?100:'Melee',armor:e.armor||0};
-  const sp=e.sp*(S.buff.slow>0?.4:1)*(S.charge?1.5:1);add('boot','Move speed',tacNum(e.root>0?0:sp,0)+' px/s');add('shield','Armor',tacNum(e.armor||0));
-  if(arson)add('flame','Altar damage',tacNum(e.dmg*3));if(e.root>0)tags.push('Rooted '+tacNum(e.root)+'s');if(S.buff.slow>0)tags.push('Mist');if(S.charge)tags.push('Final charge');if(e.boss)tags.push('Commander');tags.push('Invader');
+  const sp=e.sp*spellEnemySpeedFactor(e)*(S.charge?1.5:1);add('boot','Move speed',tacNum(spellEnemyRooted(e)?0:sp,0)+' px/s');add('shield','Armor',tacNum(e.armor||0));
+  if(arson)add('flame','Altar damage',tacNum(e.dmg*3));if(e.root>0)tags.push('Rooted '+tacNum(e.root)+'s');if(spellTimeLeft(e.arcaneGraspUntil)>0)tags.push("Death's Grasp "+tacNum(spellTimeLeft(e.arcaneGraspUntil))+'s');if(spellTimeLeft(e.arcaneFrostUntil)>0)tags.push('Frost Nova '+tacNum(spellTimeLeft(e.arcaneFrostUntil))+'s');if(spellHarvestActive(e))tags.push('Soul Harvest '+tacNum(spellTimeLeft(e.arcaneHarvestUntil))+'s');if(S.buff.slow>0)tags.push('Mist');if(S.charge)tags.push('Final charge');if(e.boss)tags.push('Commander');tags.push('Invader');
  }else{
   const base=BASE[e.type],st=stats(e.type,e.lvl,e),bf=bansheeOn(e),bench=S.bench.includes(e),support=!!base.support;
   name=NAMES[e.type];portrait=USPR[e.type];[role,note]=TAC_ROLES[e.type];stars=e.temp?'':'★'.repeat(e.lvl);

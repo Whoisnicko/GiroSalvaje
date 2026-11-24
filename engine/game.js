@@ -37,7 +37,7 @@ function noise(dur, vol = .2, freq = 1200, when = 0, dest, type = 'lowpass'){
 }
 function sfx(name){
   if (!AU.ctx || !AU.sfx) return;
-  const now = AU.ctx.currentTime, gap = { hit:.05, arrow:.06, fire:.12, enemyHit:.07, claw:.06, bite:.06, orb:.05, orbHit:.05, fireLaunch:.1, boom:.1, clank:.07, clash:.07, bolt:.08, grunt:.08, zap:.15, raise:.2, wail:1.5, arcaneBlock:.10, arcaneBreak:.15 }[name] || 0;
+  const now = AU.ctx.currentTime, gap = { hit:.05, arrow:.06, fire:.12, enemyHit:.07, claw:.06, bite:.06, orb:.05, orbHit:.05, fireLaunch:.1, boom:.1, clank:.07, clash:.07, bolt:.08, grunt:.08, zap:.15, raise:.2, wail:1.5, arcaneBlock:.10, arcaneBreak:.15, arcaneSoul:.08 }[name] || 0;
   if (gap && AU.last[name] && now - AU.last[name] < gap) return;
   AU.last[name] = now;
   switch (name) {
@@ -67,6 +67,10 @@ function sfx(name){
     case 'arcaneShield': [392,587,784].forEach((f,i)=>tone(f,.34,'sine',.095,i*.045));break;
     case 'arcaneBlock': tone(1240,.10,'sine',.10,0,null,420);break;
     case 'arcaneBreak': noise(.19,.20,5000,0,null,'highpass');tone(970,.24,'triangle',.10,0,null,160);break;
+    case 'arcaneGrasp': tone(165,.42,'triangle',.16,0,null,65);noise(.24,.13,900,0,null,'bandpass');tone(330,.3,'sine',.07,.08,null,110);break;
+    case 'arcaneFrost': noise(.30,.20,4200,0,null,'highpass');[1175,1568,2093].forEach((f,i)=>tone(f,.17,'sine',.075,i*.035));break;
+    case 'arcaneHarvest': [196,294,392].forEach((f,i)=>tone(f,.38,'triangle',.09,i*.065));break;
+    case 'arcaneSoul': tone(784,.14,'sine',.09,0,null,1175);break;
     case 'arcaneLightning': noise(.28,.22,5800,0,null,'highpass');[1800,1300,880].forEach((f,i)=>tone(f,.13,'square',.045,i*.055,null,180));break;
     case 'card': noise(.25, .14, 3000, 0, null, 'bandpass'); tone(300, .2, 'sine', .12, 0, null, 900); break;
     case 'death': tone(320, .35, 'sawtooth', .1, 0, null, 70); break;
@@ -663,7 +667,7 @@ function startFight(){
 }
 
 /* Unobstructed movement while terrain is disabled. */
-function moveHuman(e,dx,dy){ e.x += dx; e.y += dy; e.moving = true; }
+function moveHuman(e,dx,dy){ if(!dx&&!dy)return;e.x += dx; e.y += dy; e.moving = true; }
 
 // Keep an entry gap beyond the deployment zone; never spawn inside it.
 function invasionX(W){return Math.min(W-18,Math.max(zoneMax()+100,W*.86));}
@@ -741,14 +745,14 @@ function update(dt){
     if (s.k !== 'bolt' && Math.random() < .6) S.parts.push({ x:s.x, y:s.y, vx:rnd(-15, 15), vy:rnd(-15, 15), t:.25, T:.25, c:s.k === 'fire' ? 'm' : 'a', s:2.5 });
   }
   S.shots = S.shots.filter(s => !s.done);
-  const slowF = S.buff.slow > 0 ? 0.4 : 1;
   for (const e of alive) {
+    if(e.hp<=0)continue;
     e.flash = Math.max(0, e.flash - dt);
     e.root = Math.max(0, e.root - dt);
     e.moving = false;
     e.lunge = Math.max(0, (e.lunge || 0) - dt);
     if (e.kbv > 1) { const nx = e.x + e.kbv * dt; e.x = nx; e.kbv *= Math.pow(.002, dt); }
-    let sp = e.root > 0 ? 0 : e.sp * slowF;
+    let sp = spellEnemyRooted(e) ? 0 : e.sp * spellEnemySpeedFactor(e);
 
     const lonelyCleric = e.kind === 'cle' && !S.queue.some(q => q.kind !== 'cle') && !alive.some(o => o.kind !== 'cle' && o.hp > 0);
     if (S.charge) sp *= 1.5;
@@ -802,7 +806,8 @@ function update(dt){
   const deadE = S.enemies.filter(e => e.hp <= 0);
   if (deadE.length) {
     deadE.forEach(e => {
-      burst(e.x, e.y, 'red', 10, 110); burst(e.x, e.y, 'soul', 4, 50); floatText(e.x, e.y - 16, '+1 soul', 'soul', 11);feelImpact(e.x,e.y,'death');feelSoul(e.x,e.y);
+      const bonus=spellHarvestDeath(e);
+      burst(e.x, e.y, 'red', 10, 110); burst(e.x, e.y, 'soul', 4, 50); floatText(e.x, e.y - 16, bonus?'+2 souls':' +1 soul', 'soul', 11);feelImpact(e.x,e.y,'death');feelSoul(e.x,e.y);
       // Necromancer: levanta un esqueleto aliado de cada humano que cae en su área
       const n = S.units.find(u => u.type === 'N' && !u.down && u.cd <= 0 && (u.skels || 0) < skelCap(u.lvl) && dist(u, e) <= stats('N', u.lvl, u).range);
       if (n) {

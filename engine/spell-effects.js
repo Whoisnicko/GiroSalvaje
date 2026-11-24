@@ -4,9 +4,13 @@
 function spellClearWave(){
  if(!S)return;
  for(const u of [...S.units,...S.bench.filter(Boolean)]){delete u.arcaneShield;delete u.arcaneShieldTime;delete u.arcaneShieldMax;}
+ for(const foe of S.enemies||[]){delete foe.arcaneGraspUntil;delete foe.arcaneFrostUntil;delete foe.arcaneHarvestUntil;delete foe.arcaneHarvestId;}
+ S.arcaneHarvestCasts={};S.arcaneHarvestSeq=0;
  S.fx=S.fx.filter(f=>!String(f.k).startsWith('arcane'));
 }
 function spellAdvance(dt){
+ // Fight-time deadlines persist across saves; retain a cast through its expiry tick for death accounting.
+ if(S.arcaneHarvestCasts)for(const [id,cast] of Object.entries(S.arcaneHarvestCasts))if(cast.until<S.fightT)delete S.arcaneHarvestCasts[id];
  for(const u of S.units){
   if(!(u.arcaneShield>0&&u.arcaneShieldTime>0))continue;
   u.arcaneShieldTime=Math.max(0,u.arcaneShieldTime-dt);
@@ -43,6 +47,21 @@ function spellChain(first,d=SPELL_DATA.lightning){
  }
  return chain;
 }
+function spellTimeLeft(until){return Number.isFinite(until)?Math.max(0,until-(S.fightT||0)):0;}
+function spellEnemyRooted(e){return e.root>0||spellTimeLeft(e.arcaneGraspUntil)>0;}
+function spellEnemySpeedFactor(e){return Math.min(S.buff.slow>0?.4:1,spellTimeLeft(e.arcaneFrostUntil)>0?1-SPELL_DATA.frost.slow:1);}
+function spellArea(target,r){return S.enemies.filter(e=>e.hp>0&&Math.hypot(e.x-target.x,e.y-target.y)<=r);}
+function spellHarvestActive(e){
+ const cast=S.arcaneHarvestCasts?.[e.arcaneHarvestId];
+ return !!(cast&&cast.left>0&&spellTimeLeft(e.arcaneHarvestUntil)>0);
+}
+function spellHarvestDeath(e){
+ const cast=S.arcaneHarvestCasts?.[e.arcaneHarvestId];
+ if(!cast||cast.left<=0||!Number.isFinite(e.arcaneHarvestUntil)||e.arcaneHarvestUntil<(S.fightT||0))return 0;
+ // Consume the mark before granting the reward; one bonus per enemy even if processed twice.
+ delete e.arcaneHarvestId;delete e.arcaneHarvestUntil;cast.left--;S.gold++;
+ spellEvent('arcaneSoul',e.x,e.y,.70,{r:16});burst(e.x,e.y,'leaf',9,85);feelSoul(e.x,e.y);sfx('arcaneSoul');return 1;
+}
 function spellExecute(id,target){
  const d=SPELL_DATA[id];
  if(!d?.implemented)return 'preview only (no combat effect).';
@@ -69,6 +88,26 @@ function spellExecute(id,target){
   if(points.length)spellEvent('arcaneLightning',points[0].x,points[0].y,.52,{points});
   sfx('arcaneLightning');return chain.length+' enemies struck · '+d.damage.slice(0,chain.length).join(' / ')+' damage.';
  }
+ if(id==='grasp'||id==='frost'||id==='harvest'){
+  const targets=spellArea(target,d.r),until=(S.fightT||0)+d.duration;
+  if(id==='grasp'){
+   for(const foe of targets)foe.arcaneGraspUntil=Math.max(foe.arcaneGraspUntil||0,until);
+   spellEvent('arcaneGrasp',target.x,target.y,.75,{r:d.r});burst(target.x,target.y,'a',14,85);sfx('arcaneGrasp');
+   return targets.length+' enemies rooted · '+d.duration+'s.';
+  }
+  if(id==='frost'){
+   for(const foe of targets)foe.arcaneFrostUntil=Math.max(foe.arcaneFrostUntil||0,until);
+   spellEvent('arcaneFrost',target.x,target.y,.80,{r:d.r});burst(target.x,target.y,'soul',18,120);sfx('arcaneFrost');
+   return targets.length+' enemies slowed · '+Math.round(d.slow*100)+'% · '+d.duration+'s.';
+  }
+  if(targets.length){
+   S.arcaneHarvestCasts ||= {};S.arcaneHarvestSeq=(S.arcaneHarvestSeq||0)+1;
+   const castId=String(S.arcaneHarvestSeq);S.arcaneHarvestCasts[castId]={left:d.bonusCap,until};
+   for(const foe of targets){foe.arcaneHarvestId=castId;foe.arcaneHarvestUntil=until;}
+  }
+  spellEvent('arcaneHarvest',target.x,target.y,.8,{r:d.r});burst(target.x,target.y,'leaf',14,90);sfx('arcaneHarvest');
+  return targets.length+' marked · up to '+d.bonusCap+' bonus souls in '+d.duration+'s.';
+ }
  return 'preview only.';
 }
 function spellDraw(){
@@ -86,6 +125,17 @@ function spellDraw(){
   if(!minimal){ctx.strokeStyle='#d8fbff';ctx.lineWidth=1;ctx.setLineDash([4,5]);circle(x,y,r+3);ctx.stroke();ctx.setLineDash([]);for(let i=0;i<6;i++){const a=i*Math.PI/3+t*.8;ctx.fillStyle='#c5f7ff';ctx.fillRect(x+Math.cos(a)*r-1.5,y+Math.sin(a)*r-1.5,3,3);}}
   ctx.globalAlpha=1;ctx.fillStyle='#101923';ctx.fillRect(x-r,y-r-8,2*r,4);ctx.fillStyle='#80d9ff';ctx.fillRect(x-r,y-r-8,2*r*ratio,4);ctx.restore();
  }
+ // Status indicators follow individual enemies; the initial area is not a lingering hazard.
+ for(const foe of S.enemies){
+  if(foe.hp<=0)continue;
+  const x=foe.x,y=foe.y,r=foe.r+6;
+  const root=spellTimeLeft(foe.arcaneGraspUntil),frost=spellTimeLeft(foe.arcaneFrostUntil),mark=spellHarvestActive(foe);
+  if(!root&&!frost&&!mark)continue;ctx.save();
+  if(root){ctx.strokeStyle='#b49af1';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(x,y+foe.r*.65,r,6,0,0,Math.PI*2);ctx.stroke();if(!minimal){for(const side of [-1,1]){const xx=x+side*(r-3),yy=y+foe.r*.55;ctx.fillStyle='#7150a4';ctx.strokeStyle='#d3b8ff';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(xx-3,yy+5);ctx.lineTo(xx-5,yy-7);ctx.lineTo(xx-3,yy-13);ctx.lineTo(xx,yy-8);ctx.lineTo(xx+2,yy-16);ctx.lineTo(xx+4,yy-9);ctx.lineTo(xx+5,yy-12);ctx.lineTo(xx+6,yy+4);ctx.closePath();ctx.fill();ctx.stroke();}}}
+  if(frost){ctx.strokeStyle='#83e0ff';ctx.lineWidth=1.5;ctx.beginPath();ctx.ellipse(x,y+foe.r*.70,r+3,8,0,0,Math.PI*2);ctx.stroke();if(!minimal){for(let i=0;i<4;i++){const a=i*Math.PI/2+(reduced?0:t*.6);const xx=x+Math.cos(a)*(r+1),yy=y+Math.sin(a)*r*.58;ctx.fillStyle='#b7edff';ctx.fillRect(xx-1,yy-3,2,6);ctx.fillRect(xx-3,yy-1,6,2);}}}
+  if(mark){const yy=y-foe.r-13;ctx.fillStyle='#89ebac';ctx.strokeStyle='#203d31';ctx.lineWidth=1.3;ctx.beginPath();ctx.moveTo(x,yy-5);ctx.lineTo(x+5,yy);ctx.lineTo(x,yy+5);ctx.lineTo(x-5,yy);ctx.closePath();ctx.fill();ctx.stroke();}
+  ctx.restore();
+ }
  for(const f of S.fx){
   if(!String(f.k).startsWith('arcane'))continue;
   const a=Math.max(0,f.t/f.T),p=1-a;
@@ -97,6 +147,19 @@ function spellDraw(){
    if(!minimal){
     const n=soft?10:22;
     for(let i=0;i<n;i++){const ang=i*2.399963+f.seed,dist=r*(.15+.77*((i*17%23)/23))*Math.min(1,.3+p*2.1),x=f.x+Math.cos(ang)*dist,y=f.y+Math.sin(ang)*dist;const w=5+(i%4)*3,h=(10+(i%5)*5)*(1-p*.5);ctx.globalAlpha=a*.85;ctx.fillStyle=i%3?'#ec5e29':'#ffce67';ctx.beginPath();ctx.moveTo(x-w,y);ctx.quadraticCurveTo(x-w*.5,y-h*.45,x+Math.sin(ang)*5,y-h);ctx.quadraticCurveTo(x+w,y-h*.4,x+w,y);ctx.closePath();ctx.fill();ctx.fillStyle='#fff0b2';ctx.fillRect(x-1,y-4,2,4);}
+   }
+  }else if(['arcaneGrasp','arcaneFrost','arcaneHarvest','arcaneSoul'].includes(f.k)){
+   const r=f.r,rr=reduced?r:r*Math.min(1,.28+p*2),color=f.k==='arcaneGrasp'?'#b99af5':f.k==='arcaneFrost'?'#a8eaff':'#90e9a8';
+   if(!minimal)glow(f.x,f.y,rr,color,a*(soft?.12:.25));
+   ctx.globalAlpha=a;ctx.strokeStyle=color;ctx.lineWidth=2;circle(f.x,f.y,rr);ctx.stroke();
+   if(!minimal){
+    const n=soft?8:16;for(let i=0;i<n;i++){const ang=i*2.399963+f.seed,dist=rr*(.35+.60*((i*13%17)/17)),x=f.x+Math.cos(ang)*dist,y=f.y+Math.sin(ang)*dist;
+     ctx.save();ctx.translate(x,y);ctx.strokeStyle=color;ctx.fillStyle=color;ctx.lineWidth=1.2;
+     if(f.k==='arcaneFrost'){ctx.rotate(ang);ctx.beginPath();ctx.moveTo(0,-10*a);ctx.lineTo(4,0);ctx.lineTo(0,5);ctx.lineTo(-4,0);ctx.closePath();ctx.fill();ctx.stroke();}
+     else if(f.k==='arcaneGrasp'){ctx.beginPath();ctx.moveTo(-4,4);ctx.lineTo(-5,-3-9*a);ctx.lineTo(-2,-2-5*a);ctx.lineTo(0,-5-10*a);ctx.lineTo(3,-3-6*a);ctx.lineTo(5,4);ctx.closePath();ctx.fill();}
+     else{ctx.beginPath();ctx.ellipse(0,-8*p,3,5,0,0,Math.PI*2);ctx.fill();ctx.stroke();}
+     ctx.restore();
+    }
    }
   }else if(f.k==='arcaneLightning'){
    const pts=[{x:f.points[0].x,y:-12},...f.points];
