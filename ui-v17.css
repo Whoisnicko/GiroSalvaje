@@ -1,0 +1,44 @@
+
+/* v17: reference-inspired presentation only; existing game assets and mechanics. */
+:root{--bg:#10141d;--panel:#171c24;--panel-2:#262a30;--gold:#dfb475;--line:#785b3c;--cream:#eee5d7;--muted:#bdb8b0;--soul:#62dafa}
+body{margin:0;background:radial-gradient(ellipse at top,#29334b,#10141d 70%)}
+.wrap{max-width:1600px;gap:10px;padding:12px 14px 30px}
+.wrap>*{min-width:0}header{background:linear-gradient(#292a30,#141820);border:2px solid #967044;padding:8px 12px;box-shadow:inset 0 0 0 2px #15181e,0 3px 0 #090b10}
+.chip,.snd,.btn,.box,.cabinet,.lane,.table,.menu-card{border-radius:0!important}
+.chip{padding:6px 13px;min-height:0}
+.box,.cabinet,.table,.lane,.menu-card{border:3px double #bc8b50;box-shadow:0 0 0 2px #15171c,0 0 0 3px #6e5035,inset 0 0 0 2px #16171c,0 5px 12px #0007;background-color:#171c24}
+.lane{background:#172631}.lane canvas{height:clamp(300px,37vw,480px)}
+.cabinet:before{font-size:17px;color:#ffe1ad;background:linear-gradient(#42342a,#211f23);border:3px double #ac7e49}
+.reels{box-sizing:border-box;border:3px double #ffc36d;box-shadow:0 0 13px #ffad5355,inset 0 0 18px #000}
+.cell{background:radial-gradient(ellipse,#353541,#141820 75%);border:2px solid #8f7558}
+.btn.spin{background:linear-gradient(#af6a25,#6a3512)!important;border:4px double #f5bd70!important;box-shadow:inset 0 0 0 2px #7a411c,0 3px #080b12;color:#fff1d6!important;text-shadow:1px 2px #3c210e}
+.btn.fight{background:linear-gradient(#24596a,#17313b)}
+.card{border:3px double var(--edge,#bd935c);min-height:210px;width:156px;background:linear-gradient(155deg,#30333d,#141820);padding:6px}
+.card .art{min-height:66px;height:66px}.card .cd{min-height:56px;background:#181c24;border-color:#66513d}
+.card .cn{color:#ffe4bb}.hand{padding:8px 5px 12px}
+#front{background:linear-gradient(0deg,#080d18aa,transparent 48%,#080d1870),url("assets/battlefield.png") center/cover no-repeat,#151e32}
+#front:before{opacity:.55}
+#homeView{width:min(980px,100%)}#homeView .menu-layout{display:grid;grid-template-columns:1fr;gap:14px;justify-items:center;text-align:center}
+#homeView .menu-layout>div:first-child{width:100%}
+#homeView .brand{display:inline-block;font-size:clamp(38px,7vw,92px);line-height:1;margin:12px auto 4px;padding:14px 24px;background:linear-gradient(#35302b,#151a23);border:5px double #c69b5b;box-shadow:0 0 0 3px #242129,0 5px 12px #000c;text-shadow:2px 3px #6f4729,4px 5px #17141b;color:#f9ce88;letter-spacing:.015em}
+#homeView .brand em{color:inherit}#homeView .subtitle{display:table;margin:0 auto;padding:5px 22px;border:3px double #a78155;background:#181b24;color:#e6d4b5;font:bold clamp(13px,2vw,20px) Georgia,serif;letter-spacing:.12em}
+#homeView .hero-copy{display:none}#homeView .hero-cast{height:90px;max-width:340px;margin:10px auto 0}
+#homeView .menu-layout>div:first-child>.menu-small{display:none}
+#homeView .menu-card{width:min(320px,100%);box-sizing:border-box;background:#101822e8;padding:14px 20px;text-align:left}
+#homeView .menu-actions{margin-top:8px;gap:7px}
+#homeView .menu-actions button{padding:9px 12px;background:linear-gradient(#34343b,#171c24);border:3px double #b38851!important}
+#homeView .menu-actions .primary{background:linear-gradient(#24637a,#132f43)!important;border:3px double #8be7ff!important;box-shadow:0 0 12px #4bdcff70;color:#e8faff!important}
+#homeView .menu-card input{padding:9px 10px}
+@media(min-width:1200px){
+.wrap{display:grid;grid-template-columns:minmax(225px,260px) minmax(0,1fr) minmax(225px,270px);align-items:start}
+.wrap>header{grid-column:1/-1;grid-row:1}
+.wrap>.cabinet{grid-column:1;grid-row:2/span 4}
+.wrap>.lane{grid-column:2;grid-row:2}
+.wrap>.intel{grid-column:3;grid-row:2/span 4;display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
+#unitBox{grid-row:1}.foes{grid-template-columns:minmax(0,1fr)}
+.wrap>.save-line{grid-column:2;grid-row:3}.wrap>.legend{grid-column:2;grid-row:4}
+.wrap>.table{grid-column:2;grid-row:5;grid-template-columns:90px minmax(0,1fr)}
+.wrap>.coach{grid-column:1/-1;grid-row:6}
+}
+@media(max-width:1199px){.lane canvas{height:clamp(290px,40vw,420px)}}
+@media(max-width:620px){#homeView .brand{padding:12px 8px;font-size:clamp(28px,8vw,48px)}.lane canvas{height:min(290px,calc((100vw - 26px)*.7666667))}.wrap{padding:10px}.card{width:145px}.reels{max-width:270px}}

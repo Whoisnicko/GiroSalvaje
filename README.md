@@ -1,5 +1,5 @@
 # Stop Humans!
 
-A tactical dark-fantasy autobattler. v16.
+Dark-fantasy tactical autobattler. v17.1 — reference-inspired interface pass, existing art retained.
 
-See PLAYBOOK-v16.md for deployment and tests. Previous versions remain in Git history.
+See PLAYBOOK-v17.md.
