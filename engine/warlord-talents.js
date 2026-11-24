@@ -2,7 +2,7 @@
 const TALENT_KEY='gs22.warlordTalents',TALENT_MILESTONES=Object.freeze([1,2,3,4,5,6,7,8,10]);
 const TALENT_BRANCHES=Object.freeze({
  berserker:{name:'Berserker',color:'#e38373',nodes:[{name:'Cruel Edge',desc:'+20% basic and Cleave damage'},{name:'Bloodlust',desc:'+2 rage per basic hit'},{name:'Crimson Tempest',desc:'+40% Bloodstorm damage per pulse'}]},
- juggernaut:{name:'Juggernaut',color:'#a7c8df',nodes:[{name:'Iron Will',desc:'+20% maximum health'},{name:'Unbroken',desc:'15% less incoming hero damage'},{name:'Phantom Bulwark',desc:'Shadow Charge +30px distance and +0.08s immunity'}]},
+ juggernaut:{name:'Juggernaut',color:'#a7c8df',nodes:[{name:"Death's Challenge",desc:'+20% maximum health; F taunts nearby enemies for 4s (bosses 2s)'},{name:'Retaliation',desc:'15% counterattack chance; +5 points per failed eligible hit, up to 65%; 24 area damage'},{name:'Iron Skin',desc:'G reduces incoming damage by 60% for 5s'}]},
  commander:{name:'Commander',color:'#e7c27f',nodes:[{name:'Rallying Banner',desc:'+30% War Cry radius'},{name:'Unyielding Legion',desc:'+2s War Cry duration'},{name:'Lord of the Horde',desc:'War Cry +35% damage and +30% attack rate in total'}]}
 });
 const talentInt=(v,max)=>Number.isFinite(v)?Math.max(0,Math.min(max,Math.floor(v))):0;
@@ -47,7 +47,7 @@ function talentSkill(id,h=S?.hero){
  const d={...MARTIAL_SKILLS[id]};
  if(id==='cleave'&&talentHas(h,'berserker',1))d.damage=Math.round(d.damage*1.2);
  if(id==='storm'&&talentHas(h,'berserker',3))d.damage*=1.4;
- if(id==='charge'&&talentHas(h,'juggernaut',3)){d.distance+=30;d.duration+=.08;}
+ if(id==='cry'&&talentHas(h,'juggernaut',1))return {...JUGGERNAUT_RULES.taunt,key:'F',code:'KeyF'};
  if(id==='cry'){if(talentHas(h,'commander',1))d.radius*=1.3;if(talentHas(h,'commander',2))d.duration+=2;if(talentHas(h,'commander',3)){d.damageBonus+=.1;d.speedBonus+=.1;}}
  return d;
 }

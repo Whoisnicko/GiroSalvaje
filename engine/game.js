@@ -49,6 +49,9 @@ function sfx(name){
     case 'fireLaunch': noise(.22, .16, 1100, 0, null, 'bandpass'); tone(180, .2, 'sawtooth', .05, 0, null, 420); break;
     case 'boom': noise(.5, .42, 320); tone(75, .45, 'sine', .42, 0, null, 32); break;                          // explosión del dragón
     case 'clank': tone(1850, .09, 'square', .05); tone(2500, .07, 'square', .04, .012); noise(.06, .1, 5200, 0, null, 'highpass'); break; // armadura
+    case 'heroCounter': noise(.22,.20,1800,0,null,'bandpass');tone(290,.18,'triangle',.13,0,null,100);break;
+    case 'heroTaunt': tone(115,.45,'sawtooth',.12,0,null,65);noise(.32,.10,600);break;
+    case 'heroSkin': tone(180,.42,'triangle',.12,0,null,85);tone(520,.24,'sine',.07);break;
     case 'heroCleave': noise(.16,.24,1600,0,null,'bandpass');tone(370,.16,'triangle',.12,0,null,130);break;
     case 'heroStorm': noise(.16,.12,2200,0,null,'bandpass');tone(160,.14,'triangle',.08,0,null,90);break;
     case 'heroCharge': noise(.22,.18,1300,0,null,'bandpass');tone(220,.2,'sine',.08,0,null,630);break;
@@ -763,9 +766,10 @@ function update(dt){
     if (e.kbv > 1) { const nx = e.x + e.kbv * dt; e.x = nx; e.kbv *= Math.pow(.002, dt); }
     let sp = spellEnemyRooted(e) ? 0 : e.sp * spellEnemySpeedFactor(e);
 
+    const forcedHero=martialTaunted(e)?S.hero:null;
     const lonelyCleric = e.kind === 'cle' && !S.queue.some(q => q.kind !== 'cle') && !alive.some(o => o.kind !== 'cle' && o.hp > 0);
     if (S.charge) sp *= 1.5;
-    if (e.kind === 'cle' && !lonelyCleric && !S.charge) {
+    if (e.kind === 'cle' && !forcedHero && !lonelyCleric && !S.charge) {
       // Cleric: se queda atrás y cura a los humans cercanos.
       e.cd -= dt;
       if (e.cd <= 0) {
@@ -780,8 +784,8 @@ function update(dt){
     }
     if (e.kind === 'bal') {
       let tgt = null, best = 1e9; const rng = e.range;
-      for (const u of heroTargets()) { if (u.down||u.hp<=0) continue; const d = dist(e, u); if (d <= rng && d < best) { best = d; tgt = u; } }
-      const altarInRange = e.x - WALL_X <= rng;
+      for (const u of (forcedHero?[forcedHero]:heroTargets())) { if (u.down||u.hp<=0) continue; const d = dist(e, u); if (d <= rng && d < best) { best = d; tgt = u; } }
+      const altarInRange = !forcedHero && e.x - WALL_X <= rng;
       if (tgt || altarInRange) {
         e.cd -= dt;
         if (e.cd <= 0) {
@@ -790,11 +794,11 @@ function update(dt){
           else S.shots.push({ k:'bolt', x:e.x - 8, y:e.y, altar:true, tx:WALL_X - 6, ty:e.y, sp:420, dmg });
           e.lunge = .12; sfx('bolt');
         }
-      } else moveHuman(e, -sp * dt, 0);
+      } else if(forcedHero){const d=dist(e,forcedHero);if(d>0)moveHuman(e,(forcedHero.x-e.x)/d*sp*dt,(forcedHero.y-e.y)/d*sp*dt);}else moveHuman(e, -sp * dt, 0);
       continue;
     }
-    let tgt = null;
-    if (e.kind !== 'ant') {
+    let tgt = forcedHero;
+    if (!tgt && e.kind !== 'ant') {
       let best = 1e9;
       for (const u of heroTargets()) {
         if (u.down||u.hp<=0) continue;

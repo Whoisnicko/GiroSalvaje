@@ -103,8 +103,9 @@ function heroAdvance(dt){
 function heroDamageTarget(u,amount){
  if(!heroIsTarget(u))return spellDamageAlly(u,amount);
  if(!heroActive()||!Number.isFinite(amount)||amount<=0||sandboxGod()||martialInvulnerable())return 0;
- const dealt=Math.min(u.hp,amount*(talentHas(u,'juggernaut',2)?.85:1));martialGain(dealt*MARTIAL_RULES.damageRage);u.hp-=dealt;
- if(u.hp<=0){u.hp=0;u.status='fallen';u.down=true;u.martial.storm=null;u.martial.charge=null;heroClearKeys();burst(u.x,u.y,'gold',18,110);S.fx.push({k:'ring',x:u.x,y:u.y,r:35,c:'red',t:.6,T:.6});floatText(u.x,u.y-22,'Warlord fallen','red',12);sfx('death');heroRender();persist();}
+ const dealt=Math.min(u.hp,amount*(martialSkinActive(u)?1-JUGGERNAUT_RULES.skin.reduction:1));martialGain(dealt*MARTIAL_RULES.damageRage);u.hp-=dealt;
+ if(u.hp<=0){u.hp=0;u.status='fallen';u.down=true;u.martial.storm=null;u.martial.charge=null;u.martial.skinLeft=0;heroClearKeys();burst(u.x,u.y,'gold',18,110);S.fx.push({k:'ring',x:u.x,y:u.y,r:35,c:'red',t:.6,T:.6});floatText(u.x,u.y-22,'Warlord fallen','red',12);sfx('death');heroRender();persist();}
+ if(u.hp>0&&dealt>0)martialRetaliate(u);
  return dealt;
 }
 function heroHeal(){if(heroActive())S.hero.hp=S.hero.maxHp;}
@@ -165,7 +166,7 @@ function heroRender(){
 
 /* Original procedural armor, cape and blade. All shapes render without remote assets. */
 function heroDraw(h,t,air=0,descending=false){
- const d=talentHeroStats(h),still=feelReduced(),walk=h.moving&&!still?Math.sin(t*13):0,sw=h.martial?.storm&&!still?Math.sin(t*16)*.9:h.lunge>0&&!still?h.lunge/.20:0,z=still?0:air;
+ const d=talentHeroStats(h),still=feelReduced(),walk=h.moving&&!still?Math.sin(t*13):0,sw=h.martial?.counterFlash>0&&!still?Math.sin(t*24)*1.4:h.martial?.storm&&!still?Math.sin(t*16)*.9:h.lunge>0&&!still?h.lunge/.20:0,z=still?0:air;
  ctx.save();ctx.translate(Math.round(h.x),Math.round(h.y));ctx.fillStyle='#0a1017';ctx.globalAlpha=descending?.25:.55;ctx.beginPath();ctx.ellipse(0,17,Math.max(9,19-z*.11),5,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
  ctx.strokeStyle='#e4b675';ctx.lineWidth=1.3;ctx.beginPath();ctx.ellipse(0,14,20,7,0,0,Math.PI*2);ctx.stroke();
  ctx.translate(0,-z);ctx.save();ctx.scale(h.facing||1,1);ctx.translate(0,-Math.abs(walk)*2);
