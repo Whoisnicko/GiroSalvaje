@@ -12,3 +12,12 @@
 .hades-still .hades-aura,.hades-still .hades-flame{animation:none;opacity:.55}
 @media(max-width:800px){.hades-portrait.gaze-ready{min-height:230px;max-height:260px}.hades-stage{width:min(230px,72%);top:45%;left:50%}.hades-caption{padding:12px 8px 8px}}
 @media(prefers-reduced-motion:reduce){.hades-aura,.hades-flame{animation:none}}
+
+/* v19-alpha.12 — subtle breathing, transaction reaction, fixed bottom anchor. */
+.gaze-ready .hades-gaze{transform-origin:50% 94%;animation:hades-breathe 4.8s ease-in-out infinite}
+@keyframes hades-breathe{0%,100%{transform:scale(1,1)}42%{transform:scale(1.004,1.013)}65%{transform:scale(1.002,1.007)}}
+.hades-reacting .hades-gaze{background-image:url("assets/ui/hades-reaction-v19.webp");background-size:300% 100%;background-position:var(--reaction-x,0%) 50%}
+.hades-laughing .hades-gaze{animation:hades-chuckle .30s ease-in-out infinite;transform-origin:50% 92%}
+@keyframes hades-chuckle{0%,100%{transform:scale(1,1)}50%{transform:scale(1.004,1.014) translateY(-.25%)}}
+.hades-still .hades-gaze{animation:none;transform:none}
+@media(prefers-reduced-motion:reduce){.gaze-ready .hades-gaze,.hades-laughing .hades-gaze{animation:none;transform:none}}

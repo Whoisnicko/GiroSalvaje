@@ -20,7 +20,7 @@ function renderArtifactShelf(){
  box.innerHTML='<h3>Artifacts <b>'+ids.length+'/6</b></h3><div class="artifact-owned">'+(ids.length?ids.map(id=>{const a=SHOP_ARTIFACTS[id];return '<span title="'+a.desc+'">'+artifactArt(id)+'<b>'+a.name+'</b></span>';}).join(''):'<span class="artifact-empty">No artifacts yet.</span>')+'</div><button class="btn shop-entry" data-act="shop" '+(shopAvailable()?'':'disabled')+'>⚒ Soul Shop</button>';
  document.querySelectorAll('[data-act="shop"]').forEach(b=>b.disabled=!shopAvailable());
 }
-function showShop(){
+function showShop(purchased=false){
  if(!shopAvailable())return;
  const o=$('#ov2');
  const entries=Object.entries(SHOP_ARTIFACTS).map(([id,a])=>{
@@ -28,7 +28,7 @@ function showShop(){
   return '<article class="shop-item relic-'+id+'"><div class="shop-art">'+artifactArt(id)+'</div><div class="shop-item-info"><h3>'+a.name+'</h3><small>'+a.kind+' · run upgrade</small><p>'+a.desc+'</p></div><button class="btn shop-buy" data-act="artifactbuy" data-id="'+id+'" '+(ok?'':'disabled')+'>'+(owned?'✓ OWNED':'<span aria-hidden="true">◆</span> '+a.price+' souls')+'</button></article>';
  }).join('');
  o.innerHTML='<div class="panel soul-shop hades-shop" role="dialog" aria-modal="true" aria-labelledby="shopTitle"><div class="hades-portrait"><div class="hades-stage" aria-hidden="true"><div class="hades-aura"></div><div class="hades-gaze"></div><div class="hades-flame"></div></div><div class="hades-caption"><strong>HADES</strong><span>Lord of the Underworld</span><p>“Power has a price, guardian.”</p></div></div><div class="shop-content"><header class="shop-top"><div><h2 id="shopTitle">Soul Shop</h2><p>Relics from the Underworld · one of each per run</p></div><span class="shop-balance">◆ '+S.gold+' souls</span></header><div class="shop-grid">'+entries+'</div><footer class="shop-foot"><span>Permanent upgrades · Preparation only</span><button class="go" data-act="shopclose">Return to battle</button></footer></div></div>';
- o.hidden=false;startHadesGaze(o.querySelector('.hades-portrait'));o.querySelector('[data-act="shopclose"]').focus();
+ o.hidden=false;startHadesGaze(o.querySelector('.hades-portrait'),purchased);o.querySelector('[data-act="shopclose"]').focus();
 }
 function buyArtifact(id){
  if(!shopAvailable()||!Object.hasOwn(SHOP_ARTIFACTS,id)||artifactOwned(id))return false;
@@ -38,5 +38,5 @@ function buyArtifact(id){
  if(id==='boneplate'){
   for(const u of allMine()){const hp=stats(u.type,u.lvl,u).hp,old=u.maxHp;u.maxHp=hp;u.hp=Math.min(hp,u.hp+Math.max(0,hp-old));}
  }
- S.confirmFight=false;setResult('Artifact purchased',a.name+' · '+a.desc);sfx('coin');renderUI();showShop();return true;
+ S.confirmFight=false;setResult('Artifact purchased',a.name+' · '+a.desc);sfx('coin');renderUI();showShop(true);return true;
 }
