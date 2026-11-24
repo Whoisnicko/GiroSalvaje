@@ -913,6 +913,7 @@ function endWave(){
   const done = S.wave;
   const learned=knowledgeWave(done),knowledgeNote=knowledgeAnnounce(learned),valor=talentWave(done),valorNote=valor?' · +'+valor+' permanent Valor Point'+(valor===1?'':'s')+'.':'';if(valor){bigMsg('VALOR · +'+valor+' POINT');sfx('fusion');}
   S.wave++;
+  if(heroClass(S).id==='warlord')S.hero=heroNew('warlord',S.hero.build,S.wave);
   if (done >= MAX_WAVE) { S.phase = 'win'; renderUI(); return endRun(true); }
   S.gold += 3; S.spinsLeft = S.spinsPer; S.bought = 0; S.phase = 'prep';
   genTerrain();

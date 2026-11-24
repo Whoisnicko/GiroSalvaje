@@ -6,24 +6,30 @@ const HERO_CLASSES=Object.freeze({
 function heroClassId(id){return Object.hasOwn(HERO_CLASSES,id)?id:'sorcerer';}
 function heroClass(state){return HERO_CLASSES[heroClassId(state?.hero?.classId)];}
 function heroUsesMagic(state){return !!state&&heroClass(state).magic;}
-function heroNew(id,build=null){
- const d=HERO_CLASSES[heroClassId(id)],h={version:3,classId:d.id,status:'throne',build:talentBuild(build)};if(d.id!=='warlord')h.build=talentBuild(null);
+// Shared late-wave hero progression.
+const CLASS_BALANCE=Object.freeze({startAfter:3,damagePerWave:.18,healthPerWave:.12,maxWave:10});
+function classWave(w){return Number.isFinite(w)?Math.max(1,Math.min(CLASS_BALANCE.maxWave,Math.floor(w))):1;}
+function classDamageFactor(w){return 1+Math.max(0,classWave(w)-CLASS_BALANCE.startAfter)*CLASS_BALANCE.damagePerWave;}
+function classHealthFactor(w){return 1+Math.max(0,classWave(w)-CLASS_BALANCE.startAfter)*CLASS_BALANCE.healthPerWave;}
+function classDamage(value,w){return Math.round(value*classDamageFactor(w));}
+function heroNew(id,build=null,wave=1){
+ const d=HERO_CLASSES[heroClassId(id)],h={version:4,classId:d.id,status:'throne',wave:classWave(wave),build:talentBuild(build)};if(d.id!=='warlord')h.build=talentBuild(null);
  if(d.id==='warlord')Object.assign(h,{hp:talentHeroStats(h).maxHp,maxHp:talentHeroStats(h).maxHp,x:0,y:0,cd:0,flash:0,lunge:0,facing:1,moving:false,down:false,descentProgress:0,descentTarget:null,martial:martialNew()});
  return h;
 }
 function heroNormalize(state,width=420){
- const h=heroNew(state?.hero?.classId,state?.hero?.build),old=state?.hero,d=h.classId==='warlord'?talentHeroStats(h):HERO_CLASSES[h.classId];
+ const h=heroNew(state?.hero?.classId,state?.hero?.build,state?.wave),old=state?.hero,d=h.classId==='warlord'?talentHeroStats(h):HERO_CLASSES[h.classId];
  if(d.id!=='warlord'||state.phase!=='fight'||!old)return h;
  if(old.status==='fallen'){h.status='fallen';h.hp=0;h.down=true;return h;}
  if(old.status==='descending'&&Number.isFinite(old.descentProgress)){h.status='descending';h.descentProgress=Math.max(0,Math.min(.999999,old.descentProgress));h.descentTarget=heroClampLanding(old.descentTarget,width)||heroDefaultLanding(width);return h;}
  if(old.status==='active'&&Number.isFinite(old.x)&&Number.isFinite(old.y)&&Number.isFinite(old.hp)){
-  h.status=old.hp>0?'active':'fallen';h.down=h.status==='fallen';h.hp=Math.max(0,Math.min(d.maxHp,old.hp));
+  h.status=old.hp>0?'active':'fallen';h.down=h.status==='fallen';h.hp=Math.max(0,Math.min(d.maxHp,old.hp*(Number.isFinite(old.maxHp)&&old.maxHp>0?d.maxHp/old.maxHp:1)));
   h.x=Math.max(WALL_X+d.radius,Math.min(Math.max(420,width)-d.radius,old.x));h.y=Math.max(d.radius,Math.min(WORLD_H-d.radius,old.y));
   h.cd=Number.isFinite(old.cd)?Math.max(0,Math.min(d.attackInterval,old.cd)):0;h.facing=old.facing===-1?-1:1;h.martial=martialNormalize(old.martial,h.facing,h);if(h.down){h.martial.storm=null;h.martial.charge=null;}
  }
  return h;
 }
-function heroResetWave(){heroCancelAim(false);heroClearKeys();martialResetWave();if(S)S.hero=heroNew(heroClass(S).id,S.hero?.build);}
+function heroResetWave(){heroCancelAim(false);heroClearKeys();martialResetWave();if(S)S.hero=heroNew(heroClass(S).id,S.hero?.build,S.wave);}
 function heroActive(state=S){return !!state&&state.phase==='fight'&&heroClass(state).id==='warlord'&&state.hero.status==='active'&&state.hero.hp>0;}
 function heroTargets(){return heroActive()?S.units.concat(S.hero):S.units;}
 function heroRefs(state){return heroClass(state).id==='warlord'&&state.hero?[state.hero]:[];}
@@ -80,7 +86,7 @@ function heroAdvanceKnockback(e,dt,width){
 }
 function heroLand(){
  if(S.hero.status!=='descending')return false;
- const h=S.hero,d=heroClass(S),pos=heroLandingPoint();h.status='active';h.descentProgress=1;h.x=pos.x;h.y=pos.y;h.cd=d.attackInterval*.5;
+ const h=S.hero,d=talentHeroStats(h),pos=heroLandingPoint();h.status='active';h.descentProgress=1;h.x=pos.x;h.y=pos.y;h.cd=d.attackInterval*.5;
  const targets=heroImpactTargets(h),hits=targets.length;for(const e of targets){hitEnemy(e,d.descentDamage,'steel',{kb:0});heroImpactPush(e,h,d.descentKnockback);}
  S.fx.push({k:'heroLanding',x:h.x,y:h.y,r:d.descentRadius,t:.62,T:.62});burst(h.x,h.y,'gold',18,145);burst(h.x,h.y,'steel',14,110);feelImpact(h.x,h.y,'altar',null,d.descentRadius,true);S.shake=Math.max(S.shake||0,4);sfx('heroLand');
  floatText(h.x,h.y-42,hits?'Descent · '+hits+' hit':'Descent of the Warlord','gold',12);heroRender();persist();return true;
@@ -156,7 +162,7 @@ function heroSelect(id){
 function heroRender(){
  const panel=document.getElementById('heroHud');if(!panel)return;
  const active=!!S&&['prep','fight'].includes(S.phase)&&!heroUsesMagic(S);panel.hidden=!active;if(!active)return;
- document.getElementById('heroHudName').textContent=heroClass(S).name+(S.hero.build?.rank?' · '+TALENT_BRANCHES[S.hero.build.branch].name+' '+S.hero.build.rank:'');
+ document.getElementById('heroHudName').textContent=heroClass(S).name+(S.hero.build?.rank?' · '+TALENT_BRANCHES[S.hero.build.branch].name+' '+S.hero.build.rank:'');document.getElementById('heroPower').textContent='Wave '+S.hero.wave+' · '+talentHeroStats(S.hero).damage+' basic damage · '+talentHeroStats(S.hero).descentDamage+' Descent damage';
  const h=S.hero,d=talentHeroStats(h),button=document.getElementById('heroDeploy');
  document.getElementById('heroHudStatus').textContent=h.status==='fallen'?'Defeated · returns next wave':h.status==='active'?'Deployed · WASD / arrows · automatic attacks':h.status==='descending'?'Descending · impact incoming':heroAimActive()?'Click battlefield · Esc / right click to cancel':'On the throne · choose landing with Q';
  document.getElementById('heroHpText').textContent=Math.ceil(h.hp)+' / '+d.maxHp+' HP';

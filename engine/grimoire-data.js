@@ -10,9 +10,9 @@ const GRIMOIRE_LORE=Object.freeze({
 function grimoireProperties(id,d,wave=1){
  const stats=[['Mana',d.mana+' MP'],['Cooldown',d.cd+' s'],['Target',d.target==='ally'?'Guardian':d.target==='enemy'?'Human':'Area']];
  let effect='';
- if(id==='fire'){const dmg=masteryFireDamage(d,wave);stats.push(['Radius',d.r+' px'],['Damage',dmg+''],['Armor','Ignored']);effect='Instant damage to humans in the circle. No friendly fire. Damage increases by '+d.perTwoWaves+' every two waves.';}
+ if(id==='fire'){const dmg=masteryFireDamage(d,wave);stats.push(['Radius',d.r+' px'],['Damage',dmg+''],['Armor','Ignored']);if(d.burnDuration)stats.push(['Burn',masteryBurnDamage(d,wave)+' DPS · '+d.burnDuration+'s']);effect='Instant damage to humans in the circle. No friendly fire. Damage increases every two waves, with additional power from wave 4 onward.';}
  if(id==='barrier'){stats.push(['Absorption',Math.round(d.hpFraction*100)+'% max HP'],['Duration',d.duration+' s'],['Recast','Refresh']);effect='A shield absorbs incoming melee and projectile damage before health. Recasting replaces the shield.';}
- if(id==='lightning'){stats.push(['Damage',d.damage.join(' / ')],['Max targets',String(d.damage.length)],['Jump range',d.r+' px']);effect='Strikes the chosen human and jumps to nearby living enemies. Ignores physical armor. No repeat targets.';}
+ if(id==='lightning'){stats.push(['Damage',masteryLightningDamage(d,wave).join(' / ')],['Max targets',String(d.damage.length)],['Jump range',d.r+' px']);effect='Strikes the chosen human and jumps to nearby living enemies. Ignores physical armor. No repeat targets.';}
  if(id==='grasp'){stats.push(['Radius',d.r+' px'],['Root',d.duration+' s'],['Damage','None']);effect='Prevents movement, not attacks or healing. Forced displacement remains possible.';}
  if(id==='frost'){stats.push(['Radius',d.r+' px'],['Slow',Math.round(d.slow*100)+'%'],['Duration',d.duration+' s']);effect='Reduces movement speed. The strongest slow applies; slowing effects do not multiply.';}
  if(id==='harvest'){stats.push(['Radius',d.r+' px'],['Mark',d.duration+' s'],['Bonus cap','+'+d.bonusCap+' souls']);effect='Each marked human that dies grants one extra soul, up to the cap per cast. Overlapping marks replace one another.';}

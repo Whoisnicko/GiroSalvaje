@@ -36,7 +36,9 @@ function masterySpell(id,tier=masteryTier(id)){
   if(id==='frost'){d.freezeDuration=1;d.bossFreezeDuration=.5;}
  }return d;
 }
-function masteryFireDamage(d,wave){return Math.round((d.damage+d.perTwoWaves*Math.floor(Math.max(0,wave-1)/2))*(d.damageScale||1));}
+function masteryFireDamage(d,wave){return classDamage(Math.round((d.damage+d.perTwoWaves*Math.floor(Math.max(0,classWave(wave)-1)/2))*(d.damageScale||1)),wave);}
+function masteryLightningDamage(d,wave){return d.damage.map(value=>classDamage(value,wave));}
+function masteryBurnDamage(d,wave){return Math.round(d.burnDps*classDamageFactor(wave)*10)/10;}
 function masteryXp(id){
  if(!heroUsesMagic(S)||S.sandbox||S.phase!=='fight'||!knowledgeLearned(id)||!sessionRunId)return false;
  const key=sessionRunId+':'+S.wave+':'+id;if(!/^[a-zA-Z0-9_-]{1,100}:([1-9]|10):[a-z]+$/.test(key))return false;

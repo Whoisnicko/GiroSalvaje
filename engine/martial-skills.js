@@ -18,7 +18,7 @@ function martialNew(){return {rage:MARTIAL_RULES.startRage,cooldowns:{cleave:0,s
 function martialNormalize(raw,facing=1,h=null){
  const m=martialNew();if(!raw||typeof raw!=='object')return m;
  m.rage=Number.isFinite(raw.rage)?martialClamp(raw.rage,0,MARTIAL_RULES.maxRage):MARTIAL_RULES.startRage;
- for(const [id,d] of Object.entries(MARTIAL_SKILLS))m.cooldowns[id]=martialClamp(raw.cooldowns?.[id],0,d.cd);
+ for(const id of Object.keys(MARTIAL_SKILLS))m.cooldowns[id]=martialClamp(raw.cooldowns?.[id],0,talentSkill(id,h).cd);
  m.direction=martialDirection(raw.direction?.x,raw.direction?.y,facing);
  if(talentHas(h,'juggernaut',2)){const d=JUGGERNAUT_RULES.retaliation;m.retaliationChance=Number.isFinite(raw.retaliationChance)?martialClamp(raw.retaliationChance,d.chance,d.maxChance):d.chance;m.retaliationCd=martialClamp(raw.retaliationCd,0,d.cd);}
  if(talentHas(h,'juggernaut',3))m.skinLeft=martialClamp(raw.skinLeft,0,JUGGERNAUT_RULES.skin.duration);
@@ -52,7 +52,7 @@ function martialRetaliate(h,random=Math.random){
  if(m.retaliationCd>1e-7)return false;
  if(random()*100>=m.retaliationChance){m.retaliationChance=Math.min(d.maxChance,m.retaliationChance+d.increment);return false;}
  m.retaliationChance=d.chance;m.retaliationCd=d.cd;m.counterFlash=.32;h.lunge=.20;
- for(const e of martialNearby(h,d.radius))hitEnemy(e,d.damage,'steel',{kb:0});
+ for(const e of martialNearby(h,d.radius))hitEnemy(e,classDamage(d.damage,h.wave),'steel',{kb:0});
  martialEvent('counter',h.x,h.y,{r:d.radius,t:.40,T:.40});floatText(h.x,h.y-44,'Retaliation!','gold',11);sfx('heroCounter');return true;
 }
 function martialAvailability(id){
@@ -136,7 +136,7 @@ function martialRender(h){
   b.querySelector?.('b')?.replaceChildren(v.name);
   b.title=id==='cleave'?'Front arc · '+v.damage+' physical damage':id==='storm'?v.pulses+' pulses of '+v.damage+' damage · '+v.duration+'s':id==='charge'?v.distance+'px dash · '+v.duration.toFixed(2)+'s immunity':id==='skin'?'60% damage reduction · 5s':talentHas(h,'juggernaut',1)?'Taunt radius 130 · 4s · bosses 2s':'+'+Math.round(v.damageBonus*100)+'% damage · +'+Math.round(v.speedBonus*100)+'% attack rate · '+v.duration+'s';
  }
- const passive=el('heroRetaliation');passive.hidden=!talentHas(h,'juggernaut',2);passive.textContent='RETALIATION · '+m.retaliationChance+'%'+(m.retaliationCd>0?' · '+m.retaliationCd.toFixed(2)+'s recovery':' · Next eligible hit');
+ const passive=el('heroRetaliation');passive.hidden=!talentHas(h,'juggernaut',2);passive.textContent='RETALIATION · '+classDamage(JUGGERNAUT_RULES.retaliation.damage,h.wave)+' damage · '+m.retaliationChance+'%'+(m.retaliationCd>0?' · '+m.retaliationCd.toFixed(2)+'s recovery':' · Next eligible hit');
  el('heroLab').hidden=!lab;el('heroLabRage').textContent='Infinite rage: '+(lab?.infinite?'ON':'OFF');el('heroLabCd').textContent='No cooldown: '+(lab?.noCooldown?'ON':'OFF');
 }
 function martialInit(){

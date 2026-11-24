@@ -76,7 +76,7 @@ function spellExecute(id,target){
   const dmg=masteryFireDamage(d,S.wave);
   const targets=S.enemies.filter(e=>e.hp>0&&Math.hypot(e.x-target.x,e.y-target.y)<=d.r);
   targets.forEach(e=>hitEnemy(e,dmg,'m',{pierce:true,kb:30}));if(targets.length)masteryCredit('fire',token);
-  if(d.burnDuration){S.arcaneBurns||=[];S.arcaneBurns.push({x:target.x,y:target.y,r:d.r,left:d.burnDuration,dps:d.burnDps,token});if(S.arcaneBurns.length>12)S.arcaneBurns.shift();}
+  if(d.burnDuration){S.arcaneBurns||=[];S.arcaneBurns.push({x:target.x,y:target.y,r:d.r,left:d.burnDuration,dps:masteryBurnDamage(d,S.wave),token});if(S.arcaneBurns.length>12)S.arcaneBurns.shift();}
   spellEvent('arcaneFire',target.x,target.y,.88,{r:d.r});
   burst(target.x,target.y,'m',24,140);burst(target.x,target.y,'gold',15,110);S.shake=Math.max(S.shake,3);
   sfx('arcaneFire');return targets.length+' enemies hit · '+dmg+' damage each.'+(d.burnDuration?' Burning field '+d.burnDuration+'s.':'');
@@ -91,9 +91,9 @@ function spellExecute(id,target){
   const chain=spellChain(target.entity,d);
   // Freeze endpoints before damage; no repeated targets or distance from original instead of last.
   const points=chain.map(e=>({x:e.x,y:e.y}));
-  chain.forEach((e,i)=>{hitEnemy(e,d.damage[i],'soul',{pierce:true,kb:0});burst(e.x,e.y,'soul',8,80);});
+  const power=masteryLightningDamage(d,S.wave);chain.forEach((e,i)=>{hitEnemy(e,power[i],'soul',{pierce:true,kb:0});burst(e.x,e.y,'soul',8,80);});
   if(points.length){masteryCredit('lightning',token);spellEvent('arcaneLightning',points[0].x,points[0].y,.52,{points});}
-  sfx('arcaneLightning');return chain.length+' enemies struck · '+d.damage.slice(0,chain.length).join(' / ')+' damage.';
+  sfx('arcaneLightning');return chain.length+' enemies struck · '+power.slice(0,chain.length).join(' / ')+' damage.';
  }
  if(id==='grasp'||id==='frost'||id==='harvest'){
   const targets=spellArea(target,d.r),until=(S.fightT||0)+d.duration;

@@ -41,6 +41,7 @@ function talentHeroStats(h){
  const d={...HERO_CLASSES.warlord};
  if(talentHas(h,'berserker',1))d.damage=Math.round(d.damage*1.2);
  if(talentHas(h,'juggernaut',1))d.maxHp=Math.round(d.maxHp*1.2);
+ d.maxHp=Math.round(d.maxHp*classHealthFactor(h?.wave));d.damage=classDamage(d.damage,h?.wave);d.descentDamage=classDamage(d.descentDamage,h?.wave);
  return d;
 }
 function talentSkill(id,h=S?.hero){
@@ -48,6 +49,7 @@ function talentSkill(id,h=S?.hero){
  if(id==='cleave'&&talentHas(h,'berserker',1))d.damage=Math.round(d.damage*1.2);
  if(id==='storm'&&talentHas(h,'berserker',3))d.damage*=1.4;
  if(id==='cry'&&talentHas(h,'juggernaut',1))return {...JUGGERNAUT_RULES.taunt,key:'F',code:'KeyF'};
+ if(Number.isFinite(d.damage))d.damage=classDamage(d.damage,h?.wave);
  if(id==='cry'){if(talentHas(h,'commander',1))d.radius*=1.3;if(talentHas(h,'commander',2))d.duration+=2;if(talentHas(h,'commander',3)){d.damageBonus+=.1;d.speedBonus+=.1;}}
  return d;
 }

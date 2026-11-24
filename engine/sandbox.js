@@ -45,7 +45,7 @@ function sandboxAction(a){
  if(a==='god'){S.sandboxGod=!S.sandboxGod;if(S.sandboxGod)sandboxHeal();msg='God mode '+(S.sandboxGod?'enabled.':'disabled.');}
  else if(a==='heal'){sandboxHeal();msg='Army, altar and deployed hero healed.';}
  else if(a==='stop'){sandboxResetBattle();return;}
- else if(a==='wave'&&prep){S.wave=Math.max(1,Math.min(MAX_WAVE,Number(sbEl('sbWave').value)||1));S.nextQueue=rollWave(S.wave);sandboxHeal();prepUndoClear();msg='Wave '+S.wave+' loaded.';}
+ else if(a==='wave'&&prep){S.wave=Math.max(1,Math.min(MAX_WAVE,Number(sbEl('sbWave').value)||1));heroResetWave();S.nextQueue=rollWave(S.wave);sandboxHeal();prepUndoClear();msg='Wave '+S.wave+' loaded.';}
  else if(a==='fight'&&prep){if(!S.nextQueue.length){sandboxStatus('Add enemies or load a wave first.');return;}startFight();return;}
  else if(a==='unit'&&prep){prepUndoClear();msg=sandboxAddUnit(sbEl('sbUnit').value,Math.max(1,Math.min(3,Number(sbEl('sbLevel').value)||1)))?'Guardian added.':'No space available. Clear the army or reserve.';}
  else if(a==='clearUnits'&&prep){prepUndoClear();S.units=[];S.bench=[null,null,null];S.sel=null;msg='Army cleared.';}
