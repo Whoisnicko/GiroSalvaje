@@ -1,0 +1,10 @@
+CREATE TABLE IF NOT EXISTS scores (
+ run_id TEXT PRIMARY KEY,
+ name TEXT NOT NULL,
+ score INTEGER NOT NULL,
+ wave INTEGER NOT NULL,
+ kills INTEGER NOT NULL,
+ won INTEGER NOT NULL,
+ date INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS scores_ranking ON scores(score DESC, date ASC);
