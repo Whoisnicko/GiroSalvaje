@@ -937,7 +937,13 @@ function dropPlan(u){
   return { kind:'place' };
 }
 /* Confirmación antes de apilar o fusionar, para evitar errores al soltar. */
-let askMerge = store.get('gs.askMerge', true);
+let askMerge = store.get('gs.askMerge', true) !== false;
+// This is a browser UI preference, not campaign progression. Both modes share it.
+function setMergeConfirmation(enabled){
+  askMerge=!!enabled;
+  store.set('gs.askMerge',askMerge);
+  const setting=$('#mergeConfirmOpt');if(setting)setting.checked=askMerge;
+}
 function askMergeConfirm(target, src){
   const total = target.pile + src.pile, fuse = total >= S.mods.mergeN, name = `${NAMES[target.type]} ${'★'.repeat(target.lvl)}`;
   S.pendingMerge = { target, src };
@@ -947,11 +953,13 @@ function askMergeConfirm(target, src){
     <p>${fuse ? `Your ${total} <b>${name}</b> merge into <b>${NAMES[target.type]} ${'★'.repeat(target.lvl + 1)}</b>.` : `Stack <b>${total} ${name}</b> (${total}/${S.mods.mergeN}). Add ${S.mods.mergeN - total} more to merge.`}</p>
     <label class="cm-ask"><input type="checkbox" id="noAsk"> Do not ask again</label>
     <div class="btns"><button class="go" data-act="mergeYes">${fuse ? 'Merge' : 'Stack'}</button><button class="btn" data-act="mergeNo">Cancel</button></div></div>`;
+  const noAsk=o.querySelector('#noAsk');
+  noAsk.addEventListener('change',()=>setMergeConfirmation(!noAsk.checked));
   o.hidden = false; o.querySelector('[data-act="mergeYes"]').focus();
 }
 function closeMergeConfirm(ok){
   const pm = S.pendingMerge; S.pendingMerge = null;
-  const cb = $('#noAsk'); if (cb && cb.checked && !sandboxActive()) { askMerge = false; store.set('gs.askMerge', false); }
+  const cb = $('#noAsk'); if (cb?.checked) setMergeConfirmation(false);
   $('#ov2').hidden = true;
   if (ok && pm && S.phase === 'prep' && allMine().includes(pm.target) && allMine().includes(pm.src)) doMerge(pm.target, pm.src);
   else if (!ok) setResult('Canceled', 'Monsters were not stacked.');
@@ -1218,7 +1226,7 @@ function showScores(){front('scoresView');$('#scoreRows').innerHTML=scoreRows(sc
 async function cloudScores(){try{const r=await fetch('/api/scores',{signal:AbortSignal.timeout(6000)});if(!r.ok)throw Error();const j=await r.json();if(!Array.isArray(j.scores))throw Error();$('#scoreRows').innerHTML=scoreRows(j.scores);$('#scoreScope').textContent='Online leaderboard';$('#cloudStatus').textContent='Public scores for this edition.';}catch(e){$('#cloudStatus').textContent='Online ranking is unavailable. Your scores are saved locally.';}}
 async function publishScore(){const r=scores()[0];if(!r)return;$('#publishScore').disabled=true;try{const res=await fetch('/api/scores',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(r),signal:AbortSignal.timeout(6000)});if(!res.ok)throw Error();await cloudScores();$('#cloudStatus').textContent='Your best score was published as '+r.name+'.';}catch(e){$('#cloudStatus').textContent='Publishing failed. Your local score is safe; retry when the server is online.';}finally{$('#publishScore').disabled=false;}}
 function exportSave(){if(sandboxActive())return;persist();const v=snapshot()||loadedSave;if(!validSave(v)){alert('Start a run and choose a relic first.');return;}const url=URL.createObjectURL(new Blob([JSON.stringify(v)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='StopHumans-save.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),2000);}
-function showSettings(){front('settingsView');$('#volume').value=Math.round(prefs.volume*100);$('#musicOpt').checked=AU.music;$('#soundOpt').checked=AU.sfx;$('#motionOpt').checked=prefs.reduced;$('#effectsOpt').value=prefs.effects;}
+function showSettings(){front('settingsView');$('#mergeConfirmOpt').checked=askMerge;$('#volume').value=Math.round(prefs.volume*100);$('#musicOpt').checked=AU.music;$('#soundOpt').checked=AU.sfx;$('#motionOpt').checked=prefs.reduced;$('#effectsOpt').value=prefs.effects;}
 const oldEndRun=endRun;endRun=function(won){if(sandboxActive()){sandboxResetBattle('Test complete. Ready to retry.');return;}recordScore(won);oldEndRun(won);persist();};
 const oldStartRun=startRun;startRun=function(i){oldStartRun(i);persist();};
 const oldRenderUI=renderUI;renderUI=function(){oldRenderUI();if(S&&S.phase!=='relic')persist();};
@@ -1231,7 +1239,8 @@ document.addEventListener('click',ev=>{const b=ev.target.closest('[data-front]')
  if(a==='settings')showSettings();if(a==='scores')showScores();if(a==='cloud')cloudScores();if(a==='publish')publishScore();if(a==='export')exportSave();if(a==='import')$('#importFile').click();
 });
 document.addEventListener('keydown',ev=>{if(ev.target.matches('input,select,textarea'))ev.stopImmediatePropagation();if(menuOpen){if(ev.key==='Escape'&&S){closeFront();}else if(ev.key==='Enter'&&ev.target.id==='playerName')beginNew();ev.stopImmediatePropagation();}},true);
-$('#settingsView').addEventListener('change',()=>{prefs.volume=+$('#volume').value/100;prefs.reduced=$('#motionOpt').checked;prefs.effects=$('#effectsOpt').value;setMusic($('#musicOpt').checked);setSfx($('#soundOpt').checked);savePrefs();});
+$('#mergeConfirmOpt').addEventListener('change',e=>setMergeConfirmation(e.target.checked));
+$('#settingsView').addEventListener('change',e=>{if(e.target.id==='mergeConfirmOpt')return;prefs.volume=+$('#volume').value/100;prefs.reduced=$('#motionOpt').checked;prefs.effects=$('#effectsOpt').value;setMusic($('#musicOpt').checked);setSfx($('#soundOpt').checked);savePrefs();});
 $('#importFile').addEventListener('change',async ev=>{const f=ev.target.files[0];if(!f)return;try{if(f.size>2e6)throw Error();const v=JSON.parse(await f.text());if(!validSave(v))throw Error();if(S||loadedSave){if(!confirm('The imported save will replace current progress. Continue?'))return;}restore(v);}catch(e){alert('Import failed: use a compatible v15 or v16 save.');}ev.target.value='';});
 window.addEventListener('pagehide',persist);document.addEventListener('visibilitychange',()=>{if(document.hidden)persist();});
 setInterval(()=>{if(!menuOpen&&!document.hidden)persist();},5000);
