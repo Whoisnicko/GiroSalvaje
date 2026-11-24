@@ -6,7 +6,7 @@ const SPELL_DATA=Object.freeze({
  lightning:{mana:20,cd:6,r:90,target:'enemy'},grasp:{mana:20,cd:12,r:62,target:'area'},
  frost:{mana:30,cd:14,r:80,target:'area'},harvest:{mana:35,cd:25,r:75,target:'area'}
 });
-let magicOwner=null,magicMode='idle',magicDeadline=0,magicReadyAt=0,magicStroke=[],magicPointer=null,magicAim=null,magicRune=null,magicPulse=null,magicMessage='Draw runes in combat. Preview only — no combat effects.',magicLastHud=-Infinity,magicHudKey='';
+let magicOwner=null,magicMode='idle',magicDeadline=0,magicReadyAt=0,magicStroke=[],magicPointer=null,magicAim=null,magicRune=null,magicPulse=null,magicMessage='Draw runes in combat. Preview only — no combat effects.',magicLastHud=-Infinity,magicHudKey='',magicMatch=null;
 const magicEl=id=>document.getElementById(id);
 const magicDef=id=>RUNE_DEFS.find(d=>d.id===id);
 function magicNewData(old={},sandbox=false){
@@ -17,7 +17,7 @@ function magicNewData(old={},sandbox=false){
 function magicData(){if(!S)return null;if(!S.magic||magicOwner!==S){S.magic=magicNewData(S.magic||{},!!S.sandbox);}return S.magic;}
 function magicSync(){
  if(magicOwner===S)return;
- magicRelease();magicOwner=S;magicMode='idle';magicDeadline=0;magicReadyAt=0;magicStroke=[];magicAim=null;magicRune=null;magicPulse=null;magicMessage='Draw runes in combat. Preview only — no combat effects.';magicHudKey='';magicLastHud=-Infinity;
+ magicRelease();magicOwner=S;magicMode='idle';magicDeadline=0;magicReadyAt=0;magicStroke=[];magicAim=null;magicRune=null;magicPulse=null;magicMatch=null;magicMessage='Draw runes in combat. Preview only — no combat effects.';magicHudKey='';magicLastHud=-Infinity;
  if(S)S.magic=magicNewData(S.magic||{},!!S.sandbox);
 }
 function magicActive(){return !!S&&magicOwner===S&&magicMode!=='idle'&&S.phase==='fight';}
@@ -44,7 +44,7 @@ function magicBegin(now=performance.now()){
  if(now<magicReadyAt){magicSetMessage('Arcane recovery — wait before drawing again.');return false;}
  if(!Object.keys(SPELL_DATA).some(magicAvailable)){magicSetMessage('No available spells: wait for mana or cooldowns.');return false;}
  audioInit();if(S.aim!==null){S.aim=null;renderHand();}S.aimP=null;S.sel=null;tacticalClearEnemy();tacticalHide();
- magicMode='draw';magicDeadline=now+MAGIC_DRAW_MS;magicStroke=[];magicRune=null;magicAim=null;cv.style.cursor='crosshair';magicSetMessage('Draw a learned rune with one continuous stroke.');return true;
+ magicMode='draw';magicDeadline=now+MAGIC_DRAW_MS;magicStroke=[];magicRune=null;magicAim=null;magicMatch=null;cv.style.cursor='crosshair';magicSetMessage('Draw a learned rune with one continuous stroke.');return true;
 }
 function magicPoint(e){const r=cv.getBoundingClientRect();return {x:e.clientX-r.left,y:e.clientY-r.top};}
 function magicWorld(p){return {x:p.x/scale,y:p.y/scale};}
@@ -52,11 +52,18 @@ function magicInField(p){return p.x>=WALL_X&&p.x<=worldW()&&p.y>=0&&p.y<WORLD_H;
 function magicAppend(e){const p=magicPoint(e),r=cv.getBoundingClientRect(),q=[Math.max(0,Math.min(r.width,p.x)),Math.max(0,Math.min(WORLD_H*scale,p.y))];if(magicStroke.length<2048&&(!magicStroke.length||runeDistance(q,magicStroke.at(-1))>=1.3))magicStroke.push(q);}
 function magicRecognize(now){
  const result=recognizeRune(magicStroke);magicRelease();
- if(!result.accepted){magicCancel(result.reason==='short'?'Rune too small. Try a larger stroke.':'Unknown or ambiguous incantation.');return false;}
+ if(!result.accepted){magicCancel(result.reason==='short'?'Rune too small. Try a larger stroke.':'Unknown or ambiguous incantation.'+(Number.isFinite(result.score)?' Match '+result.score+'% (60% required).':''));return false;}
  const id=result.id,d=magicDef(id);
  if(!magicAllowed(id)){magicCancel(d.name+' is not learned yet. Try it in Sandbox.');return false;}
  if(!magicAvailable(id)){magicCancel(d.name+' is unavailable: mana or cooldown.');return false;}
- magicRune=id;magicMode='aim';magicDeadline=now+MAGIC_AIM_MS;magicAim=null;magicStroke=[];magicSetMessage(d.name+' recognized · choose a target.');return true;
+ magicRune=id;magicMatch=result.score;magicMode='aim';magicDeadline=now+MAGIC_AIM_MS;magicAim=null;magicStroke=[];magicSetMessage(d.name+' recognized · '+result.score+'% match · choose a target.');return true;
+}
+// Sandbox-only direct targeting, leaving normal Q and recognition unchanged.
+function magicQuickSelect(id,now=performance.now()){
+ magicSync();if(!S?.sandbox||!magicCanInteract()||!magicAvailable(id))return false;
+ if(!magicActive()&&!magicBegin(now))return false;
+ magicRelease();magicStroke=[];magicRune=id;magicMode='aim';magicDeadline=now+MAGIC_AIM_MS;magicAim=null;magicMatch=null;
+ magicSetMessage(magicDef(id).name+' · sandbox quick aim · choose a target.');return true;
 }
 function magicTarget(id,p){
  const d=SPELL_DATA[id];if(!d||!p||!magicInField(p))return null;
@@ -73,7 +80,7 @@ function magicConfirm(p,now=performance.now()){
  const m=magicData();if(!m.infinite)m.mana=Math.max(0,m.mana-d.mana);m.cooldowns[id]=m.noCooldown?0:d.cd;
  magicPulse={id,x:target.x,y:target.y,start:now,end:now+650};
  // This is the only launch boundary; real effects will be dispatched here next phase.
- const name=magicDef(id).name;magicCancel(name+' · preview cast only (no combat effect).');sfx('card');persist();return true;
+ const name=magicDef(id).name;magicCancel(name+(magicMatch!==null?' · '+magicMatch+'% match':'')+' · preview cast only (no combat effect).');sfx('card');persist();return true;
 }
 function magicFrame(now){
  magicSync();
@@ -91,12 +98,19 @@ function magicRender(now=performance.now()){
  hud.dataset.mode=active?magicMode:'idle';
  magicEl('magicTimer').textContent=active?'TIME ×0.3 · '+Math.max(0,(magicDeadline-now)/1000).toFixed(1)+'s':now<magicReadyAt?'Recovery '+((magicReadyAt-now)/1000).toFixed(1)+'s':'';
  const msg=S.phase==='prep'?'Magic ready for battle · preview only.':magicMessage;if(magicEl('magicMessage').textContent!==msg)magicEl('magicMessage').textContent=msg;
- const spells=RUNE_DEFS.filter(d=>magicAllowed(d.id)).map(d=>{const x=SPELL_DATA[d.id],cd=m.noCooldown?0:m.cooldowns[d.id],ready=magicAvailable(d.id);return '<span class="magic-spell '+(ready?'ready':'')+'" style="--rune-color:'+d.color+'">'+runeGlyph(d)+'<span><b>'+d.name+'</b><small>'+x.mana+' MP · '+(cd>0?cd.toFixed(1)+'s':'Ready')+'</small></span></span>';}).join('');
- if(spells!==magicHudKey){magicEl('magicSpells').innerHTML=spells;magicHudKey=spells;}
+ const lab=magicEl('magicSandbox');lab.hidden=!S.sandbox;
+ const list=magicEl('magicSpells'),defs=RUNE_DEFS.filter(d=>magicAllowed(d.id)),key=(S.sandbox?'sandbox:':'campaign:')+defs.map(d=>d.id).join(',');
+ if(key!==magicHudKey||list.children.length!==defs.length){
+  list.innerHTML=defs.map(d=>{const tag=S.sandbox?'button':'span',data=S.sandbox?' type="button" data-magic-quick="'+d.id+'" title="Sandbox: aim '+d.name+' without drawing"':'';return '<'+tag+data+' class="magic-spell" data-magic-id="'+d.id+'" style="--rune-color:'+d.color+'">'+runeGlyph(d)+'<span><b>'+d.name+'</b><small></small></span></'+tag+'>';}).join('');
+  magicHudKey=key;
+ }
+ for(const el of list.children){const id=el.dataset.magicId,d=SPELL_DATA[id],cd=m.noCooldown?0:m.cooldowns[id],ready=magicAvailable(id);el.classList.toggle('ready',ready);el.querySelector('small').textContent=d.mana+' MP · '+(cd>0?cd.toFixed(1)+'s':'Ready');if(S.sandbox){el.disabled=!ready||!magicCanInteract()||(!active&&now<magicReadyAt);el.setAttribute('aria-pressed',String(active&&magicRune===id));}}
+ if(S.sandbox)magicRenderSandbox();
 }
 function magicRenderSandbox(){
  if(!S?.sandbox)return;const m=magicData();
  for(const [id,on,label] of [['sbMagicMana',m.infinite,'Infinite mana'],['sbMagicCooldown',m.noCooldown,'No spell cooldown']]){const b=magicEl(id);b.textContent=label+': '+(on?'ON':'OFF');b.setAttribute('aria-pressed',String(on));}
+ for(const b of magicEl('magicSandbox').querySelectorAll('[data-sb-magic]'))b.disabled=menuOpen||!['prep','fight'].includes(S.phase)||spinning||!$('#ov').hidden||!$('#ov2').hidden||$('#unitBestiary').open||$('#runePractice').open;
 }
 function magicSandboxAction(a){
  if(!S?.sandbox)return;magicSync();magicCancel();const m=magicData();
@@ -119,6 +133,8 @@ function magicDraw(now){
 }
 function initMagicControls(){
  magicEl('magicCast').addEventListener('click',()=>magicBegin());
+ magicEl('magicSpells').addEventListener('click',e=>{const b=e.target.closest('[data-magic-quick]');if(b&&!b.disabled)magicQuickSelect(b.dataset.magicQuick);});
+ magicEl('magicSandbox').addEventListener('click',e=>{const b=e.target.closest('[data-sb-magic]');if(b&&!b.disabled&&sandboxCanEdit())magicSandboxAction(b.dataset.sbMagic);});
  document.addEventListener('keydown',e=>{
   if(!magicActive()&&e.key.toLowerCase()!=='q')return;
   if(!magicActive()&&(e.target.closest?.('input,select,textarea,[contenteditable]')||e.ctrlKey||e.metaKey||e.altKey||!magicCanInteract()))return;
@@ -126,7 +142,7 @@ function initMagicControls(){
   if(e.key.toLowerCase()==='q'){e.preventDefault();e.stopImmediatePropagation();if(!e.repeat)magicBegin();return;}
   if(magicActive()){e.preventDefault();e.stopImmediatePropagation();}
  },true);
- document.addEventListener('pointerdown',e=>{if(magicActive()&&e.target!==cv&&!e.target.closest?.('#magicCast'))magicCancel('Conjuration canceled.');},true);
+ document.addEventListener('pointerdown',e=>{if(magicActive()&&e.target!==cv&&!e.target.closest?.('#magicCast,[data-magic-quick]'))magicCancel('Conjuration canceled.');},true);
  const consume=e=>{e.preventDefault();e.stopImmediatePropagation();};
  cv.addEventListener('pointerdown',e=>{
   if(!magicActive())return;consume(e);if(e.button!==0&&e.pointerType==='mouse')return;
