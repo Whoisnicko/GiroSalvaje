@@ -5,7 +5,7 @@ const SPELL_DATA=Object.freeze({
  lightning:{mana:20,cd:6,r:90,target:'enemy',damage:[24,18,12],implemented:true},grasp:{mana:20,cd:12,r:62,target:'area',duration:2.5,implemented:true},
  frost:{mana:30,cd:14,r:80,target:'area',duration:4,slow:.5,implemented:true},harvest:{mana:35,cd:25,r:75,target:'area',duration:5,bonusCap:4,implemented:true}
 });
-let magicOwner=null,magicMode='idle',magicDeadline=0,magicReadyAt=0,magicStroke=[],magicPointer=null,magicAim=null,magicRune=null,magicPulse=null,magicMessage='Draw runes in combat. All six spells functional in Sandbox.',magicLastHud=-Infinity,magicHudKey='';
+let magicOwner=null,magicMode='idle',magicDeadline=0,magicReadyAt=0,magicStroke=[],magicPointer=null,magicAim=null,magicRune=null,magicPulse=null,magicMessage='Draw learned runes in combat. Learn more in the Grimoire.',magicLastHud=-Infinity,magicHudKey='';
 const magicEl=id=>document.getElementById(id);
 const magicDef=id=>RUNE_DEFS.find(d=>d.id===id);
 function magicNewData(old={},sandbox=false){
@@ -16,11 +16,11 @@ function magicNewData(old={},sandbox=false){
 function magicData(){if(!S)return null;if(!S.magic||magicOwner!==S){S.magic=magicNewData(S.magic||{},!!S.sandbox);}return S.magic;}
 function magicSync(){
  if(magicOwner===S)return;
- magicRelease();magicOwner=S;magicMode='idle';magicDeadline=0;magicReadyAt=0;magicStroke=[];magicAim=null;magicRune=null;magicPulse=null;magicMessage='Draw runes in combat. All six spells functional in Sandbox.';magicHudKey='';magicLastHud=-Infinity;
+ magicRelease();magicOwner=S;magicMode='idle';magicDeadline=0;magicReadyAt=0;magicStroke=[];magicAim=null;magicRune=null;magicPulse=null;magicMessage='Draw learned runes in combat. Learn more in the Grimoire.';magicHudKey='';magicLastHud=-Infinity;
  if(S)S.magic=magicNewData(S.magic||{},!!S.sandbox);
 }
 function magicActive(){return !!S&&magicOwner===S&&magicMode!=='idle'&&S.phase==='fight';}
-function magicAllowed(id){return !!S&&(!!S.sandbox||id==='fire');}
+function magicAllowed(id){return !!S&&(!!S.sandbox||knowledgeLearned(id));}
 function magicCanInteract(){return !!S&&S.phase==='fight'&&!menuOpen&&!document.hidden&&!spinning&&!S.drag&&!S.pendingMerge&&$('#ov').hidden&&$('#ov2').hidden&&!$('#unitBestiary').open&&!$('#runePractice').open;}
 function magicAvailable(id){const m=magicData(),d=SPELL_DATA[id];return !!(m&&d&&magicAllowed(id)&&(m.infinite||m.mana+1e-6>=d.mana)&&(m.noCooldown||m.cooldowns[id]<=1e-6));}
 function magicRelease(){if(magicPointer!==null){if(typeof cv!=='undefined'&&cv.hasPointerCapture?.(magicPointer))cv.releasePointerCapture(magicPointer);magicPointer=null;}}
@@ -34,7 +34,7 @@ function magicCancel(message='Conjuration canceled.'){
 function magicResetWave(){
  magicSync();magicCancel();if(!S)return;
  const m=magicData();m.mana=MAGIC_MAX;for(const id of Object.keys(SPELL_DATA))m.cooldowns[id]=0;
- magicReadyAt=0;magicPulse=null;spellClearWave();magicMessage='Draw runes in combat. All six spells functional in Sandbox.';magicRender();
+ magicReadyAt=0;magicPulse=null;spellClearWave();magicMessage='Draw learned runes in combat. Learn more in the Grimoire.';magicRender();
 }
 function magicAdvance(dt){const m=magicData();if(!m)return;spellAdvance(dt);m.mana=m.infinite?MAGIC_MAX:Math.min(MAGIC_MAX,m.mana+MAGIC_REGEN*dt);for(const id of Object.keys(SPELL_DATA))m.cooldowns[id]=Math.max(0,m.cooldowns[id]-dt);}
 function magicBegin(now=performance.now()){
@@ -53,7 +53,7 @@ function magicRecognize(now){
  const result=recognizeRune(magicStroke);magicRelease();
  if(!result.accepted){magicCancel(runeFeedbackText(result));return false;}
  const id=result.id,d=magicDef(id);
- if(!magicAllowed(id)){magicCancel(d.name+' is not learned yet. Try it in Sandbox.');return false;}
+ if(!magicAllowed(id)){magicCancel(d.name+' is sealed. '+knowledgeHint(id));return false;}
  if(!magicAvailable(id)){magicCancel(d.name+' is unavailable: mana or cooldown.');return false;}
  magicRune=id;magicMode='aim';magicDeadline=now+MAGIC_AIM_MS;magicAim=null;magicStroke=[];magicSetMessage(d.name+' recognized · choose a target.');return true;
 }

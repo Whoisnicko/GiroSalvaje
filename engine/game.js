@@ -898,13 +898,14 @@ function endWave(){
   S.zones = []; S.shots = []; S.aim = null;
   if (S.mods.wallRegen) S.wallHp = Math.min(S.wallMax, S.wallHp + S.mods.wallRegen);
   const done = S.wave;
+  const learned=knowledgeWave(done),knowledgeNote=knowledgeAnnounce(learned);
   S.wave++;
   if (done >= MAX_WAVE) { S.phase = 'win'; renderUI(); return endRun(true); }
   S.gold += 3; S.spinsLeft = S.spinsPer; S.bought = 0; S.phase = 'prep';
   genTerrain();
   drawHand();
   S.nextQueue = rollWave(S.wave);
-  setResult(`Wave ${done} survived`, `+3 souls. You have ${S.spinsLeft} spins and new cards.`);
+  setResult(`Wave ${done} survived`, `+3 souls. You have ${S.spinsLeft} spins and new cards.${knowledgeNote}`);
   if (done % 2 === 0) {
     S.phase = 'reward';
     const blessings = shuffle(BLESS.filter(b => !b.ok || b.ok())).slice(0, 2).map(b => ({ ...b, kind:'Blessing' }));
@@ -1152,6 +1153,7 @@ document.addEventListener('click', e => {
   else if (a === 'fight') startFight();
   else if (a === 'shop') showShop();
   else if (a === 'artifactbuy') buyArtifact(b.dataset.id);
+  else if (a === 'scrollbuy') knowledgeBuyScroll(b.dataset.id);
   else if (a === 'shopclose') {$('#ov2').hidden = true;renderPrepUndo();}
   else if (a === 'deck') showDeck();
   else if (a === 'closedeck') {$('#ov2').hidden = true;renderPrepUndo();}
@@ -1222,7 +1224,7 @@ function restore(v){
  const refs=[...s.units,...s.bench.filter(Boolean),...s.enemies];s.shots=s.shots.map(q=>({...q,tgt:refs[q.targetIndex]||null}));
  s.offer=s.offer.map(o=>{const legacyNames={"Ectoplasma":"Ectoplasm","Carne dura":"Tough Flesh","Fuego antiguo":"Ancient Fire","Cosecha de almas":"Soul Harvest","Luna llena":"Full Moon","Garras firmes":"Steady Claws","Altar reforzado":"Fortified Altar","Necromancia":"Necromancy","Rugido del dragón":"Dragon Roar","Manos de la tierra":"Earth Hands","Lluvia de huesos":"Bone Rain","Festín":"Feast","Aullido":"Howl","Ofrenda":"Offering","Niebla":"Mist","Temblor":"Earthquake","Murciélagos":"Bats","Cripta ampliada":"Expanded Crypt","Cosecha":"Harvest","Lago maldito":"Cursed Lake","Colina":"Hill","Pantano":"Swamp","Bendición":"Blessing","Carta para esta partida":"Card for this run","Carta":"Card"};o={...o,n:legacyNames[o.n]||o.n,kind:legacyNames[o.kind]||o.kind};let b=BLESS.find(b=>b.n===o.n);if(o.kind==='Blessing'&&b)return {...b,kind:o.kind};let id=Object.keys(CARDS).find(id=>CARDS[id].n===o.n);if(!id && ['Cursed Lake','Hill','Swamp'].includes(o.n))id='cripta';if(!id)throw Error('Invalid reward');return {n:CARDS[id].n,ic:CARDS[id].ic,d:CARDS[id].d(),kind:o.kind,a:()=>S.deck.push(id)};});
  savedWorldWidth=Number.isFinite(v.worldWidth)&&v.worldWidth>=420?v.worldWidth:null;
- S=s;sessionRunId=v.runId||uid();runName=String(v.name||'Anonymous').slice(0,20);hideOv();$('#ov2').hidden=true;closeFront();renderUI();
+ S=s;knowledgeFromSave(v,true);sessionRunId=v.runId||uid();runName=String(v.name||'Anonymous').slice(0,20);hideOv();$('#ov2').hidden=true;closeFront();renderUI();
  // Keep the original logical battlefield width across displays; pointer mapping uses the same scale.
  resize();
  if(S.phase==='reward')showRewardRestored();if(['win','over'].includes(S.phase))showEndRestored();
@@ -1232,16 +1234,16 @@ function showRewardRestored(){showOv(`<h2>Choose your reward</h2><div class="off
 function showEndRestored(){showOv(`<h2>${S.phase==='win'?'The Altar stands!':'The Altar has fallen'}</h2><p>${S.kills} humans defeated. Choose a card for your next run.</p><div class="cards-row">${S.endOffer.map((id,i)=>cardHTML(id,`data-act="endcard" data-i="${i}"`)).join('')}</div><button class="btn" data-front="scores">View scores</button>`);}
 function front(panel){magicCancel();closeBestiary();tacticalHide();$('#front').hidden=false;menuOpen=true;document.querySelector('.wrap').inert=true;$('#ov').inert=true;$('#ov2').inert=true;for(const el of document.querySelectorAll('.front-view'))el.hidden=el.id!==panel;$('#'+panel+' button:not([disabled]),#'+panel+' input')?.focus();}
 function closeFront(){menuOpen=false;$('#front').hidden=true;document.querySelector('.wrap').inert=false;$('#ov').inert=false;$('#ov2').inert=false;last=performance.now();resize();if(S)renderPrepUndo();}
-function showHome(){if(spinning)return;if(sandboxActive()){sandboxExit();return;}if(S){cancelDrag();persist();}loadedSave=store.get(SAVE_KEY,null);if(!validSave(loadedSave))loadedSave=null;$('#playerName').value=profile.name;$('#continueBtn').disabled=!loadedSave;$('#continueInfo').textContent=loadedSave?`${loadedSave.name} · oleada ${Math.min(loadedSave.state.wave,10)} · ${new Date(loadedSave.savedAt).toLocaleString('en')}`:'The invasion awaits.';$('#resumeBtn').hidden=!S;front('homeView');}
+function showHome(){if(spinning)return;if(sandboxActive()){sandboxExit();return;}if(S){cancelDrag();persist();}loadedSave=store.get(SAVE_KEY,null);if(!validSave(loadedSave))loadedSave=null;knowledgeFromSave(loadedSave);knowledgeFromScores();if(knowledgeDirty)knowledgeFlush();knowledgeSummaryRender();$('#playerName').value=profile.name;$('#continueBtn').disabled=!loadedSave;$('#continueInfo').textContent=loadedSave?`${loadedSave.name} · oleada ${Math.min(loadedSave.state.wave,10)} · ${new Date(loadedSave.savedAt).toLocaleString('en')}`:'The invasion awaits.';$('#resumeBtn').hidden=!S;front('homeView');}
 function beginNew(){let name=$('#playerName').value.trim().slice(0,20);if(!name){$('#nameError').textContent='Enter your name (1–20 characters).';$('#playerName').focus();return;}profile.name=name;durableWrite(PROFILE_KEY,profile);if(validSave(loadedSave)){front('confirmView');return;}launchNew();}
-function launchNew(){runName=profile.name;sessionRunId=uid();loadedSave=null;try{localStorage.removeItem(SAVE_KEY);}catch(e){}savedWorldWidth=null;closeFront();newGame();S.runId=sessionRunId;$('#saveStatus').textContent='Choose a relic to create your first save.';}
+function launchNew(){if(knowledgeDirty&&!knowledgeFlush()){alert('Your permanent spell knowledge could not be saved. Enable browser storage before replacing this run.');return;}runName=profile.name;sessionRunId=uid();loadedSave=null;try{localStorage.removeItem(SAVE_KEY);}catch(e){}savedWorldWidth=null;closeFront();newGame();S.runId=sessionRunId;$('#saveStatus').textContent='Choose a relic to create your first save.';}
 function scores(){const v=store.get(SCORES_KEY,[]);return Array.isArray(v)?v:[];}
 function recordScore(won){if(sandboxActive())return;const list=scores();if(list.some(r=>r.runId===sessionRunId))return;const wave=won?10:Math.max(0,S.wave-1);const r={runId:sessionRunId,name:runName,kills:S.kills,wave,won,score:wave*100+S.kills*10+(won?500:0),date:Date.now()};list.push(r);durableWrite(SCORES_KEY,list.sort((a,b)=>b.score-a.score).slice(0,50));}
 function scoreRows(rows){return rows.length?rows.slice(0,20).map((r,i)=>`<tr><td>${i+1}</td><td>${escapeHTML(r.name)}</td><td>${Number(r.score)||0}</td><td>${Number(r.wave)||0}/10</td></tr>`).join(''):'<tr><td colspan="4">No scores yet.</td></tr>';}
 function showScores(){front('scoresView');$('#scoreRows').innerHTML=scoreRows(scores());$('#scoreScope').textContent='Local scores';$('#publishScore').disabled=!scores().length;$('#cloudStatus').textContent='Local scores work offline. Online ranking requires the server.';}
 async function cloudScores(){try{const r=await fetch('/api/scores',{signal:AbortSignal.timeout(6000)});if(!r.ok)throw Error();const j=await r.json();if(!Array.isArray(j.scores))throw Error();$('#scoreRows').innerHTML=scoreRows(j.scores);$('#scoreScope').textContent='Online leaderboard';$('#cloudStatus').textContent='Public scores for this edition.';}catch(e){$('#cloudStatus').textContent='Online ranking is unavailable. Your scores are saved locally.';}}
 async function publishScore(){const r=scores()[0];if(!r)return;$('#publishScore').disabled=true;try{const res=await fetch('/api/scores',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(r),signal:AbortSignal.timeout(6000)});if(!res.ok)throw Error();await cloudScores();$('#cloudStatus').textContent='Your best score was published as '+r.name+'.';}catch(e){$('#cloudStatus').textContent='Publishing failed. Your local score is safe; retry when the server is online.';}finally{$('#publishScore').disabled=false;}}
-function exportSave(){if(sandboxActive())return;persist();const v=snapshot()||loadedSave;if(!validSave(v)){alert('Start a run and choose a relic first.');return;}const url=URL.createObjectURL(new Blob([JSON.stringify(v)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='StopHumans-save.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),2000);}
+function exportSave(){if(sandboxActive())return;persist();const v=snapshot()||loadedSave;if(!validSave(v)){alert('Start a run and choose a relic first.');return;}const url=URL.createObjectURL(new Blob([JSON.stringify({...v,spellKnowledge:spellKnowledge})],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='StopHumans-save.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),2000);}
 function showSettings(){front('settingsView');$('#mergeConfirmOpt').checked=askMerge;$('#volume').value=Math.round(prefs.volume*100);$('#musicOpt').checked=AU.music;$('#soundOpt').checked=AU.sfx;$('#motionOpt').checked=prefs.reduced;$('#effectsOpt').value=prefs.effects;}
 const oldEndRun=endRun;endRun=function(won){if(sandboxActive()){sandboxResetBattle('Test complete. Ready to retry.');return;}recordScore(won);oldEndRun(won);persist();};
 const oldStartRun=startRun;startRun=function(i){oldStartRun(i);persist();};
@@ -1263,6 +1265,7 @@ setInterval(()=>{if(!menuOpen&&!document.hidden)persist();},5000);
 savePrefs();
 initSandboxControls();
 initMagicControls();
+knowledgeInit();
 
 artReady.then(buildHybridArt).then(()=>{
  readColors(); resize(); renderPay(); renderSnd();

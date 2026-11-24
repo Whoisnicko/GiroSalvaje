@@ -20,6 +20,14 @@ function renderArtifactShelf(){
  box.innerHTML='<h3>Artifacts <b>'+ids.length+'/6</b></h3><div class="artifact-owned">'+(ids.length?ids.map(id=>{const a=SHOP_ARTIFACTS[id];return '<span title="'+a.desc+'">'+artifactArt(id)+'<b>'+a.name+'</b></span>';}).join(''):'<span class="artifact-empty">No artifacts yet.</span>')+'</div><button class="btn shop-entry" data-act="shop" '+(shopAvailable()?'':'disabled')+'>⚒ Underworld&#39;s Vault</button>';
  document.querySelectorAll('[data-act="shop"]').forEach(b=>b.disabled=!shopAvailable());
 }
+function scrollShopHTML(){
+ const entries=Object.entries(SPELL_UNLOCKS).filter(([,u])=>u.kind==='scroll').map(([id,u])=>{
+  const d=magicDef(id),owned=knowledgeLearned(id),sandbox=!!S.sandbox,ok=!sandbox&&!owned&&S.gold>=u.price;
+  const status=sandbox?'Sandbox · already available':owned?'Permanently learned':'Permanent spell knowledge';
+  return '<article class="shop-item scroll-item"><div class="scroll-art" style="--scroll-color:'+d.color+'"><div class="scroll-paper">'+runeGlyph(d)+'</div></div><div class="shop-item-info"><h3>'+u.title+'</h3><small>'+status+'</small><p>Learn '+d.name+' across all future runs.</p></div><button class="btn shop-buy" data-act="scrollbuy" data-id="'+id+'" '+(ok?'':'disabled')+'>'+(sandbox?'TEST ACCESS':owned?'✓ LEARNED':'STEAL · ◆ '+u.price+' souls')+'</button></article>';
+ }).join('');
+ return '<section class="scroll-library"><header><h3>Forbidden Scrolls</h3><p>Knowledge endures beyond this run. Purchases cannot be undone.</p></header><div class="scroll-grid">'+entries+'</div><p id="scrollNotice" role="status">'+(knowledgeDirty?'Profile save pending. Paid scrolls are recoverable from your saved run.':'')+'</p></section>';
+}
 function showShop(purchased=false){
  if(!shopAvailable())return;
  const o=$('#ov2');
@@ -27,7 +35,7 @@ function showShop(purchased=false){
   const owned=artifactOwned(id),ok=!owned&&S.gold>=a.price;
   return '<article class="shop-item relic-'+id+'"><div class="shop-art">'+artifactArt(id)+'</div><div class="shop-item-info"><h3>'+a.name+'</h3><small>'+a.kind+' · run upgrade</small><p>'+a.desc+'</p></div><button class="btn shop-buy" data-act="artifactbuy" data-id="'+id+'" '+(ok?'':'disabled')+'>'+(owned?'✓ STOLEN':'STEAL · <span aria-hidden="true">◆</span> '+a.price+' souls')+'</button></article>';
  }).join('');
- o.innerHTML='<div class="panel soul-shop hades-shop" role="dialog" aria-modal="true" aria-labelledby="shopTitle"><div class="hades-portrait"><div class="hades-stage" aria-hidden="true"><div class="hades-aura"></div><div class="hades-gaze"></div><div class="hades-flame"></div></div><div class="hades-caption"><strong>HADES</strong><span>Lord of the Underworld</span><p role="status" aria-live="polite">… Zzz …</p></div></div><div class="shop-content"><header class="shop-top"><div><h2 id="shopTitle">Underworld&#39;s Vault</h2><p>Spend souls to steal relics from Hades</p></div><span class="shop-balance">◆ '+S.gold+' souls</span></header><div class="shop-grid">'+entries+'</div><footer class="shop-foot"><span>Stolen relics last this run · Preparation only</span><button class="go" data-act="shopclose">Return to battle</button></footer></div></div>';
+ o.innerHTML='<div class="panel soul-shop hades-shop" role="dialog" aria-modal="true" aria-labelledby="shopTitle"><div class="hades-portrait"><div class="hades-stage" aria-hidden="true"><div class="hades-aura"></div><div class="hades-gaze"></div><div class="hades-flame"></div></div><div class="hades-caption"><strong>HADES</strong><span>Lord of the Underworld</span><p role="status" aria-live="polite">… Zzz …</p></div></div><div class="shop-content"><header class="shop-top"><div><h2 id="shopTitle">Underworld&#39;s Vault</h2><p>Spend souls to steal relics and forbidden knowledge from Hades</p></div><span class="shop-balance">◆ '+S.gold+' souls</span></header><div class="shop-grid">'+entries+'</div>'+scrollShopHTML()+'<footer class="shop-foot"><span>Relics: this run · Scrolls: permanent · Preparation only</span><button class="go" data-act="shopclose">Return to battle</button></footer></div></div>';
  o.hidden=false;startHadesGaze(o.querySelector('.hades-portrait'),purchased);o.querySelector('[data-act="shopclose"]').focus();
 }
 function buyArtifact(id){

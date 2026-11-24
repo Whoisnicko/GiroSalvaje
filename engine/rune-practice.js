@@ -4,12 +4,12 @@ let runeIndex=0,runeGuideOn=true,runeStroke=[],runePointer=null,runeResult=null,
 const runePracticeRecords=Object.fromEntries(RUNE_DEFS.map(d=>[d.id,{attempts:0,correct:0,streak:0}]));
 function renderRunePracticeAccess(){runeEl('runePracticeBtn').disabled=!(S&&S.phase==='prep'&&!spinning);}
 function runeGlyph(d){const path=d.points.map((p,i)=>(i?'L':'M')+(p[0]*100).toFixed(1)+' '+(p[1]*100).toFixed(1)).join(' ');return '<svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="44" fill="none" stroke="#746143" stroke-dasharray="2 4"/><path d="'+path+'" fill="none" stroke="'+d.color+'" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/></svg>';}
-function runeKnowledge(id){return S?.sandbox&&!menuOpen?'Sandbox access':id==='fire'?'Learned · Tier I':'Sealed in campaign';}
+function runeKnowledge(id){return S?.sandbox&&!menuOpen?'Sandbox access':knowledgeLearned(id)?'Learned · Tier I':'Sealed in campaign';}
 function runePracticeStats(){const rec=runePracticeRecords[RUNE_DEFS[runeIndex].id];runeEl('runeAttempts').textContent=rec.attempts+' attempts · '+rec.correct+' correct';runeEl('runeBest').textContent='Streak '+rec.streak;}
 function runeCatalogRender(){
  const selected=RUNE_DEFS[runeIndex],lore=GRIMOIRE_LORE[selected.id],spell=SPELL_DATA[selected.id],props=grimoireProperties(selected.id,spell,!menuOpen&&S?S.wave:1);
- runeEl('runeCatalog').innerHTML=RUNE_DEFS.map((d,i)=>'<button type="button" class="rune-entry" data-rune-index="'+i+'" aria-pressed="'+(i===runeIndex)+'" style="--ink:'+GRIMOIRE_LORE[d.id].ink+'">'+runeGlyph(d)+'<b>'+d.name+'</b></button>').join('');
- runeEl('runeName').textContent=selected.name;runeEl('runeSchool').textContent=lore.school;runeEl('runeKnowledge').textContent=runeKnowledge(selected.id);runeEl('runeKnowledge').dataset.learned=String(selected.id==='fire'||!!S?.sandbox&&!menuOpen);
+ runeEl('runeCatalog').innerHTML=RUNE_DEFS.map((d,i)=>'<button type="button" class="rune-entry" data-rune-index="'+i+'" aria-pressed="'+(i===runeIndex)+'" style="--ink:'+GRIMOIRE_LORE[d.id].ink+'">'+runeGlyph(d)+'<b>'+d.name+'</b><small class="grimoire-index-state">'+(S?.sandbox&&!menuOpen?'Test':knowledgeLearned(d.id)?'Learned':'Sealed')+'</small></button>').join('');
+ runeEl('runeName').textContent=selected.name;runeEl('runeSchool').textContent=lore.school;runeEl('runeKnowledge').textContent=runeKnowledge(selected.id);runeEl('runeKnowledge').dataset.learned=String(knowledgeLearned(selected.id)||!!S?.sandbox&&!menuOpen);runeEl('runeUnlock').textContent=(S?.sandbox&&!menuOpen?'Sandbox access does not unlock campaign knowledge. ':'')+knowledgeHint(selected.id);
  runeEl('runeLore').textContent=lore.lore;runeEl('runeIllustration').innerHTML=grimoireEngraving(selected.id)+'<div class="grimoire-rune-seal">'+runeGlyph(selected)+'</div>';
  runeEl('runeStats').innerHTML=props.stats.map(([label,value])=>'<div><small>'+label+'</small><b>'+value+'</b></div>').join('');
  runeEl('runeEffect').textContent=props.effect;runeEl('runeDescription').textContent=selected.hint;runeEl('runePageNumber').textContent=['I','II','III','IV','V','VI'][runeIndex]+' / VI';
