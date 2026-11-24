@@ -1,0 +1,30 @@
+/* v18 battlefield layout */
+:root{--leaf:#8dcc41;--red:#ee5753;--gold:#e4ba78;--panel:#171c24;--soul:#5edbff}
+.wrap{max-width:none;padding:10px 12px 28px;gap:10px}
+.box,.cabinet,.table,.lane,.menu-card{border:2px solid #a68150;box-shadow:inset 0 0 0 2px #39302a,0 0 0 2px #0d1015,0 3px 5px #0009;border-radius:7px!important}
+header{position:sticky;top:0;z-index:5;background:#171c24}
+#unitBox .foe{display:grid;grid-template-columns:64px 1fr;gap:8px;background:transparent;border:0;box-shadow:none;padding:8px 2px}
+#unitBox .foe img{width:64px;height:64px;grid-row:auto}
+#unitBox .fn{font-size:17px;align-self:center}
+#unitBox .fx{grid-column:1/-1;border-top:1px solid #3b414b;padding-top:8px;font-size:13px;line-height:1.5}
+.unit-stat-lines{grid-column:1/-1;display:grid;gap:8px;border-top:1px solid #3b414b;padding-top:10px;font-size:13px}
+.unit-stat-lines span{display:flex;justify-content:space-between;gap:6px;color:#bdb7aa}.unit-stat-lines b{color:#f2e9d9;text-align:right}
+#unitBox{background:linear-gradient(#20262e,#161c25)}
+.cabinet:before,.btn.spin,.chip{border-radius:5px!important}
+.reels{border:3px solid #e8a64b;box-shadow:0 0 12px #ffb040a0,inset 0 0 9px #000;border-radius:8px!important}
+.cell{border-radius:6px!important;background:linear-gradient(145deg,#3d414a,#1a2029);border:2px solid #786149}
+.cell img{filter:drop-shadow(2px 3px 0 #090d12)}
+.card{border-radius:7px!important}
+@media(min-width:1100px){
+.wrap{display:grid;grid-template-columns:minmax(165px,205px) minmax(0,1fr) minmax(170px,225px);align-items:start}
+.wrap>header{grid-column:1/-1;grid-row:1}
+.wrap>.cabinet{grid-column:1;grid-row:2/span 4;padding:9px;gap:9px}
+.wrap>.lane{grid-column:2;grid-row:2}
+.wrap>.intel{grid-column:3;grid-row:2/span 4;display:grid;grid-template-columns:minmax(0,1fr)}
+#unitBox{grid-row:1}.foes{grid-template-columns:1fr}
+.wrap>.table{grid-column:2;grid-row:3;grid-template-columns:80px minmax(0,1fr)}
+.wrap>.legend{grid-column:2;grid-row:4}.wrap>.save-line{grid-column:2;grid-row:5}
+.wrap>.coach{grid-column:1/-1;grid-row:6}
+.cabinet .btns{grid-template-columns:1fr}.cabinet .btns>*{grid-column:1}
+}
+@media(max-width:1099px){.wrap{display:flex;flex-direction:column}.wrap>*{width:100%;box-sizing:border-box}.lane{order:1}.cabinet{order:2}.table{order:3}.intel{order:4}.legend,.save-line{order:5}.coach{order:6}}
