@@ -1,5 +1,8 @@
 # Stop Humans!
 
-Dark-fantasy tactical autobattler. v17.1 — reference-inspired interface pass, existing art retained.
+Dark-fantasy tactical autobattler. v22-alpha.7 — Soul Infusions.
 
-See PLAYBOOK-v17.md.
+Production: https://stophumans.pages.dev/
+GitHub: https://github.com/Whoisnicko/StopHumans
+
+See PLAYBOOK-v22-alpha7.md and PROYECTO-v22-alpha7.md.

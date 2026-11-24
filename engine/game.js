@@ -262,7 +262,7 @@ const BANSHEE_RANGE = [120, 165, 220];
 function bansheeOn(u){
   if (!u || u.down || u.y >= WORLD_H || !S.units.includes(u)) return 0;
   let b = 0;
-  for (const s of S.units) if (s.type === 'B' && s !== u && !s.down && dist(s, u) <= BANSHEE_RANGE[s.lvl - 1]) b = Math.max(b, bansheeBuff(s.lvl));
+  for (const s of S.units) if (s.type === 'B' && s !== u && !s.down && dist(s, u) <= stats('B',s.lvl,s).range) b = Math.max(b, bansheeBuff(s.lvl));
   return b;
 }
 const MAX_UNITS = 8, MAX_WAVE = 10, WORLD_H = 260, LOGIC_H = 322, WALL_X = 40, TILE = 52, ROWS = 5; // debajo del campo (260-322) va la reserva
@@ -442,7 +442,7 @@ function stats(type, lvl, u){
   if(artifactOwned("boneplate")) hp*=1.25;
   if(artifactOwned("hourglass") && !b.support) cd/=1.2;
   if(artifactOwned("lens") && b.ranged) range*=1.15;
-  return { hp:Math.round(hp), dmg:Math.round(dmg), cd, range, splash };
+  return infusionStats({ hp:Math.round(hp), dmg:Math.round(dmg), cd, range, splash },u);
 }
 const size = u => u.type === 'L' ? 36 : u.type === 'K' ? Math.round(32 * [1, 1.3, 1.6][(u.nl || 1) - 1]) : u.type === 'M' ? 40 + (u.lvl - 1) * 9 : 34 + (u.lvl - 1) * 9;
 const radius = u => heroIsTarget(u)?HERO_CLASSES.warlord.radius:Math.min(size(u), 34 + u.lvl * 6) / 2 - 2;
@@ -499,18 +499,19 @@ function summon(type){
 }
 const mergeable = (a, b) => a && b && a !== b && a.type === b.type && a.lvl === b.lvl && a.lvl < 3 && !a.temp && !b.temp && a.type !== 'L';
 /* Fusión manual: soltar un monstruo sobre otro igual los apila; al juntar 3 (o 2 con Necromancy) se fusionan. */
-function doMerge(target, src){
+function doMerge(target, src, chosenInfusion){
+  const keptInfusion=infusionMergeChoice(target,src,chosenInfusion);
   prepUndoRecord('Merge / stack '+NAMES[target.type]);
   const total = target.pile + src.pile, train = Math.max(target.train || 0, src.train || 0);
   removeUnit(src);
   if (total < S.mods.mergeN) {
-    target.pile = total; target.train = train; refreshHp(target);
+    target.pile = total; target.train = train; if(keptInfusion)target.infusion=keptInfusion; infusionReset(target); refreshHp(target);
     S.fx.push({ k:'ring', x:target.x, y:target.y, r:26, c:'gold', t:.4, T:.4 }); sfx('place');
     setResult('Stacked', `${NAMES[target.type]} ${target.pile}/${S.mods.mergeN}: drop another matching monster onto it to merge.`);
     return;
   }
   const leftover = total - S.mods.mergeN, nu = makeUnit(target.type, target.lvl + 1);
-  nu.x = target.x; nu.y = target.y; nu.train = train; refreshHp(nu);
+  nu.x = target.x; nu.y = target.y; nu.train = train; if(keptInfusion)nu.infusion=keptInfusion; refreshHp(nu);
   const bi = S.bench.indexOf(target);
   removeUnit(target);
   if (bi >= 0) S.bench[bi] = nu; else S.units.push(nu);
@@ -666,7 +667,7 @@ function startFight(){
   S.phase = 'fight'; heroResetWave(); magicResetWave(); S.held.clear(); S.wins.clear(); S.confirmFight = false; S.drag = null; S.aim = null; S.sel = null;
   S.buff = { haste:0, slow:0 }; S.zones = []; S.fightT = 0; S.charge = false;
   const W = waveInfo(S.wave);
-  S.units.forEach(u => { u.hx = u.x; u.hy = u.y; u.skels = 0; u.cd = Math.min(u.cd, .3); });
+  S.units.forEach(u => { u.hx = u.x; u.hy = u.y; u.skels = 0; infusionReset(u); u.cd = Math.min(u.cd, .3); });
   S.altarCd = 0;
   S.queue = S.nextQueue.map(q => ({ ...q })); S.curQueue = S.nextQueue;
   S.queue.forEach(q => S.seenKinds.add(q.kind));
@@ -727,11 +728,11 @@ function update(dt){
     u.cd = st.cd;
     const dmg = st.dmg * (1 + buff) * (warCry?1+cryStats.damageBonus:1);
     const dd = dist(tgt, u) || 1; u.lx = (tgt.x - u.x) / dd; u.ly = (tgt.y - u.y) / dd; u.lunge = .14;
-    if (u.type === 'M') { S.shots.push({ k:'fire', x:u.x + 14, y:u.y - 12, tgt, tx:tgt.x, ty:tgt.y, sp:300, dmg, splash:st.splash }); sfx('fireLaunch'); }
-    else if (u.type === 'A') { S.shots.push({ k:'orb', x:u.x + 8, y:u.y - 4, tgt, tx:tgt.x, ty:tgt.y, sp:380, dmg }); sfx('orb'); }
+    if (u.type === 'M') { S.shots.push({ k:'fire', x:u.x + 14, y:u.y - 12, tgt, tx:tgt.x, ty:tgt.y, sp:300, dmg, source:u, splash:st.splash }); sfx('fireLaunch'); }
+    else if (u.type === 'A') { S.shots.push({ k:'orb', x:u.x + 8, y:u.y - 4, tgt, tx:tgt.x, ty:tgt.y, sp:380, dmg, source:u }); sfx('orb'); }
     else {
       const c = UCOL[u.type];
-      hitEnemy(tgt, dmg, c);
+      hitEnemy(tgt, dmg, c,{source:u});
       S.fx.push({ k:'claw', x:tgt.x, y:tgt.y, c, t:.18, T:.18 });
       sfx(u.type === 'L' ? 'bite' : 'claw');
     }
@@ -784,7 +785,7 @@ function update(dt){
     }
     if (e.kind === 'bal') {
       let tgt = null, best = 1e9; const rng = e.range;
-      for (const u of (forcedHero?[forcedHero]:heroTargets())) { if (u.down||u.hp<=0) continue; const d = dist(e, u); if (d <= rng && d < best) { best = d; tgt = u; } }
+      for (const u of (forcedHero?[forcedHero]:heroTargets())) { if (u.down||u.hp<=0||infusionHidden(u)) continue; const d = dist(e, u); if (d <= rng && d < best) { best = d; tgt = u; } }
       const altarInRange = !forcedHero && e.x - WALL_X <= rng;
       if (tgt || altarInRange) {
         e.cd -= dt;
@@ -801,7 +802,7 @@ function update(dt){
     if (!tgt && e.kind !== 'ant') {
       let best = 1e9;
       for (const u of heroTargets()) {
-        if (u.down||u.hp<=0) continue;
+        if (u.down||u.hp<=0||infusionHidden(u)) continue;
         const dx = e.x - u.x, dy = Math.abs(u.y - e.y),hero=heroIsTarget(u);
         if ((hero?Math.abs(dx)>150:dx < -10 || dx > 150) || dy > 60) continue;
         const d = (hero?Math.abs(dx):dx) + dy * 1.5; if (d < best) { best = d; tgt = u; }
@@ -875,7 +876,9 @@ function stepUnit(u, tx, ty, step){
 function burst(x, y, c, n, sp = 90){ for (let i = 0; i < n; i++) { const a = Math.random() * Math.PI * 2, v = rnd(sp * .4, sp); S.parts.push({ x, y, vx:Math.cos(a) * v, vy:Math.sin(a) * v - 30, t:rnd(.25, .5), T:.5, c, s:rnd(2, 3.5) }); } }
 function hitEnemy(e, d, c, o = {}){
   const armored = e.armor && !o.pierce, real = armored ? Math.max(1, d - e.armor) : d;
+  const hpBefore=Math.max(0,e.hp);
   damage(e, d, {...o,hitFeedback:true});
+  infusionHeal(o.source,Math.min(hpBefore,Math.max(0,hpBefore-e.hp)));
   burst(e.x, e.y, armored ? 'steel' : c, armored ? 5 : 7);
   const kb = o.kb ?? 60;
   if (kb) e.kbv = Math.max(e.kbv || 0, e.boss ? kb * .2 : e.armor ? kb * .5 : kb);
@@ -886,9 +889,9 @@ function hitEnemy(e, d, c, o = {}){
   if (armored) sfx('clank');
 }
 function landShot(s){
-  if (s.k === 'orb') { if (s.tgt && s.tgt.hp > 0) { hitEnemy(s.tgt, s.dmg, 'a', { kb:0 }); sfx('orbHit'); } else burst(s.x, s.y, 'a', 4, 40); }
+  if (s.k === 'orb') { if (s.tgt && s.tgt.hp > 0) { hitEnemy(s.tgt, s.dmg, 'a', { kb:0,source:s.source }); sfx('orbHit'); } else burst(s.x, s.y, 'a', 4, 40); }
   else if (s.k === 'fire') {
-    S.enemies.forEach(e => { if (e.hp > 0 && Math.hypot(e.x - s.tx, e.y - s.ty) <= s.splash) hitEnemy(e, s.dmg, 'm'); });
+    S.enemies.forEach(e => { if (e.hp > 0 && Math.hypot(e.x - s.tx, e.y - s.ty) <= s.splash) hitEnemy(e, s.dmg, 'm',{source:s.source}); });
     S.fx.push({ k:'ring', x:s.tx, y:s.ty, r:s.splash, c:'m', t:.35, T:.35 });
     burst(s.tx, s.ty, 'm', 14, 140); burst(s.tx, s.ty, 'gold', 8, 100);
     S.shake = Math.max(S.shake, 3); feelImpact(s.tx,s.ty,'fire',null,Math.max(24,s.splash));sfx('boom');
@@ -979,6 +982,7 @@ function askMergeConfirm(target, src){
   o.innerHTML = `<div class="panel confirm"><h2>${fuse ? 'Merge?' : 'Stack?'}</h2>
     <div class="cm-row">${img(USPR[src.type])}<span class="cm-plus">+</span>${img(USPR[target.type])}<span class="cm-plus">→</span>${fuse ? `<span class="cm-res">${img(USPR[target.type])}<b>${'★'.repeat(target.lvl + 1)}</b></span>` : `<span class="cm-res"><b>${total}/${S.mods.mergeN}</b></span>`}</div>
     <p>${fuse ? `Your ${total} <b>${name}</b> merge into <b>${NAMES[target.type]} ${'★'.repeat(target.lvl + 1)}</b>.` : `Stack <b>${total} ${name}</b> (${total}/${S.mods.mergeN}). Add ${S.mods.mergeN - total} more to merge.`}</p>
+    ${infusionMergeHTML(target,src)}
     <label class="cm-ask"><input type="checkbox" id="noAsk"> Do not ask again</label>
     <div class="btns"><button class="go" data-act="mergeYes">${fuse ? 'Merge' : 'Stack'}</button><button class="btn" data-act="mergeNo">Cancel</button></div></div>`;
   const noAsk=o.querySelector('#noAsk');
@@ -986,10 +990,10 @@ function askMergeConfirm(target, src){
   o.hidden = false; o.querySelector('[data-act="mergeYes"]').focus();
 }
 function closeMergeConfirm(ok){
-  const pm = S.pendingMerge; S.pendingMerge = null;
+  const pm = S.pendingMerge, chosenInfusion=$('#ov2 input[name="keepInfusion"]:checked')?.value; S.pendingMerge = null;
   const cb = $('#noAsk'); if (cb?.checked) setMergeConfirmation(false);
   $('#ov2').hidden = true;
-  if (ok && pm && S.phase === 'prep' && allMine().includes(pm.target) && allMine().includes(pm.src)) doMerge(pm.target, pm.src);
+  if (ok && pm && S.phase === 'prep' && allMine().includes(pm.target) && allMine().includes(pm.src)) doMerge(pm.target, pm.src,chosenInfusion);
   else if (!ok) setResult('Canceled', 'Monsters were not stacked.');
   renderUI();
 }
@@ -1003,7 +1007,7 @@ function resolveDrop(){
   if(plan.kind!=='merge')prepUndoRecord(plan.kind==='sell'?'Sell '+NAMES[u.type]:plan.kind==='bench'?'Move '+NAMES[u.type]+' to reserve':'Move '+NAMES[u.type],d);
   S.drag = null;
   if (plan.kind === 'sell') { removeUnit(u); S.gold += plan.value; floatText(WALL_X + 30, u.y, `+${plan.value} souls`, 'soul'); burst(WALL_X, u.y, 'soul', 12, 90); sfx('coin'); setResult('Sold', `${NAMES[u.type]} ${'★'.repeat(u.lvl)} for ${plan.value} souls.`); }
-  else if (plan.kind === 'merge') { u.x = d.ox; u.y = d.oy; if (askMerge) { askMergeConfirm(plan.target, u); return; } doMerge(plan.target, u); }
+  else if (plan.kind === 'merge') { u.x = d.ox; u.y = d.oy; if (askMerge || (infusionOf(plan.target)&&infusionOf(u)&&plan.target.infusion!==u.infusion)) { askMergeConfirm(plan.target, u); return; } doMerge(plan.target, u); }
   else if (plan.kind === 'bench') { removeUnit(u); S.bench[plan.slot] = u; Object.assign(u, benchSlot(plan.slot)); sfx('place'); }
   else { if (d.from === 'bench') { removeUnit(u); S.units.push(u); } sfx('place'); }
   S.sel = S.units.includes(u) || S.bench.includes(u) ? u : S.sel;
@@ -1214,7 +1218,7 @@ function savePrefs(){durableWrite(SETTINGS_KEY,prefs);document.body.classList.to
 function snapshot(){
  if(!S||sandboxActive())return null;
  const refs=[...S.units,...S.bench.filter(Boolean),...S.enemies,...heroRefs(S)];
- const state={...S,held:[...S.held],wins:[...S.wins],ter:[...S.ter],seenKinds:[...S.seenKinds],sel:null,drag:null,pendingMerge:null,aim:null,aimP:null,shots:S.shots.map(s=>({...s,tgt:undefined,targetIndex:refs.indexOf(s.tgt)})),relicIndex:RELICS.indexOf(S.relic),relic:null,offer:S.offer.map(o=>({n:o.n,kind:o.kind})),fx:[],parts:[],floats:[],shake:0};
+ const state={...S,held:[...S.held],wins:[...S.wins],ter:[...S.ter],seenKinds:[...S.seenKinds],sel:null,drag:null,pendingMerge:null,aim:null,aimP:null,shots:S.shots.map(s=>({...s,tgt:undefined,source:undefined,sourceIndex:refs.indexOf(s.source),targetIndex:refs.indexOf(s.tgt)})),relicIndex:RELICS.indexOf(S.relic),relic:null,offer:S.offer.map(o=>({n:o.n,kind:o.kind})),fx:[],parts:[],floats:[],shake:0};
  return {version:14,runId:sessionRunId,name:runName,savedAt:Date.now(),worldWidth:worldW(),state};
 }
 function validSave(v){return !!(v&&v.version===14&&v.state&&!v.state.sandbox&&['prep','fight','reward','win','over'].includes(v.state.phase)&&Array.isArray(v.state.units)&&Array.isArray(v.state.enemies)&&Array.isArray(v.state.ter)&&Array.isArray(v.state.bench)&&v.state.wave>=1&&v.state.wave<=11);}
@@ -1225,6 +1229,7 @@ function restore(v){
  s.hero=heroNormalize(s,v.worldWidth);heroCancelAim(false);heroClearKeys();
  s.artifacts=Array.isArray(s.artifacts)?[...new Set(s.artifacts.filter(id=>Object.hasOwn(SHOP_ARTIFACTS,id)))]:[];
  for(const u of [...s.units,...s.bench.filter(Boolean)])if(!BASE[u.type]||!Number.isFinite(u.x)||!Number.isFinite(u.hp))throw Error('Invalid unit');
+ for(const u of [...s.units,...s.bench.filter(Boolean)])infusionNormalize(u);
  for(const e of s.enemies)if(!KIND[e.kind]||!Number.isFinite(e.hp))throw Error('Invalid enemy');
  if(!Array.isArray(s.hand)||!Array.isArray(s.deck)||!s.hand.every(c=>Object.hasOwn(CARDS,c.id)||RETIRED_TERRAIN_CARDS.has(c.id))||!s.deck.every(id=>Object.hasOwn(CARDS,id)||RETIRED_TERRAIN_CARDS.has(id)))throw Error('Invalid cards');
  // Preserve hand-to-deck indices when removing disabled terrain cards.
@@ -1237,7 +1242,7 @@ function restore(v){
  s.freeHill=false;
  if(typeof s.resultSub==='string')s.resultSub=s.resultSub.replace('Terrain changed. ','');
  s.held=new Set(s.held);s.wins=new Set(s.wins);s.seenKinds=new Set(s.seenKinds);s.ter=new Map();s.relic=RELICS[s.relicIndex]||null;
- const refs=[...s.units,...s.bench.filter(Boolean),...s.enemies,...heroRefs(s)];s.shots=s.shots.map(q=>({...q,tgt:refs[q.targetIndex]||null}));
+ const refs=[...s.units,...s.bench.filter(Boolean),...s.enemies,...heroRefs(s)];s.shots=s.shots.map(q=>({...q,tgt:refs[q.targetIndex]||null,source:refs[q.sourceIndex]||null}));
  s.offer=s.offer.map(o=>{const legacyNames={"Ectoplasma":"Ectoplasm","Carne dura":"Tough Flesh","Fuego antiguo":"Ancient Fire","Cosecha de almas":"Soul Harvest","Luna llena":"Full Moon","Garras firmes":"Steady Claws","Altar reforzado":"Fortified Altar","Necromancia":"Necromancy","Rugido del dragón":"Dragon Roar","Manos de la tierra":"Earth Hands","Lluvia de huesos":"Bone Rain","Festín":"Feast","Aullido":"Howl","Ofrenda":"Offering","Niebla":"Mist","Temblor":"Earthquake","Murciélagos":"Bats","Cripta ampliada":"Expanded Crypt","Cosecha":"Harvest","Lago maldito":"Cursed Lake","Colina":"Hill","Pantano":"Swamp","Bendición":"Blessing","Carta para esta partida":"Card for this run","Carta":"Card"};o={...o,n:legacyNames[o.n]||o.n,kind:legacyNames[o.kind]||o.kind};let b=BLESS.find(b=>b.n===o.n);if(o.kind==='Blessing'&&b)return {...b,kind:o.kind};let id=Object.keys(CARDS).find(id=>CARDS[id].n===o.n);if(!id && ['Cursed Lake','Hill','Swamp'].includes(o.n))id='cripta';if(!id)throw Error('Invalid reward');return {n:CARDS[id].n,ic:CARDS[id].ic,d:CARDS[id].d(),kind:o.kind,a:()=>S.deck.push(id)};});
  savedWorldWidth=Number.isFinite(v.worldWidth)&&v.worldWidth>=420?v.worldWidth:null;
  S=s;knowledgeFromSave(v,true);talentFromSave(v,true);sessionRunId=v.runId||uid();runName=String(v.name||'Anonymous').slice(0,20);hideOv();$('#ov2').hidden=true;closeFront();renderUI();

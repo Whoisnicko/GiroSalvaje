@@ -56,6 +56,7 @@ function tacticalModel(e){
   if(base.guard)add('flag','Patrol radius',tacNum(guardOf(e),0)+' px');if(st.splash)add('flame','Blast radius',tacNum(st.splash,0)+' px');
   if(e.type==='N')add('skull','Skeletons raised',(e.skels||0)+' / '+skelCap(e.lvl));if(e.type==='B')add('spark','Aura bonus','+'+Math.round(bansheeBuff(e.lvl)*100)+'%');
   if(e.arcaneShield>0&&e.arcaneShieldTime>0&&!e.down)tags.push('Soul Barrier '+tacNum(e.arcaneShield,0)+' HP · '+tacNum(e.arcaneShieldTime)+'s');
+  if(infusionOf(e))tags.push(infusionOf(e).name);
   if(e.pile>1)tags.push('Stack '+e.pile+'/'+S.mods.mergeN);if(e.train)tags.push('Training +'+e.train*50+'% HP/ATK');if(bf)tags.push('Banshee +'+Math.round(bf*100)+'%');if(haste>1&&!support)tags.push('Dragon Roar ×2');if(e.temp)tags.push('Temporary');tags.push(e.down?'Fallen':bench?'Reserve':'Active');
   for(const id of (S.artifacts||[])){if(id==='bloodfang'&&!support||id==='boneplate'||id==='hourglass'&&!support||id==='lens'&&base.ranged)tags.push(SHOP_ARTIFACTS[id].name);}
  }
@@ -87,7 +88,7 @@ let bestiaryEntity=null,bestiaryState=null,bestiaryPhase=null,bestiaryMarkup='';
 function bestiaryHTML(e,m){
  const l=m.enemy?{title:'Invader of the living kingdom',lore:'Driven by the living kingdom’s fear of the dead, this invader marches toward the altar in the Valley of Souls.',tactic:m.note}:BESTIARY_LORE[e.type];
  const cards=sanctuaryStats(m).map(s=>'<div class="bestiary-stat"><span aria-hidden="true">'+s.icon+'</span><small>'+s.label+'</small><b>'+s.value+'</b></div>').join('');
- return '<div class="bestiary-hero"><div class="bestiary-portrait">'+tacPic(m.portrait)+'</div><div><span class="bestiary-role">'+m.role+'</span><h2 id="bestiaryTitle">'+m.name+' <em>'+m.stars+'</em></h2><p>'+l.title+'</p><div class="bestiary-vitality"><span>VITALITY</span><b>'+Math.ceil(m.hp)+' / '+Math.ceil(m.max)+'</b></div><div class="bestiary-hp"><i style="width:'+Math.max(0,Math.min(100,m.hp/m.max*100))+'%"></i></div></div></div><div class="bestiary-stats">'+cards+'</div><div class="bestiary-columns"><section><h3>Chronicle</h3><p>'+l.lore+'</p></section><section><h3>Battlecraft</h3><p>'+l.tactic+'</p><dl>'+m.rows.filter(s=>!['Attack','Attack interval','Attack reach','Reach','Armor'].includes(s.label)).map(s=>'<div><dt>'+s.label+'</dt><dd>'+s.value+'</dd></div>').join('')+'</dl></section></div><div class="bestiary-tags">'+m.tags.map(t=>'<span>'+t+'</span>').join('')+'</div>';
+ return '<div class="bestiary-hero"><div class="bestiary-portrait">'+tacPic(m.portrait)+'</div><div><span class="bestiary-role">'+m.role+'</span><h2 id="bestiaryTitle">'+m.name+' <em>'+m.stars+'</em></h2><p>'+l.title+'</p><div class="bestiary-vitality"><span>VITALITY</span><b>'+Math.ceil(m.hp)+' / '+Math.ceil(m.max)+'</b></div><div class="bestiary-hp"><i style="width:'+Math.max(0,Math.min(100,m.hp/m.max*100))+'%"></i></div></div></div><div class="bestiary-stats">'+cards+'</div><div class="bestiary-columns"><section><h3>Chronicle</h3><p>'+l.lore+'</p></section><section><h3>Battlecraft</h3><p>'+l.tactic+'</p><dl>'+m.rows.filter(s=>!['Attack','Attack interval','Attack reach','Reach','Armor'].includes(s.label)).map(s=>'<div><dt>'+s.label+'</dt><dd>'+s.value+'</dd></div>').join('')+'</dl></section></div><div class="bestiary-tags">'+m.tags.map(t=>'<span>'+t+'</span>').join('')+'</div>'+(!m.enemy?infusionHTML(e):'');
 }
 function bestiaryPosition(){
  const d=bestiaryDialog(),r=cv.getBoundingClientRect(),left=Math.max(0,r.left),right=Math.min(innerWidth,r.right),top=Math.max(0,r.top),bottom=Math.min(innerHeight,r.top+WORLD_H*scale);
@@ -152,6 +153,7 @@ const bestiaryEl=bestiaryDialog();
 // Both controls are native method=dialog submit buttons. A capture-phase handler
 // also closes directly, independent of document-level gameplay click delegation.
 bestiaryEl.addEventListener('click',e=>{
+ const infusionButton=e.target.closest?.('[data-infusion]');if(infusionButton&&bestiaryEl.contains(infusionButton)){e.preventDefault();e.stopImmediatePropagation();if(!infusionButton.disabled)infusionBuy(bestiaryEntity,infusionButton.dataset.infusion);return;}
  const button=e.target.closest?.('.bestiary-close,.bestiary-return');
  if(button&&bestiaryEl.contains(button)){e.preventDefault();e.stopImmediatePropagation();closeBestiary();return;}
  if(e.target===bestiaryEl){const r=bestiaryEl.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom){e.preventDefault();e.stopImmediatePropagation();closeBestiary();}}

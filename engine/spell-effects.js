@@ -32,7 +32,7 @@ function spellEvent(kind,x,y,duration,extra={}){
 }
 function spellDamageAlly(u,amount){
  if(!Number.isFinite(amount)||amount<=0||u.down||u.hp<=0)return 0;
- let remaining=amount;
+ let remaining=infusionReduce(u,amount);
  // God mode protects HP, but shields still absorb hits so testers can validate depletion.
  if(u.arcaneShield>0&&u.arcaneShieldTime>0){
   const blocked=Math.min(remaining,u.arcaneShield);remaining-=blocked;u.arcaneShield-=blocked;if(blocked>0)masteryCredit('barrier',u.arcaneShieldToken);
@@ -40,8 +40,8 @@ function spellDamageAlly(u,amount){
   if(u.arcaneShield<=1e-6){delete u.arcaneShield;delete u.arcaneShieldTime;delete u.arcaneShieldMax;delete u.arcaneShieldToken;spellEvent('arcaneBreak',u.x,u.y,.48,{r:radius(u)+9});sfx('arcaneBreak');}
   else sfx('arcaneBlock');
  }
- const dealt=sandboxGod()?0:remaining;
- u.hp-=dealt;return dealt;
+ const dealt=sandboxGod()?0:Math.min(u.hp,remaining);
+ const before=u.hp;if(dealt>0&&!infusionLethal(u,dealt))u.hp-=dealt;return Math.max(0,before-u.hp);
 }
 function spellChain(first,d=SPELL_DATA.lightning){
  if(!first||first.hp<=0||!S.enemies.includes(first))return [];
