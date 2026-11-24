@@ -34,3 +34,24 @@
 #ov .relic-opt .rn{font:700 13px Georgia,serif!important;color:#f3d2a0}
 #ov .relic-opt .rd{color:#d4d0c8;font-size:11px}
 .wrap .relic .medal{border-radius:4px;overflow:hidden}
+
+/* v20-alpha.4 — original cyan Profane Sanctuary frame, live text overlay.
+   Pinned dossier keeps its previous style. */
+.unit-inspector.is-compact,.unit-inspector.is-compact.is-enemy{width:min(224px,calc(100vw - 20px));padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;overflow:hidden;font:12px/1.15 Georgia,serif;color:#f6dfaa;pointer-events:none}
+.sanctuary-shell{position:relative;width:100%;aspect-ratio:425/392;isolation:isolate;background:linear-gradient(#211e28,#171923);border:2px solid #567f90;border-radius:30px 30px 10px 10px;box-sizing:border-box}
+.sanctuary-frame-ready .sanctuary-shell{background:transparent url("assets/ui/sanctuary-frame-v20.webp") center/100% 100% no-repeat;border:0;border-radius:0;image-rendering:pixelated;filter:drop-shadow(0 3px 4px #0009)}
+.sanctuary-title{position:absolute;top:23%;left:22%;right:22%;height:8.5%;display:flex;align-items:center;justify-content:center;gap:3px;white-space:nowrap;line-height:1}
+.sanctuary-title strong{font:700 13px/1 Georgia,serif;color:#f6dba1;text-shadow:0 1px 1px #000;overflow:hidden;text-overflow:ellipsis}
+.sanctuary-title>span{font:700 10px/1 Georgia,serif;color:#ffcc62;letter-spacing:-1px}
+.sanctuary-health{position:absolute;left:35%;right:26%;top:33%;height:6.5%;display:flex;align-items:center;justify-content:center;color:#ffe5ad;font-size:12px;font-weight:bold;font-variant-numeric:tabular-nums}
+.sanctuary-hp-track{position:absolute;left:36%;top:40.05%;width:36.2%;height:2.8%;background:#101611;overflow:hidden;border-radius:1px}
+.sanctuary-hp-track i{display:block;height:100%;background:linear-gradient(#a7ef70 0%,#74c83b 45%,#43931c 100%);box-shadow:inset 0 1px 0 #c1f68b}
+.is-enemy .sanctuary-hp-track i{background:linear-gradient(#f9a36e,#d45242 60%,#842628)}
+.sanctuary-stat{position:absolute;left:35%;right:26%;height:7.2%;display:flex;align-items:center;justify-content:space-between;gap:3px;font-weight:bold;font-size:11.5px;line-height:1;color:#f5dfab;text-shadow:0 1px 1px #000}
+.sanctuary-stat b{font-size:11.5px;font-variant-numeric:tabular-nums;white-space:nowrap;color:#ffe5b0}
+.sanctuary-stat-0{top:45.5%}.sanctuary-stat-1{top:53%}.sanctuary-stat-2{top:60.4%}.sanctuary-stat-3{top:67.7%}.sanctuary-stat-4{top:75.1%}
+.sanctuary-fallback-icon,.sanctuary-fallback-heart{position:absolute;right:calc(100% + 7px);font-size:13px;color:#d7b46f}.sanctuary-fallback-heart{color:#e47769}
+.sanctuary-frame-ready .sanctuary-fallback-icon,.sanctuary-frame-ready .sanctuary-fallback-heart{display:none}
+.sanctuary-buffs{display:flex;justify-content:center;flex-wrap:wrap;gap:3px;padding:0 12px 3px;margin-top:-1px}
+.sanctuary-buffs span{background:#111b23f5;border:1px solid #3f889b;border-radius:3px;padding:2px 4px;color:#a8e8f5;font:10px/1.2 system-ui,sans-serif;text-align:center}
+@media(max-width:620px){.unit-inspector.is-compact,.unit-inspector.is-compact.is-enemy{width:min(210px,calc(100vw - 20px))}.sanctuary-title strong{font-size:12px}.sanctuary-stat,.sanctuary-stat b,.sanctuary-health{font-size:11px}}

@@ -28,18 +28,20 @@ function tacticalClose(){if(!S)return false;tacReset();const p=$('#unitInspector
 function tacticalModel(e){
  const enemy=S.enemies.includes(e),rows=[],tags=[],add=(icon,label,value)=>rows.push({icon,label,value:String(value)});
  const hp=Math.max(0,e.hp),max=Math.max(1,e.maxHp??e.hp);
- let name,portrait,role,note,stars='';
+ let name,portrait,role,note,stars='',combat;
  if(enemy){
   const k=KIND[e.kind],cleric=e.kind==='cle',arson=e.kind==='ant',ranged=e.kind==='bal';
   name=k.n;portrait=k.spr;role=e.boss?'Boss · Human':cleric?'Support · Human':ranged?'Ranged · Human':arson?'Siege · Human':'Melee · Human';note=FOE_NOTE[e.kind]||'Human invader.';
   if(cleric)note+=' Heals '+tacNum(5+S.wave*1.5)+' HP every 2.5s while supporting.';
   add('sword','Attack',tacNum(e.dmg));add('clock','Attack interval',cleric?'1s melee / 2.5s heal':ranged?'1.6 s':'1 s');add('target','Reach',ranged?tacNum(e.range,0)+' px':cleric?'100 px heal':'Contact');
+  const rate=ranged?1/1.6:1;combat={damage:e.dmg,attackRate:rate,dps:e.dmg*rate,range:ranged?e.range:cleric?100:'Melee',armor:e.armor||0};
   const sp=e.sp*(S.buff.slow>0?.4:1)*(S.charge?1.5:1);add('boot','Move speed',tacNum(e.root>0?0:sp,0)+' px/s');add('shield','Armor',tacNum(e.armor||0));
   if(arson)add('flame','Altar damage',tacNum(e.dmg*3));if(e.root>0)tags.push('Rooted '+tacNum(e.root)+'s');if(S.buff.slow>0)tags.push('Mist');if(S.charge)tags.push('Final charge');if(e.boss)tags.push('Commander');tags.push('Invader');
  }else{
   const base=BASE[e.type],st=stats(e.type,e.lvl,e),bf=bansheeOn(e),bench=S.bench.includes(e),support=!!base.support;
   name=NAMES[e.type];portrait=USPR[e.type];[role,note]=TAC_ROLES[e.type];stars=e.temp?'':'★'.repeat(e.lvl);
   const haste=S.phase==='fight'&&S.buff.haste>0?2:1,atk=st.dmg*(1+bf),interval=st.cd/((1+bf)*haste);
+  combat={damage:support?null:atk,attackRate:support?null:1/interval,dps:support?null:atk/interval,range:st.range,armor:null};
   add('sword','Attack',support?'—':tacNum(atk));add('clock',support?'Ability interval':'Attack interval',tacNum(support?st.cd:interval,2)+' s');add('target',support?'Ability radius':'Attack reach',tacNum(st.range,0)+' px');
   add('boot','Move speed',base.move?tacNum(base.move,0)+' px/s':'Stationary');add('shield','Armor','0');
   if(base.guard)add('flag','Patrol radius',tacNum(guardOf(e),0)+' px');if(st.splash)add('flame','Blast radius',tacNum(st.splash,0)+' px');
@@ -47,17 +49,27 @@ function tacticalModel(e){
   if(e.pile>1)tags.push('Stack '+e.pile+'/'+S.mods.mergeN);if(e.train)tags.push('Training +'+e.train*50+'% HP/ATK');if(bf)tags.push('Banshee +'+Math.round(bf*100)+'%');if(haste>1&&!support)tags.push('Dragon Roar ×2');if(e.temp)tags.push('Temporary');tags.push(e.down?'Fallen':bench?'Reserve':'Active');
   for(const id of (S.artifacts||[])){if(id==='bloodfang'&&!support||id==='boneplate'||id==='hourglass'&&!support||id==='lens'&&base.ranged)tags.push(SHOP_ARTIFACTS[id].name);}
  }
- return {enemy,name,portrait,role,note,stars,hp,max,rows,tags};
+ return {enemy,name,portrait,role,note,stars,hp,max,rows,tags,combat};
 }
 const TAC_ICONS={sword:'M4 20l4-4m-3-5 8 8m-5-3L20 4l-1 7-8 8',clock:'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18m0 4v5l4 2',target:'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18m0 5a4 4 0 1 0 0 8a4 4 0 1 0 0-8',boot:'M7 3h7v10l5 3v4H4v-5l3-3Z',shield:'M12 3 4 6v6c0 4 4 7 8 9 4-2 8-5 8-9V6Z',flag:'M5 21V3m0 1h13l-3 4 3 4H5',flame:'M12 21C2 20 4 12 10 6c-1 5 3 6 4-3 8 8 9 17-2 18Z',skull:'M5 13a7 7 0 1 1 14 0l-3 3v4H8v-4Zm4-2h1m4 0h1m-3 4v2',spark:'M12 2l3 7 7 3-7 3-3 7-3-7-7-3 7-3Z'};
 function tacIcon(k){return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+TAC_ICONS[k]+'" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';}
+/* The approved cyan Profane Sanctuary artwork is a static frame.
+   All content is rendered from live game data; no numbers are baked into the art. */
+const SANCTUARY_ART='assets/ui/sanctuary-frame-v20.webp';
+function sanctuaryStats(m){
+ const v=m.combat,fmt=(n,d=1)=>n===null||n===undefined?'—':typeof n==='string'?n:tacNum(n,d);
+ return [
+ {label:'ATK',value:fmt(v.damage),icon:'⚔',title:'Effective attack damage'},
+ {label:'ATK/s',value:fmt(v.attackRate,2),icon:'⌛',title:'Attacks per second'},
+ {label:'DPS',value:fmt(v.dps),icon:'ϟ',title:'Theoretical damage per second before enemy armor'},
+ {label:'RNG',value:fmt(v.range,0),icon:'◎',title:'Attack or ability range'},
+ {label:'ARM',value:fmt(v.armor,0),icon:'⛨',title:'Armor (not implemented for monsters)'}
+ ];
+}
 function tacticalCompactHTML(m){
- const keyLabels={'Attack':'ATK','Attack interval':'INT','Ability interval':'CD','Attack reach':'RNG','Ability radius':'AREA','Reach':'RNG','Move speed':'SPD','Armor':'ARM','Blast radius':'BLAST','Aura bonus':'AURA','Skeletons raised':'SUMMON','Patrol radius':'PATROL','Altar damage':'ALTAR'};
- const primary=m.rows.filter(r=>['Attack','Attack interval','Ability interval','Attack reach','Ability radius','Reach','Move speed','Armor'].includes(r.label)&&r.value!=='—'&&r.value!=='Stationary'&&(r.label!=='Armor'||r.value!=='0'));
- const special=m.rows.filter(r=>['Blast radius','Aura bonus','Skeletons raised','Altar damage'].includes(r.label));
- const rows=[...primary.filter(r=>r.label!=='Move speed'),...special,...primary.filter(r=>r.label==='Move speed')].slice(0,6);
  const tags=m.tags.filter(t=>/^(Fallen|Temporary|Reserve|Rooted|Banshee|Training|Dragon Roar|Commander|Mist|Final charge)/.test(t)).slice(0,2);
- return '<div class="hover-title"><strong>'+m.name+'</strong><span>'+m.stars+'</span></div><div class="hover-vitality"><span>HP</span><b>'+Math.ceil(m.hp)+' / '+Math.ceil(m.max)+'</b></div><div class="hover-hp-track"><i style="width:'+Math.max(0,Math.min(100,m.hp/m.max*100))+'%"></i></div><div class="hover-grid">'+rows.map(r=>'<div class="hover-stat"><span>'+keyLabels[r.label]+'</span><b>'+r.value+'</b></div>').join('')+'</div>'+(tags.length?'<div class="hover-buffs">'+tags.map(t=>'<span>'+t+'</span>').join('')+'</div>':'');
+ const hp=Math.max(0,Math.min(100,m.hp/m.max*100));
+ return '<div class="sanctuary-shell"><div class="sanctuary-title"><strong>'+m.name+'</strong><span>'+m.stars+'</span></div><div class="sanctuary-health"><span class="sanctuary-fallback-heart" aria-hidden="true">♥</span><b>'+Math.ceil(m.hp)+' / '+Math.ceil(m.max)+'</b></div><div class="sanctuary-hp-track" role="meter" aria-label="Health" aria-valuemin="0" aria-valuemax="'+Math.ceil(m.max)+'" aria-valuenow="'+Math.ceil(Math.min(m.hp,m.max))+'"><i style="width:'+hp+'%"></i></div>'+sanctuaryStats(m).map((s,i)=>'<div class="sanctuary-stat sanctuary-stat-'+i+'" title="'+s.title+'"><span class="sanctuary-fallback-icon" aria-hidden="true">'+s.icon+'</span><span>'+s.label+'</span><b>'+s.value+'</b></div>').join('')+'</div>'+(tags.length?'<div class="sanctuary-buffs">'+tags.map(t=>'<span>'+t+'</span>').join('')+'</div>':'');
 }
 function tacticalHTML(m,pinned){if(!pinned)return tacticalCompactHTML(m);return '<div class="inspect-kicker">'+(pinned?'PINNED DOSSIER':'FIELD DOSSIER')+' <span>'+(m.enemy?'HUMAN':'GUARDIAN')+'</span></div><div class="inspect-head"><div class="inspect-portrait">'+tacPic(m.portrait)+'</div><div><h3>'+m.name+'</h3><span class="inspect-role">'+m.role+'</span><div class="inspect-stars">'+m.stars+'</div></div></div><div class="inspect-health"><div><span>VITALITY</span><b>'+Math.ceil(m.hp)+' / '+Math.ceil(m.max)+'</b></div><div class="inspect-hp-track"><i style="width:'+Math.max(0,Math.min(100,m.hp/m.max*100))+'%"></i></div></div><div class="inspect-stats">'+m.rows.map(s=>'<div class="inspect-stat">'+tacIcon(s.icon)+'<span>'+s.label+'</span><b>'+s.value+'</b></div>').join('')+'</div><div class="inspect-tags">'+m.tags.map(t=>'<span>'+t+'</span>').join('')+'</div><p class="inspect-note">'+m.note+'</p><div class="inspect-hint">'+(pinned?'Click unit again or Esc to close':'Click to pin dossier')+'</div>';}
 function tacticalPosition(panel,e,pinned){
@@ -79,3 +91,7 @@ function tacticalTick(now,force=false){
  panel.classList.toggle('is-compact',!pinned);panel.classList.toggle('is-pinned',!!pinned);panel.classList.toggle('is-enemy',model.enemy);panel.querySelector('.inspect-close').hidden=!pinned;panel.hidden=false;tacticalPosition(panel,entity,!!pinned);
 }
 document.querySelector('#unitInspector .inspect-close').addEventListener('click',()=>tacticalClose());
+// Preload once. The fallback is readable immediately, including if the asset fails.
+const sanctuaryImage=new Image();
+sanctuaryImage.onload=()=>{if(sanctuaryImage.naturalWidth===425&&sanctuaryImage.naturalHeight===392)document.querySelector('#unitInspector').classList.add('sanctuary-frame-ready');};
+sanctuaryImage.src=SANCTUARY_ART;
