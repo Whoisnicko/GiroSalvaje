@@ -1,2 +1,5 @@
-# GiroSalvaje
-Autobattler de fantasía oscura en HTML5: pixel art híbrido, altar de símbolos y combate táctico.
+# Stop Humans!
+
+A tactical dark-fantasy autobattler. v16.
+
+See PLAYBOOK-v16.md for deployment and tests. Previous versions remain in Git history.
