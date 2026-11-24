@@ -1,0 +1,6 @@
+# Stop Humans! v22-alpha.5 — Path of the Warlord
+
+Separate permanent browser profile gs22.warlordTalents. Valor Points: one per first completed campaign wave 1–8 and 10 as Warlord, nine points total; no repeating milestones or sandbox awards. Migrate saved Warlord runs and local completed-wave scores. Nine sequential nodes, one VP each, no soul costs. Learn from menu; choose one learned branch at unlocked rank before relic, applies to new run only. Existing campaigns retain old build; default base. Sandbox selects any rank I–III or base without spending VP. Berserker: +20% basic/Cleave damage rounded, +2 basic hit rage, +40% Bloodstorm pulse damage. Juggernaut: +20% HP, 15% incoming reduction, dash +30px and +.08s immunity. Commander: +30% Cry radius, +2s duration, total +35% damage/+30% attack rate. Run-local build serialized; exports include permanent profile. Import merges within budget preferring local purchases in conflicts. No respec needed to change path between runs; no cloud sync or anti-cheat. Syntax and isolated regression/15 talent checks passed; browser and deployment pending. Next: class balance, Soul Infusions.
+
+Production: https://stophumans.pages.dev/
+GitHub: https://github.com/Whoisnicko/StopHumans

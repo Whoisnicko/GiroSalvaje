@@ -9,7 +9,7 @@ const MARTIAL_SKILLS=Object.freeze({
 const martialClamp=(v,min,max)=>Number.isFinite(v)?Math.max(min,Math.min(max,v)):min;
 function martialDirection(x,y,facing=1){const n=Math.hypot(x,y);return Number.isFinite(n)&&n>.0001?{x:x/n,y:y/n}:{x:facing===-1?-1:1,y:0};}
 function martialNew(){return {rage:MARTIAL_RULES.startRage,cooldowns:{cleave:0,storm:0,charge:0,cry:0},direction:{x:1,y:0},storm:null,charge:null};}
-function martialNormalize(raw,facing=1){
+function martialNormalize(raw,facing=1,h=null){
  const m=martialNew();if(!raw||typeof raw!=='object')return m;
  m.rage=Number.isFinite(raw.rage)?martialClamp(raw.rage,0,MARTIAL_RULES.maxRage):MARTIAL_RULES.startRage;
  for(const [id,d] of Object.entries(MARTIAL_SKILLS))m.cooldowns[id]=martialClamp(raw.cooldowns?.[id],0,d.cd);
@@ -20,7 +20,7 @@ function martialNormalize(raw,facing=1){
   m.storm={left,pulses:Math.max(pulses,Math.min(4,1+Math.floor((2-left)/.5)))};
  }
  if(!m.storm&&charge&&Number.isFinite(charge.left)&&charge.left>0&&Number.isFinite(charge.dx)&&Number.isFinite(charge.dy)){
-  const dir=martialDirection(charge.dx,charge.dy,facing);m.charge={left:martialClamp(charge.left,0,MARTIAL_SKILLS.charge.duration),dx:dir.x,dy:dir.y};
+  const dir=martialDirection(charge.dx,charge.dy,facing);m.charge={left:martialClamp(charge.left,0,talentSkill('charge',h).duration),dx:dir.x,dy:dir.y};
  }
  return m;
 }
@@ -32,7 +32,7 @@ function martialMovement(){
 }
 function martialMove(h,dx,dy){const p=heroClampLanding({x:h.x+dx,y:h.y+dy});if(!p)return false;const moved=Math.hypot(p.x-h.x,p.y-h.y)>.001;h.x=p.x;h.y=p.y;h.moving=moved;if(dx)h.facing=Math.sign(dx);return moved;}
 function martialNearby(h,r){return S.enemies.filter(e=>e.hp>0&&Math.hypot(e.x-h.x,e.y-h.y)<=r+(e.r||0));}
-function martialCleaveTargets(h,dir){const d=MARTIAL_SKILLS.cleave;return martialNearby(h,d.radius).filter(e=>{const x=e.x-h.x,y=e.y-h.y,n=Math.hypot(x,y);return n<.001||(x*dir.x+y*dir.y)/n>=Math.cos(d.arc/2);});}
+function martialCleaveTargets(h,dir){const d=talentSkill('cleave',h);return martialNearby(h,d.radius).filter(e=>{const x=e.x-h.x,y=e.y-h.y,n=Math.hypot(x,y);return n<.001||(x*dir.x+y*dir.y)/n>=Math.cos(d.arc/2);});}
 function martialGuardBuff(u){return !!S&&heroClass(S).id==='warlord'&&S.phase==='fight'&&!u.down&&u.hp>0&&Number.isFinite(u.warCryUntil)&&u.warCryUntil>S.fightT;}
 function martialResetWave(){if(S){for(const u of [...(S.units||[]),...(S.bench||[]).filter(Boolean)])delete u.warCryUntil;}}
 function martialInvulnerable(){return heroActive()&&!!S.hero.martial.charge;}
@@ -46,13 +46,13 @@ function martialAvailability(id){
 }
 function martialEvent(kind,x,y,extra={}){S.fx.push({k:'martial',kind,x,y,t:.48,T:.48,...extra});}
 function martialStormPulse(h){
- const d=MARTIAL_SKILLS.storm;
+ const d=talentSkill('storm',h);
  for(const e of martialNearby(h,d.radius))hitEnemy(e,d.damage,'steel',{kb:0});
  martialEvent('storm',h.x,h.y,{r:d.radius,t:.42,T:.42});sfx('heroStorm');
 }
 function martialCast(id){
  if(martialAvailability(id)!=='Ready')return false;
- const h=S.hero,m=h.martial,d=MARTIAL_SKILLS[id],lab=martialLab(),input=martialMovement(),dir=input.len?martialDirection(input.dx,input.dy,h.facing):m.direction;
+ const h=S.hero,m=h.martial,d=talentSkill(id,h),lab=martialLab(),input=martialMovement(),dir=input.len?martialDirection(input.dx,input.dy,h.facing):m.direction;
  if(id==='charge'){const end=heroClampLanding({x:h.x+dir.x*d.distance,y:h.y+dir.y*d.distance});if(!end||Math.hypot(end.x-h.x,end.y-h.y)<1)return false;}
  if(!lab?.infinite)m.rage=Math.max(0,m.rage-d.cost);m.cooldowns[id]=lab?.noCooldown?0:d.cd;
  if(id==='cleave'){
@@ -74,7 +74,7 @@ function martialAdvance(h,dt){
  const m=h.martial,lab=martialLab();
  for(const id of Object.keys(MARTIAL_SKILLS))m.cooldowns[id]=lab?.noCooldown?0:Math.max(0,m.cooldowns[id]-dt);
  if(m.charge){
-  const d=MARTIAL_SKILLS.charge,c=m.charge,step=Math.min(dt,c.left),x=h.x,y=h.y;
+  const d=talentSkill('charge',h),c=m.charge,step=Math.min(dt,c.left),x=h.x,y=h.y;
   martialMove(h,c.dx*d.distance/d.duration*step,c.dy*d.distance/d.duration*step);c.left-=step;
   if(Math.hypot(x-h.x,y-h.y)>.01)martialEvent('charge',x,y,{x2:h.x,y2:h.y,t:.21,T:.21});
   if(c.left<=1e-7)m.charge=null;
@@ -101,7 +101,7 @@ function martialRender(h){
  const m=h.martial,lab=martialLab(),el=id=>document.getElementById(id);
  el('heroRageText').textContent=lab?.infinite?'∞ RAGE':Math.floor(m.rage)+' / 100 RAGE';
  el('heroRageFill').style.width=(lab?.infinite?100:m.rage)+'%';
- for(const [id,d] of Object.entries(MARTIAL_SKILLS)){const b=el('heroSkill-'+id),state=martialAvailability(id);b.disabled=state!=='Ready';el('heroSkillState-'+id).textContent=state;el('heroSkillCost-'+id).textContent=d.cost+' Rage · '+d.cd+'s';}
+ for(const [id,d] of Object.entries(MARTIAL_SKILLS)){const b=el('heroSkill-'+id),state=martialAvailability(id);b.disabled=state!=='Ready';el('heroSkillState-'+id).textContent=state;el('heroSkillCost-'+id).textContent=d.cost+' Rage · '+d.cd+'s';const v=talentSkill(id,h);b.title=id==='cleave'?'Front arc · '+v.damage+' physical damage':id==='storm'?v.pulses+' pulses of '+v.damage+' damage · '+v.duration+'s':id==='charge'?v.distance+'px dash · '+v.duration.toFixed(2)+'s immunity':'+'+Math.round(v.damageBonus*100)+'% damage · +'+Math.round(v.speedBonus*100)+'% attack rate · '+v.duration+'s';}
  el('heroLab').hidden=!lab;el('heroLabRage').textContent='Infinite rage: '+(lab?.infinite?'ON':'OFF');el('heroLabCd').textContent='No cooldown: '+(lab?.noCooldown?'ON':'OFF');
 }
 function martialInit(){

@@ -9,11 +9,11 @@ function sandboxRefill(){if(!sandboxActive())return;S.gold=999999;S.spinsLeft=99
 function sandboxCards(){S.deck=Object.keys(CARDS);S.hand=S.deck.map((id,di)=>({id,di,used:false}));S.aim=null;}
 function sandboxInitialize(){sandboxRefill();sandboxCards();S.sandboxGod=true;sbEl('sbWave').value=String(S.wave);sandboxStatus('All cards available. Select guardians or launch a wave.');}
 function sandboxCanEdit(){return sandboxActive()&&!menuOpen&&!spinning&&!S.drag&&!S.pendingMerge&&$('#ov').hidden&&$('#ov2').hidden&&!$('#unitBestiary').open&&!$('#runePractice').open&&['prep','fight'].includes(S.phase);}
-function sandboxEnter(heroId='sorcerer'){
+function sandboxEnter(heroId='sorcerer',build=null){
  if(!menuOpen||spinning||sandboxActive()||sandboxParked)return;
  if(S?.drag)cancelDrag();if(S)persist();
  sandboxParked={state:S,runId:sessionRunId,name:runName,width:savedWorldWidth,save:loadedSave,status:$('#saveStatus').textContent,ov:$('#ov').innerHTML,ovHidden:$('#ov').hidden,ov2:$('#ov2').innerHTML,ov2Hidden:$('#ov2').hidden};
- S=null;sessionRunId='sandbox';runName='Sandbox';savedWorldWidth=null;$('#ov').hidden=true;$('#ov2').hidden=true;closeFront();newGame(true,heroId);
+ S=null;sessionRunId='sandbox';runName='Sandbox';savedWorldWidth=null;$('#ov').hidden=true;$('#ov2').hidden=true;closeFront();newGame(true,heroId,build);
  $('#saveStatus').textContent='SANDBOX · Campaign save untouched';
 }
 function sandboxExit(){
