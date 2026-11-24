@@ -5,7 +5,7 @@ const SPELL_DATA=Object.freeze({
  lightning:{mana:20,cd:6,r:90,target:'enemy',damage:[24,18,12],implemented:true},grasp:{mana:20,cd:12,r:62,target:'area',duration:2.5,implemented:true},
  frost:{mana:30,cd:14,r:80,target:'area',duration:4,slow:.5,implemented:true},harvest:{mana:35,cd:25,r:75,target:'area',duration:5,bonusCap:4,implemented:true}
 });
-let magicOwner=null,magicMode='idle',magicDeadline=0,magicReadyAt=0,magicStroke=[],magicPointer=null,magicAim=null,magicRune=null,magicPulse=null,magicMessage='Draw runes in combat. All six spells functional in Sandbox.',magicLastHud=-Infinity,magicHudKey='',magicMatch=null;
+let magicOwner=null,magicMode='idle',magicDeadline=0,magicReadyAt=0,magicStroke=[],magicPointer=null,magicAim=null,magicRune=null,magicPulse=null,magicMessage='Draw runes in combat. All six spells functional in Sandbox.',magicLastHud=-Infinity,magicHudKey='';
 const magicEl=id=>document.getElementById(id);
 const magicDef=id=>RUNE_DEFS.find(d=>d.id===id);
 function magicNewData(old={},sandbox=false){
@@ -16,7 +16,7 @@ function magicNewData(old={},sandbox=false){
 function magicData(){if(!S)return null;if(!S.magic||magicOwner!==S){S.magic=magicNewData(S.magic||{},!!S.sandbox);}return S.magic;}
 function magicSync(){
  if(magicOwner===S)return;
- magicRelease();magicOwner=S;magicMode='idle';magicDeadline=0;magicReadyAt=0;magicStroke=[];magicAim=null;magicRune=null;magicPulse=null;magicMatch=null;magicMessage='Draw runes in combat. All six spells functional in Sandbox.';magicHudKey='';magicLastHud=-Infinity;
+ magicRelease();magicOwner=S;magicMode='idle';magicDeadline=0;magicReadyAt=0;magicStroke=[];magicAim=null;magicRune=null;magicPulse=null;magicMessage='Draw runes in combat. All six spells functional in Sandbox.';magicHudKey='';magicLastHud=-Infinity;
  if(S)S.magic=magicNewData(S.magic||{},!!S.sandbox);
 }
 function magicActive(){return !!S&&magicOwner===S&&magicMode!=='idle'&&S.phase==='fight';}
@@ -43,7 +43,7 @@ function magicBegin(now=performance.now()){
  if(now<magicReadyAt){magicSetMessage('Arcane recovery — wait before drawing again.');return false;}
  if(!Object.keys(SPELL_DATA).some(magicAvailable)){magicSetMessage('No available spells: wait for mana or cooldowns.');return false;}
  audioInit();if(S.aim!==null){S.aim=null;renderHand();}S.aimP=null;S.sel=null;tacticalClearEnemy();tacticalHide();
- magicMode='draw';magicDeadline=now+MAGIC_DRAW_MS;magicStroke=[];magicRune=null;magicAim=null;magicMatch=null;cv.style.cursor='crosshair';magicSetMessage('Draw a learned rune with one continuous stroke.');return true;
+ magicMode='draw';magicDeadline=now+MAGIC_DRAW_MS;magicStroke=[];magicRune=null;magicAim=null;cv.style.cursor='crosshair';magicSetMessage('Draw a learned rune with one continuous stroke.');return true;
 }
 function magicPoint(e){const r=cv.getBoundingClientRect();return {x:e.clientX-r.left,y:e.clientY-r.top};}
 function magicWorld(p){return {x:p.x/scale,y:p.y/scale};}
@@ -51,17 +51,17 @@ function magicInField(p){return p.x>=WALL_X&&p.x<=worldW()&&p.y>=0&&p.y<WORLD_H;
 function magicAppend(e){const p=magicPoint(e),r=cv.getBoundingClientRect(),q=[Math.max(0,Math.min(r.width,p.x)),Math.max(0,Math.min(WORLD_H*scale,p.y))];if(magicStroke.length<2048&&(!magicStroke.length||runeDistance(q,magicStroke.at(-1))>=1.3))magicStroke.push(q);}
 function magicRecognize(now){
  const result=recognizeRune(magicStroke);magicRelease();
- if(!result.accepted){magicCancel(result.reason==='short'?'Rune too small. Try a larger stroke.':'Unknown or ambiguous incantation.'+(Number.isFinite(result.score)?' Match '+result.score+'% (60% required).':''));return false;}
+ if(!result.accepted){magicCancel(runeFeedbackText(result));return false;}
  const id=result.id,d=magicDef(id);
  if(!magicAllowed(id)){magicCancel(d.name+' is not learned yet. Try it in Sandbox.');return false;}
  if(!magicAvailable(id)){magicCancel(d.name+' is unavailable: mana or cooldown.');return false;}
- magicRune=id;magicMatch=result.score;magicMode='aim';magicDeadline=now+MAGIC_AIM_MS;magicAim=null;magicStroke=[];magicSetMessage(d.name+' recognized · '+result.score+'% match · choose a target.');return true;
+ magicRune=id;magicMode='aim';magicDeadline=now+MAGIC_AIM_MS;magicAim=null;magicStroke=[];magicSetMessage(d.name+' recognized · choose a target.');return true;
 }
 // Sandbox-only direct targeting, leaving normal Q and recognition unchanged.
 function magicQuickSelect(id,now=performance.now()){
  magicSync();if(!S?.sandbox||!magicCanInteract()||!magicAvailable(id))return false;
  if(!magicActive()&&!magicBegin(now))return false;
- magicRelease();magicStroke=[];magicRune=id;magicMode='aim';magicDeadline=now+MAGIC_AIM_MS;magicAim=null;magicMatch=null;
+ magicRelease();magicStroke=[];magicRune=id;magicMode='aim';magicDeadline=now+MAGIC_AIM_MS;magicAim=null;
  magicSetMessage(magicDef(id).name+' · sandbox quick aim · choose a target.');return true;
 }
 function magicTarget(id,p){
@@ -80,7 +80,7 @@ function magicConfirm(p,now=performance.now()){
 
  const outcome=spellExecute(id,target);
  if(!d.implemented){magicPulse={id,x:target.x,y:target.y,start:now,end:now+650};sfx('card');}
- const name=magicDef(id).name;magicCancel(name+(magicMatch!==null?' · '+magicMatch+'% match':'')+' · '+outcome);persist();return true;
+ const name=magicDef(id).name;magicCancel(name+' · '+outcome);persist();return true;
 }
 function magicFrame(now){
  magicSync();

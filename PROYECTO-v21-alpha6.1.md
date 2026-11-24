@@ -1,0 +1,6 @@
+# Stop Humans! v21-alpha.6.1 — Structural rune recognition
+
+One shared recognizer for practice and battle. Physical check: >=48 CSS px largest dimension, >=24 smaller dimension, >=75 total length. Per-symbol shape rules: polygon simplification, local corner sharpness, edge straightness, angles, balanced arms, closing gap; circularity and radial consistency for circle; consistent winding and radial growth for spiral. Internal template distance disambiguates only, no visible similarity percentages. Practice records consecutive correct attempts rather than best percentage. Rejection feedback describes size, closure, corners, arms, zigzag or curvature. No changes to spell effects, mana, cooldowns, progress, art, or quick aim. Deterministic synthetic tests: 180/180 clean, 176/180 moderately distorted, zero misclassification in these 360 samples; all four screenshot-inspired manually approximated negative traces rejected, plus large checkmark and line; four additional positive examples pass. Practice/battle acceptance identical. Browser mouse validation and Cloudflare unverified. Screenshots do not contain original pointer coordinates.
+
+Production: https://stophumans.pages.dev/
+GitHub: https://github.com/Whoisnicko/StopHumans
