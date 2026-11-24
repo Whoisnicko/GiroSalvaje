@@ -1009,11 +1009,11 @@ function loop(now){
 function setResult(a, b){ S.result = a; S.resultSub = b; }
 function renderChips(){
   $('#chips').innerHTML = `
-    <span class="chip">Wave <b>${Math.min(S.wave, MAX_WAVE)}/${MAX_WAVE}</b></span>
-    <span class="chip ${S.wallHp < S.wallMax * 0.35 ? 'bad' : ''}">Altar <b>${S.wallHp}/${S.wallMax}</b></span>
-    <span class="chip soul">Souls <b>${S.gold}</b></span>
-    <span class="chip">Monsters <b>${fieldCount()}/${S.maxUnits}</b></span>
-    <span class="chip">Reserve <b>${S.bench.filter(Boolean).length}/3</b></span>`;
+    <span class="chip wave-chip"><span class="hud-icon" aria-hidden="true">⚔</span> Wave <b>${Math.min(S.wave, MAX_WAVE)}/${MAX_WAVE}</b></span>
+    <span class="chip ${S.wallHp < S.wallMax * 0.35 ? 'bad' : ''}"><span class="hud-icon hp-icon" aria-hidden="true">♥</span> Altar <b>${S.wallHp}/${S.wallMax}</b></span>
+    <span class="chip soul"><img src="${URL_.alma}" alt="" class="hud-gem"> Souls <b>${S.gold}</b></span>
+    <span class="chip minor-chip">Monsters <b>${fieldCount()}/${S.maxUnits}</b></span>
+    <span class="chip minor-chip">Reserve <b>${S.bench.filter(Boolean).length}/3</b></span>`;
   const b = $('#banner');
   if (S.phase === 'fight') { b.hidden = false; b.innerHTML = !S.units.length ? '<b>No defenders! Use your cards</b>' : `Humans remaining: <b>${S.queue.length + S.enemies.length}</b>`; }
   else if (S.phase === 'prep' && S.wave <= MAX_WAVE) {
@@ -1028,7 +1028,7 @@ function renderBuyCard(){
 }
 function renderHand(){
   const fight = S.phase === 'fight';
-  $('#handTitle').textContent = fight ? 'Your cards · click to play · unused cards carry over' : 'Your cards · preparation cards now, combat cards in battle · unused cards carry over';
+  $('#handTitle').textContent = fight ? 'Spell cards · click to cast' : 'Spell cards · prepare your defense';
   $('#deckLink').textContent = `View deck (${S.deck.length})`;
   $('#relic').innerHTML = S.relic ? `<span class="medal" title="${S.relic.d}">${relicArt(S.relic)}</span><span class="rn">${S.relic.n}</span><span class="rd">${S.relic.d}</span>` : '';
   const canBuy = buyable().length > 0 && S.gold >= cardCost();
@@ -1042,7 +1042,7 @@ function renderHand(){
 function renderPay(){
   $('#pay').innerHTML = `<div><b>3 matching symbols in a line</b> (row, column or diagonal):</div>
     <div class="row">${['W','A','M','C'].map(k => `<span>${img(SYM[k].spr)}<b>${SYM[k].n}</b> · ${SYM[k].role}</span>`).join('')}</div>
-    <div><b>Merge:</b> during preparation, drop a monster onto another of the same type and level. With <b>3 stacked</b> they merge (★★, ★★★). Pay for everything with <b style="color:var(--soul)">almas</b>.</div>`;
+    <div><b>Merge:</b> during preparation, drop a monster onto another of the same type and level. With <b>3 stacked</b> they merge (★★, ★★★). Pay for everything with <b style="color:var(--soul)">souls</b>.</div>`;
 }
 const FOE_NOTE = { sol:'Melee', bal:'Range: 150 px', cab:'Armor reduces damage per hit', jin:'Very fast', cle:'Heals nearby humans', ant:'Ignores monsters, ×3 Altar damage', com:'Armored boss' };
 function renderIntel(){
@@ -1066,7 +1066,7 @@ function renderIntel(){
   }
   // Selected monster
   const ub = $('#unitBox'), u = S.sel && (S.units.includes(S.sel) || S.bench.includes(S.sel)) ? S.sel : null;
-  if (!u) { ub.innerHTML = `<h3>Monster</h3><span class="empty">Select a monster to view its range and stats.</span>`; return; }
+  if (!u) { ub.innerHTML = `<h3>Monster dossier</h3><div class="unit-empty"><img src="${URL_.espectro}" alt=""><b>Select a monster</b><span>Click a guardian to inspect its abilities and stats.</span></div>`; return; }
   const st = stats(u.type, u.lvl, u), inBench = S.bench.includes(u);
   const role = { W:'Patrols and stops humans', A:'Ranged attacker', M:'Area fire', N:`Raises up to ${skelCap(u.lvl)} skeletons per wave`, B:`Aura: +${Math.round(bansheeBuff(u.lvl) * 100)}% damage and speed to nearby allies`, L:'Temporary, this wave only', K:'Temporary, this wave only' }[u.type];
   const bf = bansheeOn(u);
@@ -1076,9 +1076,9 @@ function renderIntel(){
   const atk = BASE[u.type].support ? '' : bf
     ? ` · ⚔ ${st.dmg} → ${up(Math.round(st.dmg * (1 + bf)))} · 1 every ${st.cd.toFixed(1)} → ${up((st.cd / (1 + bf)).toFixed(1))} s`
     : ` · ⚔ ${st.dmg} · 1 every ${st.cd.toFixed(1)} s`;
-  ub.innerHTML = `<h3>Selected monster</h3>
+  ub.innerHTML = `<h3>Monster dossier</h3>
     <div class="foe mine${bf ? ' buffed' : ''}"><img src="${URL_[USPR[u.type]]}" alt=""><span class="fn">${NAMES[u.type]} <b>${u.temp ? '' : '★'.repeat(u.lvl)}</b>${u.pile > 1 ? `<span class="new">${u.pile}/${S.mods.mergeN}</span>` : ''}</span>
-      <div class="unit-stat-lines"><span>♥ Health <b>${Math.ceil(u.hp)} / ${Math.ceil(u.maxHp)}</b></span>${BASE[u.type].support ? "" : `<span>⚔ Attack <b>${st.dmg}</b></span><span>⏱ Attack interval <b>${st.cd.toFixed(1)}s</b></span>`}<span>◎ Reach <b>${reach}</b></span></div><span class="fx">${role}${tags ? " · " + tags : ""}</span></div>`;
+      <div class="unit-stat-lines"><span>♥ Health <b>${Math.ceil(u.hp)} / ${Math.ceil(u.maxHp)}</b></span>${BASE[u.type].support ? "" : `<span>⚔ Attack <b>${st.dmg}${bf ? ` <em>→ ${Math.round(st.dmg * (1 + bf))}</em>` : ""}</b></span><span>⏱ Interval <b>${st.cd.toFixed(1)}s${bf ? ` <em>→ ${(st.cd/(1+bf)).toFixed(1)}s</em>` : ""}</b></span>`}<span>◎ Reach <b>${reach}</b></span>${BASE[u.type].move ? `<span>➟ Move speed <b>${BASE[u.type].move}</b></span>` : ""}</div><span class="fx">${role}${tags ? " · " + tags : ""}</span></div>`;
 }
 function renderUI(){
   renderChips(); renderHand(); renderIntel();
@@ -1087,7 +1087,7 @@ function renderUI(){
   $('#result').innerHTML = `${S.result}<small>${S.resultSub}</small>`;
   const cost = spinCost(), canBuy = prep && S.gold >= cost && !spinning;
   $('#btns').innerHTML = `
-    <button class="btn spin ${prep && !S.spunOnce && S.spinsLeft > 0 ? 'nudge' : ''}" data-act="spin" ${prep && S.spinsLeft > 0 && !spinning ? '' : 'disabled'}>SPIN (${S.spinsLeft})</button>
+    <button class="btn spin ${prep && !S.spunOnce && S.spinsLeft > 0 ? 'nudge' : ''}" data-act="spin" ${prep && S.spinsLeft > 0 && !spinning ? '' : 'disabled'}>SPIN</button><div class="spin-counter" aria-live="polite">⟳ <b>${S.spinsLeft}</b> ${S.spinsLeft === 1 ? "spin" : "spins"} remaining</div>
     <button class="btn ${prep && S.spinsLeft === 0 && canBuy ? 'nudge' : ''}" data-act="buy" ${canBuy ? '' : 'disabled'}>Buy spin · <span class="s">${cost} souls</span></button>
     <button class="btn" data-act="slot" ${prep && S.gold >= slotCost() && !spinning ? '' : 'disabled'} title="Increase field capacity">+1 slot (${S.maxUnits}→${S.maxUnits + 1}) · <span class="s">${slotCost()} souls</span></button>
     <button class="btn fight ${S.confirmFight ? 'warn' : ''} ${prep && S.spinsLeft === 0 && !canBuy ? 'nudge' : ''}" data-act="fight" ${prep && !spinning ? '' : 'disabled'}>${S.confirmFight ? 'DEFEND ANYWAY' : 'DEFEND!'}</button>`;

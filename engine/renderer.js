@@ -21,7 +21,7 @@ function drawInkAltar(t){
  ctx.restore();bar(5,8,WALL_X-14,5,S.wallHp/S.wallMax,colors.soul);
 }
 function drawInkReserve(W){
- ctx.save();ctx.fillStyle='#201d26';ctx.fillRect(0,WORLD_H,W,LOGIC_H-WORLD_H);ctx.strokeStyle='#695b65';ctx.lineWidth=1;
+ ctx.save();ctx.fillStyle='#141b25';ctx.fillRect(0,WORLD_H,W,LOGIC_H-WORLD_H);ctx.strokeStyle='#46382c';ctx.lineWidth=1;
  for(let x=0;x<W;x+=38){ctx.beginPath();ctx.moveTo(x,WORLD_H+1);ctx.lineTo(x+7,WORLD_H+9);ctx.lineTo(x+34,WORLD_H+9);ctx.stroke();}
  ctx.strokeStyle='#b7a181';ctx.beginPath();ctx.moveTo(0,WORLD_H+1);ctx.lineTo(W,WORLD_H+1);ctx.stroke();ctx.restore();
 }
@@ -49,10 +49,10 @@ function draw(){
   for (let i = 0; i < 3; i++) {
     const p = benchSlot(i), hot = plan && plan.kind === 'bench' && plan.slot === i;
     ctx.fillStyle = hot ? colors.soul : colors.panel; ctx.globalAlpha = hot ? .25 : 1; ctx.fillRect(p.x - 26, p.y - 26, 52, 52); ctx.globalAlpha = 1;
-    ctx.strokeStyle = hot ? colors.soul : colors.gold; ctx.beginPath(); ctx.moveTo(p.x-25,p.y+25);ctx.lineTo(p.x-25,p.y-7);ctx.quadraticCurveTo(p.x-25,p.y-22,p.x,p.y-27);ctx.quadraticCurveTo(p.x+25,p.y-22,p.x+25,p.y-7);ctx.lineTo(p.x+25,p.y+25);ctx.closePath();ctx.stroke();
+    ctx.strokeStyle=hot?colors.soul:'#a18051';ctx.lineWidth=1.5;ctx.strokeRect(p.x-26,p.y-26,52,52);ctx.strokeStyle='#65513c';ctx.lineWidth=1;ctx.strokeRect(p.x-23,p.y-23,46,46);for(const dx of [-24,24])for(const dy of [-24,24]){ctx.fillStyle=hot?colors.soul:'#dfba79';ctx.fillRect(p.x+dx-1,p.y+dy-1,3,3);}
   }
   ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.font = '600 11px Rubik, sans-serif';
-  ctx.fillStyle = colors.gold; ctx.fillText('RESERVE', benchSlot(2).x + 40, WORLD_H + 22);
+  ctx.fillStyle = colors.gold; ctx.fillText('RESERVE ('+S.bench.filter(Boolean).length+'/3)', benchSlot(2).x + 40, WORLD_H + 22);
   ctx.fillStyle = colors.muted; ctx.fillText(W < 600 ? 'train +50% / wave' : 'do not fight · train +50% per wave (max +150%)', benchSlot(2).x + 40, WORLD_H + 40);
   if (plan && plan.kind === 'sell') {
     ctx.fillStyle = colors.gold; ctx.globalAlpha = .35; ctx.fillRect(0, 0, WALL_X, WORLD_H); ctx.globalAlpha = 1;
