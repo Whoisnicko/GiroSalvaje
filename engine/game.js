@@ -49,6 +49,8 @@ function sfx(name){
     case 'fireLaunch': noise(.22, .16, 1100, 0, null, 'bandpass'); tone(180, .2, 'sawtooth', .05, 0, null, 420); break;
     case 'boom': noise(.5, .42, 320); tone(75, .45, 'sine', .42, 0, null, 32); break;                          // explosión del dragón
     case 'clank': tone(1850, .09, 'square', .05); tone(2500, .07, 'square', .04, .012); noise(.06, .1, 5200, 0, null, 'highpass'); break; // armadura
+    case 'heroLeap': tone(130,.36,'triangle',.16,0,null,390);noise(.34,.16,1400,0,null,'bandpass');break;
+    case 'heroLand': noise(.42,.32,420);tone(95,.4,'sine',.28,0,null,38);tone(520,.17,'triangle',.08,0,null,95);break;
     case 'clash': noise(.05, .16, 3500, 0, null, 'bandpass'); tone(950, .06, 'triangle', .05, 0, null, 600); break;
     case 'bolt': tone(320, .09, 'triangle', .08, 0, null, 950); break;                                          // virote de ballesta
     case 'grunt': tone(190, .16, 'sawtooth', .06, 0, null, 85); break;                                          // humano cae

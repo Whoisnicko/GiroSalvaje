@@ -218,4 +218,4 @@ function hybridFX(){
  ctx.restore();}
 
 }
-function renderFrame(){draw();ctx.save();const camera=feelCamera();ctx.translate(camera.x,camera.y);hybridFX();spellDraw();ctx.restore();}
+function renderFrame(){draw();ctx.save();const camera=feelCamera();ctx.translate(camera.x,camera.y);hybridFX();spellDraw();heroDrawLanding();heroDrawDescent(performance.now()/1000);ctx.restore();}

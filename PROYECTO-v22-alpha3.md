@@ -1,0 +1,8 @@
+# Stop Humans! v22-alpha.3 — Descent of the Warlord
+
+Rune recognition now scale-independent: removed the fixed 48/24 px extent and 75 px length requirements and 1.3 px capture filter. Distinct points retained; degenerate inputs and structural failures rejected. Closing gaps relaxed to 0.30 of rune extent. Circle requires smooth local turning, preventing the reported irregular square being misidentified as circle. Adaptive trace thickness improves small strokes. Same recognition in practice and battle; no percentages, costs or spell effects changed. Tests: 180/180 clean, 177/180 distorted, zero wrong classifications; four screenshot-inspired cases still rejected, 84 scale/direction tests at 4–320 logical CSS px and three degenerate strokes. Synthetic coordinates do not guarantee actual mouse sampling at tiny sizes.
+
+Warlord: Q triggers 0.65 simulation-second leap from altar toward fixed point WALL_X+95, mid-field height. Landing deals 24 physical damage in radius 52 (includes enemy radius), knockback 55, no friendly fire; vulnerable after landing. One deployment per wave. Landing executed once, midair progress persisted, legacy saves supported. Original procedural layered armor, horns, burgundy cape, longer sword, movement/attack motion, dust, shockwave, cracks, sound and reduced-motion handling. Existing baked altar illustration unchanged; final bespoke sprite art and throne asset separation pending. Existing hero stats unchanged. No rage or special skills beyond landing yet. 17 isolated hero checks passed. Browser and Cloudflare deployment not independently verified.
+
+Production: https://stophumans.pages.dev/
+GitHub: https://github.com/Whoisnicko/StopHumans

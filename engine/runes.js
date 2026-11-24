@@ -16,13 +16,13 @@ function runeRot(p,a){const c=Math.cos(a),s=Math.sin(a);return p.map(q=>[q[0]*c-
 function runeCircularity(p){const smooth=p.map((q,i)=>{const a=p[(i+p.length-1)%p.length],b=p[(i+1)%p.length];return [(a[0]+2*q[0]+b[0])/4,(a[1]+2*q[1]+b[1])/4]});let area=0,l=0;for(let i=0;i<smooth.length;i++){const a=smooth[i],b=smooth[(i+1)%smooth.length];area+=a[0]*b[1]-a[1]*b[0];l+=runeDistance(a,b)}return 2*Math.PI*Math.abs(area)/(l*l||1)}
 const RUNE_TEMPLATES=RUNE_DEFS.map(d=>{const p=runeNorm(runeSample(d.points,RUNE_N,d.closed));return {d,p,c:runeCircularity(p)}});
 function runeMatch(p,t,closed){let best=Infinity;for(const a of [-25,-15,-7.5,0,7.5,15,25]){const q=runeNorm(runeRot(p,a*Math.PI/180));for(const rev of [false,true])for(let shift=0;shift<(closed?RUNE_N:1);shift++){let sum=0;for(let i=0;i<RUNE_N;i++){const j=closed?(shift+(rev?-i:i)+RUNE_N)%RUNE_N:rev?RUNE_N-1-i:i;sum+=(q[i][0]-t[j][0])**2+(q[i][1]-t[j][1])**2}best=Math.min(best,Math.sqrt(sum/RUNE_N))}}return best}
-/* Structural validators use scale-independent geometry after a physical-size check. */
+/* Structural validators use scale-independent geometry on normalized coordinates, independent of physical size. */
 const RUNE_RULES=Object.freeze({
- fire:{closed:true,gap:.25,corners:3,aspect:.48,fit:.20,epsilon:.075},
- barrier:{closed:true,gap:.24,aspect:.65,fit:.16},
+ fire:{closed:true,gap:.30,corners:3,aspect:.48,fit:.20,epsilon:.075},
+ barrier:{closed:true,gap:.30,aspect:.65,fit:.16},
  lightning:{closed:false,gap:.55,corners:4,aspect:.35,fit:.20,epsilon:.055},
  grasp:{closed:false,gap:.45,corners:3,aspect:.50,fit:.18,epsilon:.065},
- frost:{closed:true,gap:.24,corners:4,aspect:.66,fit:.18,epsilon:.065},
+ frost:{closed:true,gap:.30,corners:4,aspect:.66,fit:.18,epsilon:.065},
  harvest:{closed:false,gap:.24,aspect:.52,fit:.19}
 });
 function runeSmooth(p,closed){return p.map((q,i)=>{
@@ -68,7 +68,8 @@ function runeStructure(id,points,gap,aspect){
  const q=runeSmooth(runeNorm(runeSample(points,64,rule.closed)),rule.closed);
  if(id==='barrier'){
   const c=runeCircularity(q),cx=q.reduce((s,p)=>s+p[0],0)/q.length,cy=q.reduce((s,p)=>s+p[1],0)/q.length,rs=q.map(p=>Math.hypot(p[0]-cx,p[1]-cy)),mean=rs.reduce((s,x)=>s+x,0)/rs.length,cv=Math.sqrt(rs.reduce((s,x)=>s+(x-mean)**2,0)/rs.length)/mean;
-  return c>=.86&&cv<=.19?'':'curve';
+  const peak=Math.max(...q.map((a,i)=>Math.abs(runeTurn(q[(i+q.length-3)%q.length],a,q[(i+3)%q.length]))));
+  return c>=.86&&cv<=.19&&peak<=45?'':'curve';
  }
  if(id==='harvest')return runeSpiral(q)?'':'spiral';
  const poly=runePolygon(q,rule.closed,rule.epsilon),v=poly.vertices;
@@ -92,11 +93,11 @@ function runeStructure(id,points,gap,aspect){
  }return '';
 }
 function recognizeRune(raw,expectedId){
- if(!Array.isArray(raw)||raw.length<5||raw.length>4096)return {accepted:false,reason:'short'};
- const p=[];for(const q of raw){if(!Array.isArray(q)||!Number.isFinite(q[0])||!Number.isFinite(q[1]))return {accepted:false,reason:'invalid'};if(!p.length||runeDistance(q,p.at(-1))>.7)p.push(q);}
- if(p.length<5)return {accepted:false,reason:'short'};
+ if(!Array.isArray(raw)||raw.length<3||raw.length>4096)return {accepted:false,reason:'short'};
+ const p=[];for(const q of raw){if(!Array.isArray(q)||!Number.isFinite(q[0])||!Number.isFinite(q[1]))return {accepted:false,reason:'invalid'};if(!p.length||runeDistance(q,p.at(-1))>1e-9)p.push(q);}
+ if(p.length<3)return {accepted:false,reason:'short'};
  const b=runeBounds(p),len=runeLength(p),aspect=Math.min(b.w,b.h)/b.size;
- if(b.size<48||Math.min(b.w,b.h)<24||len<75)return {accepted:false,reason:'short'};
+ if(!(b.size>1e-6)||!(len>0))return {accepted:false,reason:'short'};
  if(aspect<.23||len/b.size>7.3)return {accepted:false,reason:'shape'};
  const gap=runeDistance(p[0],p.at(-1))/b.size,ranked=[];
  for(const {d,p:t,c} of RUNE_TEMPLATES){const rule=RUNE_RULES[d.id],failure=runeStructure(d.id,p,gap,aspect);const q=runeNorm(runeSample(p,RUNE_N,d.closed));let distance=runeMatch(q,t,d.closed);if(d.closed)distance+=.65*Math.abs(runeCircularity(q)-c);ranked.push({id:d.id,distance,failure:failure|| (distance>rule.fit?'shape':'')});}
@@ -110,7 +111,7 @@ function recognizeRune(raw,expectedId){
 }
 function runeFeedbackText(result){
  const id=result.hintId;
- if(result.reason==='short')return 'Draw a larger rune in one continuous stroke.';
+ if(result.reason==='short')return 'Draw a complete rune in one continuous stroke.';
  if(result.reason==='ambiguous')return 'Unclear incantation. Make its shape more distinct.';
  if(result.reason==='close')return id==='fire'?'Close the triangle.':id==='frost'?'Close the square.':'Join the ends of the circle.';
  if(result.reason==='open')return 'Keep the ends apart.';
@@ -127,3 +128,5 @@ function runeFeedbackText(result){
  if(result.reason==='spiral')return 'Draw a spiral winding around its center.';
  return 'Unknown incantation. Draw a clear rune.';
 }
+
+function runeTraceWidth(points){const size=points.length?runeBounds(points).size:0;return Math.max(.8,Math.min(5,size*.07));}
