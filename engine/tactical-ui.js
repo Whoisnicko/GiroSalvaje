@@ -64,7 +64,7 @@ const TAC_ICONS={sword:'M4 20l4-4m-3-5 8 8m-5-3L20 4l-1 7-8 8',clock:'M12 3a9 9 
 function tacIcon(k){return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+TAC_ICONS[k]+'" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>';}
 /* The approved cyan Profane Sanctuary artwork is a static frame.
    All content is rendered from live game data; no numbers are baked into the art. */
-const SANCTUARY_ART='assets/ui/sanctuary-frame-v20.webp';
+const SANCTUARY_ART='assets/ui/sanctuary-frame-v20.webp?v=20a8';
 function sanctuaryStats(m){
  const v=m.combat,fmt=(n,d=1)=>n===null||n===undefined?'—':typeof n==='string'?n:tacNum(n,d);
  return [
@@ -78,7 +78,7 @@ function sanctuaryStats(m){
 function tacticalCompactHTML(m){
  const tags=m.tags.filter(t=>/^(Fallen|Temporary|Reserve|Rooted|Banshee|Training|Dragon Roar|Commander|Mist|Final charge)/.test(t)).slice(0,2);
  const hp=Math.max(0,Math.min(100,m.hp/m.max*100));
- return '<div class="sanctuary-shell"><div class="sanctuary-title"><strong>'+m.name+'</strong><span>'+m.stars+'</span></div><div class="sanctuary-health"><span class="sanctuary-fallback-heart" aria-hidden="true">♥</span><b>'+Math.ceil(m.hp)+' / '+Math.ceil(m.max)+'</b></div><div class="sanctuary-hp-track" role="meter" aria-label="Health" aria-valuemin="0" aria-valuemax="'+Math.ceil(m.max)+'" aria-valuenow="'+Math.ceil(Math.min(m.hp,m.max))+'"><i style="width:'+hp+'%"></i></div>'+sanctuaryStats(m).map((s,i)=>'<div class="sanctuary-stat sanctuary-stat-'+i+'" title="'+s.title+'"><span class="sanctuary-fallback-icon" aria-hidden="true">'+s.icon+'</span><span>'+s.label+'</span><b>'+s.value+'</b></div>').join('')+'</div>'+(tags.length?'<div class="sanctuary-buffs">'+tags.map(t=>'<span>'+t+'</span>').join('')+'</div>':'');
+ return '<div class="sanctuary-shell"><img class="sanctuary-art" src="'+SANCTUARY_ART+'" alt="" draggable="false" onload="this.parentElement.classList.add(\'sanctuary-art-loaded\')" onerror="this.hidden=true;this.parentElement.classList.remove(\'sanctuary-art-loaded\')"><div class="sanctuary-title"><strong>'+m.name+'</strong><span>'+m.stars+'</span></div><div class="sanctuary-health"><span class="sanctuary-fallback-heart" aria-hidden="true">♥</span><b>'+Math.ceil(m.hp)+' / '+Math.ceil(m.max)+'</b></div><div class="sanctuary-hp-track" role="meter" aria-label="Health" aria-valuemin="0" aria-valuemax="'+Math.ceil(m.max)+'" aria-valuenow="'+Math.ceil(Math.min(m.hp,m.max))+'"><i style="width:'+hp+'%"></i></div>'+sanctuaryStats(m).map((s,i)=>'<div class="sanctuary-stat sanctuary-stat-'+i+'" title="'+s.title+'"><span class="sanctuary-fallback-icon" aria-hidden="true">'+s.icon+'</span><span>'+s.label+'</span><b>'+s.value+'</b></div>').join('')+'</div>'+(tags.length?'<div class="sanctuary-buffs">'+tags.map(t=>'<span>'+t+'</span>').join('')+'</div>':'');
 }
 function tacticalHTML(m){return tacticalCompactHTML(m);}
 function bestiaryDialog(){return $('#unitBestiary');}
@@ -140,6 +140,7 @@ function tacticalTick(now,force=false){
  const entity=tacticalHovered();if(!entity){tacticalHide();return;}
  const panel=$('#unitInspector'),model=tacticalModel(entity),markup=tacticalHTML(model);
  if(markup!==tacMarkup){panel.querySelector('.inspect-body').innerHTML=markup;tacMarkup=markup;}
+ const art=panel.querySelector('.sanctuary-art');if(art&&art.complete&&art.naturalWidth>0)art.parentElement.classList.add('sanctuary-art-loaded');
  panel.classList.add('is-compact');panel.classList.remove('is-pinned');panel.classList.toggle('is-enemy',model.enemy);panel.querySelector('.inspect-close').hidden=true;panel.hidden=false;if(!tacticalPosition(panel,entity))tacticalHide();
 }
 const bestiaryEl=bestiaryDialog();
@@ -149,7 +150,5 @@ bestiaryEl.addEventListener('cancel',e=>{e.preventDefault();closeBestiary();});
 bestiaryEl.addEventListener('click',e=>{if(e.target===bestiaryEl){const r=bestiaryEl.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)closeBestiary();}});
 document.addEventListener('keydown',e=>{if(!bestiaryEl.open)return;if(e.key==='Escape'){e.preventDefault();closeBestiary();}else if(e.key!=='Tab'&&e.key!=='Enter'&&e.key!==' '){e.preventDefault();}e.stopImmediatePropagation();},true);
 document.querySelector('#unitInspector .inspect-close').addEventListener('click',()=>tacticalClose());
-// Preload once. The fallback is readable immediately, including if the asset fails.
-const sanctuaryImage=new Image();
-sanctuaryImage.onload=()=>{if(sanctuaryImage.naturalWidth===425&&sanctuaryImage.naturalHeight===392)document.querySelector('#unitInspector').classList.add('sanctuary-frame-ready');};
-sanctuaryImage.src=SANCTUARY_ART;
+// Warm the cache; the real image element determines readiness, not this preloader.
+const sanctuaryImage=new Image();sanctuaryImage.src=SANCTUARY_ART;
