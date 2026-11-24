@@ -17,11 +17,11 @@ function magicData(){if(!S)return null;if(!S.magic||magicOwner!==S){S.magic=magi
 function magicSync(){
  if(magicOwner===S)return;
  magicRelease();magicOwner=S;magicMode='idle';magicDeadline=0;magicReadyAt=0;magicStroke=[];magicAim=null;magicRune=null;magicPulse=null;magicMessage='Draw learned runes in combat. Learn more in the Grimoire.';magicHudKey='';magicLastHud=-Infinity;
- if(S)S.magic=magicNewData(S.magic||{},!!S.sandbox);
+ if(heroUsesMagic(S))S.magic=magicNewData(S.magic||{},!!S.sandbox);
 }
-function magicActive(){return !!S&&magicOwner===S&&magicMode!=='idle'&&S.phase==='fight';}
-function magicAllowed(id){return !!S&&(!!S.sandbox||knowledgeLearned(id));}
-function magicCanInteract(){return !!S&&S.phase==='fight'&&!menuOpen&&!document.hidden&&!spinning&&!S.drag&&!S.pendingMerge&&$('#ov').hidden&&$('#ov2').hidden&&!$('#unitBestiary').open&&!$('#runePractice').open;}
+function magicActive(){return heroUsesMagic(S)&&magicOwner===S&&magicMode!=='idle'&&S.phase==='fight';}
+function magicAllowed(id){return heroUsesMagic(S)&&(!!S.sandbox||knowledgeLearned(id));}
+function magicCanInteract(){return heroUsesMagic(S)&&S.phase==='fight'&&!menuOpen&&!document.hidden&&!spinning&&!S.drag&&!S.pendingMerge&&$('#ov').hidden&&$('#ov2').hidden&&!$('#unitBestiary').open&&!$('#runePractice').open;}
 function magicAvailable(id){const m=magicData(),d=SPELL_DATA[id];return !!(m&&d&&magicAllowed(id)&&(m.infinite||m.mana+1e-6>=d.mana)&&(m.noCooldown||m.cooldowns[id]<=1e-6));}
 function magicRelease(){if(magicPointer!==null){if(typeof cv!=='undefined'&&cv.hasPointerCapture?.(magicPointer))cv.releasePointerCapture(magicPointer);magicPointer=null;}}
 function magicSetMessage(message){magicMessage=message;magicRender();}
@@ -33,10 +33,11 @@ function magicCancel(message='Conjuration canceled.'){
 }
 function magicResetWave(){
  magicSync();magicCancel();if(!S)return;
+ if(!heroUsesMagic(S)){spellClearWave();magicRender();return;}
  const m=magicData();m.mana=MAGIC_MAX;for(const id of Object.keys(SPELL_DATA))m.cooldowns[id]=0;
  magicReadyAt=0;magicPulse=null;spellClearWave();magicMessage='Draw learned runes in combat. Learn more in the Grimoire.';magicRender();
 }
-function magicAdvance(dt){const m=magicData();if(!m)return;spellAdvance(dt);m.mana=m.infinite?MAGIC_MAX:Math.min(MAGIC_MAX,m.mana+MAGIC_REGEN*dt);for(const id of Object.keys(SPELL_DATA))m.cooldowns[id]=Math.max(0,m.cooldowns[id]-dt);}
+function magicAdvance(dt){if(!heroUsesMagic(S))return;const m=magicData();if(!m)return;spellAdvance(dt);m.mana=m.infinite?MAGIC_MAX:Math.min(MAGIC_MAX,m.mana+MAGIC_REGEN*dt);for(const id of Object.keys(SPELL_DATA))m.cooldowns[id]=Math.max(0,m.cooldowns[id]-dt);}
 function magicBegin(now=performance.now()){
  magicSync();if(magicActive()){magicCancel();return false;}
  if(!magicCanInteract())return false;
@@ -90,7 +91,7 @@ function magicFrame(now){
 }
 function magicRender(now=performance.now()){
  const hud=magicEl('magicHud');if(!hud)return;
- const visible=!!S&&['prep','fight'].includes(S.phase);hud.hidden=!visible;if(!visible)return;
+ const visible=heroUsesMagic(S)&&['prep','fight'].includes(S.phase);hud.hidden=!visible;if(!visible)return;
  const m=magicData(),value=Math.floor(m.mana+1e-6),cast=magicEl('magicCast'),active=magicActive();
  magicEl('magicManaText').textContent=m.infinite?'∞':value+' / '+MAGIC_MAX;
  magicEl('magicManaFill').style.width=(m.infinite?100:m.mana)+'%';hud.querySelector('.magic-meter').setAttribute('aria-valuenow',String(m.infinite?100:value));
@@ -108,13 +109,13 @@ function magicRender(now=performance.now()){
  if(S.sandbox)magicRenderSandbox();
 }
 function magicRenderSandbox(){
- if(!S?.sandbox)return;const m=magicData();
+ if(!S?.sandbox||!heroUsesMagic(S))return;const m=magicData();
  for(const [id,on,label] of [['sbMagicMana',m.infinite,'Infinite mana'],['sbMagicCooldown',m.noCooldown,'No spell cooldown']]){const b=magicEl(id);b.textContent=label+': '+(on?'ON':'OFF');b.setAttribute('aria-pressed',String(on));}
  const tier=magicEl('sbSpellTier');if(tier.value!==String(m.testTier))tier.value=String(m.testTier);tier.disabled=menuOpen||!['prep','fight'].includes(S.phase)||spinning||!$('#ov').hidden||!$('#ov2').hidden||$('#unitBestiary').open||$('#runePractice').open;
  for(const b of magicEl('magicSandbox').querySelectorAll('[data-sb-magic]'))b.disabled=menuOpen||!['prep','fight'].includes(S.phase)||spinning||!$('#ov').hidden||!$('#ov2').hidden||$('#unitBestiary').open||$('#runePractice').open;
 }
 function magicSandboxAction(a){
- if(!S?.sandbox)return;magicSync();magicCancel();const m=magicData();
+ if(!S?.sandbox||!heroUsesMagic(S))return;magicSync();magicCancel();const m=magicData();
  if(a==='magicMana'){m.infinite=!m.infinite;if(m.infinite)m.mana=MAGIC_MAX;}
  else if(a==='magicCooldown'){m.noCooldown=!m.noCooldown;if(m.noCooldown)for(const id of Object.keys(SPELL_DATA))m.cooldowns[id]=0;}
  else if(a==='magicRefill'){m.mana=MAGIC_MAX;for(const id of Object.keys(SPELL_DATA))m.cooldowns[id]=0;}
@@ -134,7 +135,7 @@ function magicDraw(now){
 }
 function initMagicControls(){
  magicEl('magicCast').addEventListener('click',()=>magicBegin());
- magicEl('sbSpellTier').addEventListener('change',e=>{if(!S?.sandbox||!sandboxCanEdit())return;magicCancel();magicData().testTier=masteryInt(Number(e.target.value),1,3);magicRender();});
+ magicEl('sbSpellTier').addEventListener('change',e=>{if(!S?.sandbox||!heroUsesMagic(S)||!sandboxCanEdit())return;magicCancel();magicData().testTier=masteryInt(Number(e.target.value),1,3);magicRender();});
  magicEl('magicSpells').addEventListener('click',e=>{const b=e.target.closest('[data-magic-quick]');if(b&&!b.disabled)magicQuickSelect(b.dataset.magicQuick);});
  magicEl('magicSandbox').addEventListener('click',e=>{const b=e.target.closest('[data-sb-magic]');if(b&&!b.disabled&&sandboxCanEdit())magicSandboxAction(b.dataset.sbMagic);});
  document.addEventListener('keydown',e=>{

@@ -384,9 +384,9 @@ function bigMsg(text){ const d = document.createElement('div'); d.className = 'b
 
 let S, colors = {};
 
-function newGame(sandbox=false){
+function newGame(sandbox=false,heroId='sorcerer'){
   S = {
-    sandbox:!!sandbox,sandboxGod:!!sandbox,
+    sandbox:!!sandbox,sandboxGod:!!sandbox,hero:heroNew(heroId),
     wave:1, wallHp:80, wallMax:80, gold:0, spinsPer:3, spinsLeft:3, bought:0, cardBuys:0, holdsMax:2, handSize:3, startZombiee:1, relic:null,
     grid:Array.from({ length:9 }, () => BAG[Math.floor(Math.random() * BAG.length)]), held:new Set(), wins:new Set(),
     units:[], enemies:[], fx:[], floats:[], zones:[], shots:[], parts:[], shake:0, queue:[], spawnT:0, phase:'relic', speed:1, kills:0, spunOnce:false, confirmFight:false, drag:null,
@@ -397,7 +397,7 @@ function newGame(sandbox=false){
   setResult('Choose your relic', '');
   renderUI();
   showOv(`<h2>Defend the Valley of Souls</h2>
-  <p>Humans march toward the Altar. Summon guardians, match symbols and prepare your defense.</p>
+  <p>Hero: <b>${heroClass(S).name}</b>. Humans march toward the Altar. Summon guardians, match symbols and prepare your defense.</p>
   <div class="deckbar"><span>Your starting deck: <b>${META.deck.length} cards</b></span><button class="link" data-act="deck">View deck</button></div>
   <p><b>Choose 1 relic</b> for this run:</p>
   <div class="relics">${RELICS.map((r, i) => r.disabled ? '' : `<button class="relic-opt" data-act="relic" data-i="${i}"><span class="medal">${relicArt(r)}</span><span class="rn">${r.n}</span><span class="rd">${r.d}</span></button>`).join('')}</div>`);
@@ -653,7 +653,7 @@ function startFight(){
   }
   if (S.drag) { cancelDrag(); }
   prepUndoClear();
-  S.phase = 'fight'; magicResetWave(); S.held.clear(); S.wins.clear(); S.confirmFight = false; S.drag = null; S.aim = null; S.sel = null;
+  S.phase = 'fight'; heroResetWave(); magicResetWave(); S.held.clear(); S.wins.clear(); S.confirmFight = false; S.drag = null; S.aim = null; S.sel = null;
   S.buff = { haste:0, slow:0 }; S.zones = []; S.fightT = 0; S.charge = false;
   const W = waveInfo(S.wave);
   S.units.forEach(u => { u.hx = u.x; u.hy = u.y; u.skels = 0; u.cd = Math.min(u.cd, .3); });
@@ -886,7 +886,7 @@ function landShot(s){
 }
 
 function endWave(){
-  magicResetWave();
+  heroResetWave();magicResetWave();
   if(sandboxActive()){sandboxResetBattle('Wave completed. Ready to repeat.');return;}
   S.units = S.units.filter(u => !u.temp);
   // Los caídos se levantan y todos vuelven a su puesto con la vida completa.
@@ -1069,6 +1069,7 @@ function loop(now){
 function setResult(a, b){ S.result = a; S.resultSub = b; }
 function renderChips(){
   $('#chips').innerHTML = `
+    <span class="chip hero-class-chip" data-class="${heroClass(S).id}"><b>${heroClass(S).name}</b></span>
     <span class="chip wave-chip"><span class="hud-icon" aria-hidden="true">⚔</span> Wave <b>${Math.min(S.wave, MAX_WAVE)}/${MAX_WAVE}</b></span>
     <span class="chip ${S.wallHp < S.wallMax * 0.35 ? 'bad' : ''}"><span class="hud-icon hp-icon" aria-hidden="true">♥</span> Altar <b>${S.wallHp}/${S.wallMax}</b></span>
     <span class="chip soul"><img src="${URL_.alma}" alt="" class="hud-gem"> Souls <b>${sandboxActive()?'∞':S.gold}</b></span>
@@ -1122,7 +1123,7 @@ function renderUI(){
   $('#speedBtn').textContent = '×' + S.speed;
   renderPrepUndo();
   renderRunePracticeAccess();
-  renderSandbox();
+  heroRender();renderSandbox();
   magicRender();
 }
 function showDeck(){
@@ -1207,6 +1208,7 @@ function persist(){if(sandboxActive()||!S||spinning||S.drag||S.pendingMerge||S.p
 function restore(v){
  if(!validSave(v))throw Error('Incompatible save format');
  const s=JSON.parse(JSON.stringify(v.state));
+ s.hero=heroNormalize(s);
  s.artifacts=Array.isArray(s.artifacts)?[...new Set(s.artifacts.filter(id=>Object.hasOwn(SHOP_ARTIFACTS,id)))]:[];
  for(const u of [...s.units,...s.bench.filter(Boolean)])if(!BASE[u.type]||!Number.isFinite(u.x)||!Number.isFinite(u.hp))throw Error('Invalid unit');
  for(const e of s.enemies)if(!KIND[e.kind]||!Number.isFinite(e.hp))throw Error('Invalid enemy');
@@ -1234,11 +1236,11 @@ function showRewardRestored(){showOv(`<h2>Choose your reward</h2><div class="off
 function showEndRestored(){showOv(`<h2>${S.phase==='win'?'The Altar stands!':'The Altar has fallen'}</h2><p>${S.kills} humans defeated. Choose a card for your next run.</p><div class="cards-row">${S.endOffer.map((id,i)=>cardHTML(id,`data-act="endcard" data-i="${i}"`)).join('')}</div><button class="btn" data-front="scores">View scores</button>`);}
 function front(panel){magicCancel();closeBestiary();tacticalHide();$('#front').hidden=false;menuOpen=true;document.querySelector('.wrap').inert=true;$('#ov').inert=true;$('#ov2').inert=true;for(const el of document.querySelectorAll('.front-view'))el.hidden=el.id!==panel;$('#'+panel+' button:not([disabled]),#'+panel+' input')?.focus();}
 function closeFront(){menuOpen=false;$('#front').hidden=true;document.querySelector('.wrap').inert=false;$('#ov').inert=false;$('#ov2').inert=false;last=performance.now();resize();if(S)renderPrepUndo();}
-function showHome(){if(spinning)return;if(sandboxActive()){sandboxExit();return;}if(S){cancelDrag();persist();}loadedSave=store.get(SAVE_KEY,null);if(!validSave(loadedSave))loadedSave=null;knowledgeFromSave(loadedSave);knowledgeFromScores();if(knowledgeDirty)knowledgeFlush();knowledgeSummaryRender();$('#playerName').value=profile.name;$('#continueBtn').disabled=!loadedSave;$('#continueInfo').textContent=loadedSave?`${loadedSave.name} · oleada ${Math.min(loadedSave.state.wave,10)} · ${new Date(loadedSave.savedAt).toLocaleString('en')}`:'The invasion awaits.';$('#resumeBtn').hidden=!S;front('homeView');}
-function beginNew(){let name=$('#playerName').value.trim().slice(0,20);if(!name){$('#nameError').textContent='Enter your name (1–20 characters).';$('#playerName').focus();return;}profile.name=name;durableWrite(PROFILE_KEY,profile);if(validSave(loadedSave)){front('confirmView');return;}launchNew();}
-function launchNew(){if(knowledgeDirty&&!knowledgeFlush()){alert('Your permanent spell knowledge could not be saved. Enable browser storage before replacing this run.');return;}runName=profile.name;sessionRunId=uid();loadedSave=null;try{localStorage.removeItem(SAVE_KEY);}catch(e){}savedWorldWidth=null;closeFront();newGame();S.runId=sessionRunId;$('#saveStatus').textContent='Choose a relic to create your first save.';}
+function showHome(){if(spinning)return;if(sandboxActive()){sandboxExit();return;}if(S){cancelDrag();persist();}loadedSave=store.get(SAVE_KEY,null);if(!validSave(loadedSave))loadedSave=null;knowledgeFromSave(loadedSave);knowledgeFromScores();if(knowledgeDirty)knowledgeFlush();knowledgeSummaryRender();$('#playerName').value=profile.name;$('#continueBtn').disabled=!loadedSave;$('#continueInfo').textContent=loadedSave?`${loadedSave.name} · ${heroClass(loadedSave.state).name} · Wave ${Math.min(loadedSave.state.wave,10)} · ${new Date(loadedSave.savedAt).toLocaleString('en')}`:'The invasion awaits.';$('#resumeBtn').hidden=!S;front('homeView');}
+function beginNew(){let name=$('#playerName').value.trim().slice(0,20);if(!name){$('#nameError').textContent='Enter your name (1–20 characters).';$('#playerName').focus();return;}profile.name=name;durableWrite(PROFILE_KEY,profile);heroChoose('campaign');}
+function launchNew(heroId=heroPending){if(knowledgeDirty&&!knowledgeFlush()){alert('Your permanent spell knowledge could not be saved. Enable browser storage before replacing this run.');return;}runName=profile.name;sessionRunId=uid();loadedSave=null;try{localStorage.removeItem(SAVE_KEY);}catch(e){}savedWorldWidth=null;closeFront();newGame(false,heroId);S.runId=sessionRunId;$('#saveStatus').textContent='Choose a relic to create your first save.';}
 function scores(){const v=store.get(SCORES_KEY,[]);return Array.isArray(v)?v:[];}
-function recordScore(won){if(sandboxActive())return;const list=scores();if(list.some(r=>r.runId===sessionRunId))return;const wave=won?10:Math.max(0,S.wave-1);const r={runId:sessionRunId,name:runName,kills:S.kills,wave,won,score:wave*100+S.kills*10+(won?500:0),date:Date.now()};list.push(r);durableWrite(SCORES_KEY,list.sort((a,b)=>b.score-a.score).slice(0,50));}
+function recordScore(won){if(sandboxActive())return;const list=scores();if(list.some(r=>r.runId===sessionRunId))return;const wave=won?10:Math.max(0,S.wave-1);const r={runId:sessionRunId,name:runName,heroClass:heroClass(S).id,kills:S.kills,wave,won,score:wave*100+S.kills*10+(won?500:0),date:Date.now()};list.push(r);durableWrite(SCORES_KEY,list.sort((a,b)=>b.score-a.score).slice(0,50));}
 function scoreRows(rows){return rows.length?rows.slice(0,20).map((r,i)=>`<tr><td>${i+1}</td><td>${escapeHTML(r.name)}</td><td>${Number(r.score)||0}</td><td>${Number(r.wave)||0}/10</td></tr>`).join(''):'<tr><td colspan="4">No scores yet.</td></tr>';}
 function showScores(){front('scoresView');$('#scoreRows').innerHTML=scoreRows(scores());$('#scoreScope').textContent='Local scores';$('#publishScore').disabled=!scores().length;$('#cloudStatus').textContent='Local scores work offline. Online ranking requires the server.';}
 async function cloudScores(){try{const r=await fetch('/api/scores',{signal:AbortSignal.timeout(6000)});if(!r.ok)throw Error();const j=await r.json();if(!Array.isArray(j.scores))throw Error();$('#scoreRows').innerHTML=scoreRows(j.scores);$('#scoreScope').textContent='Online leaderboard';$('#cloudStatus').textContent='Public scores for this edition.';}catch(e){$('#cloudStatus').textContent='Online ranking is unavailable. Your scores are saved locally.';}}
@@ -1252,11 +1254,12 @@ let savedWorldWidth=null;
 const oldWorldW=worldW;worldW=function(){return savedWorldWidth||oldWorldW();};
 resize=function(){const dpr=Math.min(2,window.devicePixelRatio||1);const w=cv.clientWidth;const targetH=window.innerWidth>=1100?Math.min(600,Math.max(460,window.innerHeight*.68)):Math.min(460,Math.max(280,window.innerHeight*.55));const logicalW=savedWorldWidth||Math.max(420,w/(targetH/LOGIC_H));savedWorldWidth=logicalW;cv.style.height=(w/logicalW*LOGIC_H)+'px';scale=w/logicalW;cv.width=Math.round(w*dpr);cv.height=Math.round(cv.clientHeight*dpr);ctx.setTransform(scale*dpr,0,0,scale*dpr,0,0);ctx.imageSmoothingEnabled=false;};
 document.addEventListener('click',ev=>{const b=ev.target.closest('[data-front]');if(!b||b.disabled)return;ev.preventDefault();const a=b.dataset.front;
- if(a==='home')showHome();if(a==='new')beginNew();if(a==='confirm')launchNew();if(a==='back')showHome();if(a==='resume')closeFront();
+ if(a==='home')showHome();if(a==='new')beginNew();if(a==='confirm'&&!$('#confirmView').hidden)launchNew(heroPending);if(a==='back')showHome();if(a==='resume')closeFront();
  if(a==='continue'){try{restore(loadedSave);}catch(e){$('#nameError').textContent='Could not restore this run. Start a new one or import a backup.';}}
  if(a==='settings')showSettings();if(a==='scores')showScores();if(a==='cloud')cloudScores();if(a==='publish')publishScore();if(a==='export')exportSave();if(a==='import')$('#importFile').click();
 });
-document.addEventListener('keydown',ev=>{if(ev.target.matches('input,select,textarea'))ev.stopImmediatePropagation();if(menuOpen){if(ev.key==='Escape'&&S){closeFront();}else if(ev.key==='Enter'&&ev.target.id==='playerName')beginNew();ev.stopImmediatePropagation();}},true);
+$('#heroSelectView').addEventListener('click',ev=>{const b=ev.target.closest('[data-hero-class]');if(b&&!b.disabled)heroSelect(b.dataset.heroClass);});
+document.addEventListener('keydown',ev=>{if(ev.target.matches('input,select,textarea'))ev.stopImmediatePropagation();if(menuOpen){if(ev.key==='Escape'&&(!$('#heroSelectView').hidden||!$('#confirmView').hidden)){showHome();}else if(ev.key==='Escape'&&S){closeFront();}else if(ev.key==='Enter'&&ev.target.id==='playerName')beginNew();ev.stopImmediatePropagation();}},true);
 $('#mergeConfirmOpt').addEventListener('change',e=>setMergeConfirmation(e.target.checked));
 $('#settingsView').addEventListener('change',e=>{if(e.target.id==='mergeConfirmOpt')return;prefs.volume=+$('#volume').value/100;prefs.reduced=$('#motionOpt').checked;prefs.effects=$('#effectsOpt').value;setMusic($('#musicOpt').checked);setSfx($('#soundOpt').checked);savePrefs();});
 $('#importFile').addEventListener('change',async ev=>{const f=ev.target.files[0];if(!f)return;try{if(f.size>2e6)throw Error();const v=JSON.parse(await f.text());if(!validSave(v))throw Error();if(S||loadedSave){if(!confirm('The imported save will replace current progress. Continue?'))return;}restore(v);}catch(e){alert('Import failed: use a compatible v15 or v16 save.');}ev.target.value='';});

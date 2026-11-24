@@ -33,18 +33,18 @@ function knowledgeGrant(ids){
  return fresh;
 }
 function knowledgeWaveIds(completed){return Object.keys(SPELL_UNLOCKS).filter(id=>SPELL_UNLOCKS[id].kind==='wave'&&completed>=SPELL_UNLOCKS[id].wave);}
-function knowledgeWave(completed){if(!S||S.sandbox||S.phase!=='fight'||S.wave!==completed)return [];return knowledgeGrant(knowledgeWaveIds(completed));}
+function knowledgeWave(completed){if(!heroUsesMagic(S)||S.sandbox||S.phase!=='fight'||S.wave!==completed)return [];return knowledgeGrant(knowledgeWaveIds(completed));}
 function knowledgeFromSave(v,includeBackup=false){
  if(!validSave(v))return [];
  const state=v.state,completed=Math.max(0,Math.min(10,Math.floor(state.wave)-1));
- const ids=knowledgeWaveIds(completed);
+ const ids=heroUsesMagic(state)?knowledgeWaveIds(completed):[];
  // Only recognized scroll identifiers can be recovered; the debit was saved before the unlock.
  if(Array.isArray(state.paidSpellScrolls))for(const id of state.paidSpellScrolls)if(SPELL_UNLOCKS[id]?.kind==='scroll')ids.push(id);
  if(includeBackup)ids.push(...knowledgeNormalize(v.spellKnowledge).learned);
  const fresh=knowledgeGrant(ids);if(includeBackup&&v.spellKnowledge){spellKnowledge=masteryMergeProfiles(spellKnowledge,knowledgeNormalize(v.spellKnowledge));knowledgeDirty=true;knowledgeFlush();}masteryRecover(state);return fresh;
 }
 function knowledgeFromScores(){
- const list=scores(),completed=list.reduce((max,row)=>Math.max(max,Math.min(10,Number(row.wave)||0)),0);
+ const list=scores().filter(row=>heroClassId(row.heroClass)==='sorcerer'),completed=list.reduce((max,row)=>Math.max(max,Math.min(10,Number(row.wave)||0)),0);
  return knowledgeGrant(knowledgeWaveIds(completed));
 }
 function knowledgeHint(id){
@@ -60,7 +60,7 @@ function knowledgeSummaryRender(){
 function knowledgeAnnounce(ids){if(!ids.length)return '';const names=ids.map(id=>magicDef(id).name).join(', ');bigMsg('SPELL LEARNED · '+names);sfx('fusion');return ' Permanent spell learned: '+names+'.';}
 function knowledgeBuyScroll(id){
  const u=SPELL_UNLOCKS[id],overlay=$('#ov2');
- if(!S||S.sandbox||!shopAvailable()||overlay.hidden||!overlay.querySelector('.hades-shop')||!u||u.kind!=='scroll'||knowledgeLearned(id)||S.gold<u.price)return false;
+ if(!heroUsesMagic(S)||S.sandbox||!shopAvailable()||overlay.hidden||!overlay.querySelector('.hades-shop')||!u||u.kind!=='scroll'||knowledgeLearned(id)||S.gold<u.price)return false;
  if(!confirm('Steal '+u.title+' for '+u.price+' souls? This permanently learns '+magicDef(id).name+'. This purchase cannot be undone.'))return false;
  const oldGold=S.gold,oldReceipts=S.paidSpellScrolls,oldSave=loadedSave;
  S.gold-=u.price;S.paidSpellScrolls=[...new Set([...(Array.isArray(oldReceipts)?oldReceipts:[]),id])];

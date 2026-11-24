@@ -38,7 +38,7 @@ function masterySpell(id,tier=masteryTier(id)){
 }
 function masteryFireDamage(d,wave){return Math.round((d.damage+d.perTwoWaves*Math.floor(Math.max(0,wave-1)/2))*(d.damageScale||1));}
 function masteryXp(id){
- if(!S||S.sandbox||S.phase!=='fight'||!knowledgeLearned(id)||!sessionRunId)return false;
+ if(!heroUsesMagic(S)||S.sandbox||S.phase!=='fight'||!knowledgeLearned(id)||!sessionRunId)return false;
  const key=sessionRunId+':'+S.wave+':'+id;if(!/^[a-zA-Z0-9_-]{1,100}:([1-9]|10):[a-z]+$/.test(key))return false;
  spellKnowledge=masteryMergeProfiles(knowledgeRead(),spellKnowledge);
  const rec=spellKnowledge.mastery[id],count=spellKnowledge.practiceCaps[key]||0;
@@ -56,7 +56,7 @@ function masteryRecover(state){
  if(knowledgeDirty)knowledgeFlush();
 }
 function masteryCanRitual(id){
- if(!S||S.sandbox||menuOpen||S.phase!=='prep'||spinning||S.drag||S.pendingMerge||!$('#ov').hidden||!$('#ov2').hidden||!knowledgeLearned(id))return false;
+ if(!heroUsesMagic(S)||S.sandbox||menuOpen||S.phase!=='prep'||spinning||S.drag||S.pendingMerge||!$('#ov').hidden||!$('#ov2').hidden||!knowledgeLearned(id))return false;
  const rec=masteryRecord(id),next=MASTERY_RULES[rec.tier+1];return !!(next&&rec.xp>=next.xp&&S.gold>=next.cost);
 }
 function masteryRitual(id){

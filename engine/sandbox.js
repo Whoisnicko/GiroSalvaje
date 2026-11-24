@@ -9,11 +9,11 @@ function sandboxRefill(){if(!sandboxActive())return;S.gold=999999;S.spinsLeft=99
 function sandboxCards(){S.deck=Object.keys(CARDS);S.hand=S.deck.map((id,di)=>({id,di,used:false}));S.aim=null;}
 function sandboxInitialize(){sandboxRefill();sandboxCards();S.sandboxGod=true;sbEl('sbWave').value=String(S.wave);sandboxStatus('All cards available. Select guardians or launch a wave.');}
 function sandboxCanEdit(){return sandboxActive()&&!menuOpen&&!spinning&&!S.drag&&!S.pendingMerge&&$('#ov').hidden&&$('#ov2').hidden&&!$('#unitBestiary').open&&!$('#runePractice').open&&['prep','fight'].includes(S.phase);}
-function sandboxEnter(){
+function sandboxEnter(heroId='sorcerer'){
  if(!menuOpen||spinning||sandboxActive()||sandboxParked)return;
  if(S?.drag)cancelDrag();if(S)persist();
  sandboxParked={state:S,runId:sessionRunId,name:runName,width:savedWorldWidth,save:loadedSave,status:$('#saveStatus').textContent,ov:$('#ov').innerHTML,ovHidden:$('#ov').hidden,ov2:$('#ov2').innerHTML,ov2Hidden:$('#ov2').hidden};
- S=null;sessionRunId='sandbox';runName='Sandbox';savedWorldWidth=null;$('#ov').hidden=true;$('#ov2').hidden=true;closeFront();newGame(true);
+ S=null;sessionRunId='sandbox';runName='Sandbox';savedWorldWidth=null;$('#ov').hidden=true;$('#ov2').hidden=true;closeFront();newGame(true,heroId);
  $('#saveStatus').textContent='SANDBOX · Campaign save untouched';
 }
 function sandboxExit(){
@@ -22,12 +22,12 @@ function sandboxExit(){
  if(S.drag)cancelDrag();
  const p=sandboxParked;sandboxParked=null;closeBestiary();tacticalHide();S=p.state;sessionRunId=p.runId;runName=p.name;savedWorldWidth=p.width;loadedSave=p.save;
  $('#ov').innerHTML=p.ov;$('#ov').hidden=p.ovHidden;$('#ov2').innerHTML=p.ov2;$('#ov2').hidden=p.ov2Hidden;
- $('#saveStatus').textContent=p.status;renderSandbox();if(S){resize();renderUI();}showHome();
+ $('#saveStatus').textContent=p.status;renderSandbox();heroRender();if(S){resize();renderUI();}else magicRender();showHome();
 }
 function sandboxHeal(){S.wallHp=S.wallMax;for(const u of [...S.units,...S.bench.filter(Boolean)]){u.down=false;u.gone=false;refreshHp(u);}}
 function sandboxResetBattle(message='Battle reset.'){
  if(!sandboxActive())return;
- magicResetWave();
+ heroResetWave();magicResetWave();
  closeBestiary();S.units=S.units.filter(u=>!u.temp);for(const u of S.units){if(u.hx!=null){u.x=u.hx;u.y=u.hy;}delete u.hx;delete u.hy;u.skels=0;}
  S.phase='prep';S.enemies=[];S.queue=[];S.curQueue=[];S.shots=[];S.zones=[];S.fx=[];S.parts=[];S.floats=[];S.shake=0;S.buff={haste:0,slow:0};S.aim=null;S.aimP=null;S.sel=null;S.charge=false;S.confirmFight=false;S.fightT=0;S.spawnT=0;
  sandboxHeal();sandboxCards();prepUndoClear();setResult('Sandbox',message);sandboxStatus(message);renderUI();
@@ -59,7 +59,7 @@ function sandboxAction(a){
 function renderSandbox(){
  const p=sbEl('sandboxPanel'),on=sandboxActive();p.hidden=!on;if(!on)return;
  const prep=S.phase==='prep',ready=prep||S.phase==='fight';
- magicRenderSandbox();
+ if(heroUsesMagic(S))magicRenderSandbox();
  sbEl('sbGod').textContent='God mode: '+(S.sandboxGod?'ON':'OFF');sbEl('sbGod').setAttribute('aria-pressed',String(S.sandboxGod));
  for(const b of p.querySelectorAll('[data-sb]')){const a=b.dataset.sb;b.disabled=spinning||!ready||(['wave','fight','unit','clearUnits'].includes(a)&&!prep);}
 }
@@ -67,6 +67,6 @@ function initSandboxControls(){
  sbEl('sbWave').innerHTML=Array.from({length:MAX_WAVE},(_,i)=>'<option value="'+(i+1)+'">'+(i+1)+'</option>').join('');
  sbEl('sbUnit').innerHTML=MERGEABLE.map(t=>'<option value="'+t+'">'+NAMES[t]+'</option>').join('');
  sbEl('sbEnemy').innerHTML=Object.keys(KIND).map(k=>'<option value="'+k+'">'+KIND[k].n+'</option>').join('');
- sbEl('sandboxEnter').addEventListener('click',sandboxEnter);
+ sbEl('sandboxEnter').addEventListener('click',()=>heroChoose('sandbox'));
  sbEl('sandboxPanel').addEventListener('click',e=>{const b=e.target.closest('[data-sb]');if(b&&!b.disabled)sandboxAction(b.dataset.sb);});
 }

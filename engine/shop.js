@@ -21,6 +21,7 @@ function renderArtifactShelf(){
  document.querySelectorAll('[data-act="shop"]').forEach(b=>b.disabled=!shopAvailable());
 }
 function scrollShopHTML(){
+ if(!heroUsesMagic(S))return '';
  const entries=Object.entries(SPELL_UNLOCKS).filter(([,u])=>u.kind==='scroll').map(([id,u])=>{
   const d=magicDef(id),owned=knowledgeLearned(id),sandbox=!!S.sandbox,ok=!sandbox&&!owned&&S.gold>=u.price;
   const status=sandbox?'Sandbox · already available':owned?'Permanently learned':'Permanent spell knowledge';
