@@ -289,7 +289,7 @@ const RELICS = [
   { n:'Soul Eye',      ic:'◉', d:'Hold one extra symbol and gain +2 souls per soul line.', a:()=>{ S.holdsMax++; S.mods.coinBonus += 2; } },
   { n:'Forbidden Grimoire',ic:'▤', d:'Draw 4 cards per wave instead of 3.', a:()=>{ S.handSize = 4; } },
   { n:'Ancestral Altar',   ic:'⌂', d:'The Altar gains +25 HP and heals 8 after each wave.', a:()=>{ S.wallMax += 25; S.wallHp = S.wallMax; S.mods.wallRegen = 8; } },
-  { n:'Earth Stone',ic:'▲', d:'Receive a free Hill card each preparation phase.', a:()=>{ S.freeHill = true; } },
+  { n:'Earth Stone (inactive)',ic:'▲', d:'Temporarily disabled while terrain is paused.', disabled:true, a:()=>{} }, // keep legacy save index
 ];
 const BLESS = [
   { n:'Ectoplasm',      ic:'☁', d:'Wraiths fire 40% faster.',            a:()=>S.mods.archSpd *= 1.4 },
@@ -317,21 +317,19 @@ const CARDS = {
   murcielagos:{ n:'Bats',    ic:'⋀', t:'atk', aim:65, d:()=>`Deal ${batDps()} damage per second in an area for 5 s.`, play(p){ S.zones.push({ x:p.x, y:p.y, r:65, dps:batDps(), t:5 }); } },
   cripta:  { n:'Expanded Crypt',   ic:'▣', t:'sup', prep:true, d:()=>'Preparation: +1 field capacity for the rest of the run.', play(){ S.maxUnits++; bigMsg(`+1 SLOT · ${S.maxUnits}`); sfx('fusion'); setResult('Expanded Crypt', `Field capacity: ${S.maxUnits}.`); renderUI(); } },
   cosecha: { n:'Harvest',           sp:'alma', t:'sup', d:()=>'Gain 1 soul for each human on the field.', play(){ const g = S.enemies.length; S.gold += g; floatText(worldW() / 2, 60, `+${g} souls`, 'soul'); sfx('coin'); } },
-  lago:    { n:'Cursed Lake',      ic:'≋', t:'ter', tile:'water', size:2, d:()=>'Preparation: create 2 water tiles. Humans must go around them.' },
-  colina:  { n:'Hill',            ic:'▲', t:'ter', tile:'hill', size:1, d:()=>'Preparation: create a hill. Wraiths and dragons on it deal +50% damage.' },
-  pantano: { n:'Swamp',           ic:'∷', t:'ter', tile:'swamp', size:3, d:()=>'Preparation: create 3 swamp tiles that slow humans.' },
 };
 const START_DECK = ['rugido','manos','huesos','festin','aullido'];
 const META = { deck: START_DECK.slice() };
-{ const s = store.get('giroSalvaje.deck', null); if (Array.isArray(s) && s.every(id => CARDS[id])) META.deck = s; }
+const RETIRED_TERRAIN_CARDS = new Set(['lago','colina','pantano']);
+{ const saved = store.get('giroSalvaje.deck', null); if (Array.isArray(saved)) { const active = saved.filter(id => Object.hasOwn(CARDS,id)); if(active.length) META.deck = active; } }
 const saveMeta = () => store.set('giroSalvaje.deck', META.deck);
-const isPrepCard = id => CARDS[id].t === 'ter' || !!CARDS[id].prep;
+const isPrepCard = id => !!CARDS[id]?.prep;
 const usableNow = id => isPrepCard(id) ? S.phase === 'prep' : S.phase === 'fight';
 
 function cardHTML(id, attrs = '', extra = '', note = ''){
   const C = CARDS[id];
   const tag = isPrepCard(id) ? '<span class="tag prep">PREPARATION</span>' : C.aim ? '<span class="tag">AIM</span>' : '';
-  const TY = { atk:'ATTACK', ctl:'CONTROL', sup:'SUPPORT', sum:'SUMMON', ter:'TERRAIN' };
+  const TY = { atk:'ATTACK', ctl:'CONTROL', sup:'SUPPORT', sum:'SUMMON' };
   return `<button class="card ${C.t} ${extra}" ${attrs}>${tag}<span class="cn">${C.n}${note}</span><span class="art">${`<img src="${GOTHIC_DATA.cards[id]}" alt="" decoding="async">`}</span><span class="cd"><span class="ty">${TY[C.t]}</span>${C.d()}</span></button>`;
 }
 
@@ -339,7 +337,7 @@ function cardHTML(id, attrs = '', extra = '', note = ''){
 const TIPS = {
   spin:   'Humans invade the Valley of Souls. Click <b>SPIN</b>: 3 matching symbols in a line summon a guardian.',
   hold:   'No match. Click up to 2 symbols to <b>HOLD</b> them for your next spin.',
-  drag:   'New monster! <b>Drag</b> to place it and <b>click</b> to see its range. Wraiths and dragons deal more damage on a <b>hill</b>.',
+  drag:   'New monster! <b>Drag</b> to place it and <b>click</b> to see its range.',
   near:   'You have <b>2 matching monsters</b>. Drag one <b>onto the other</b> to stack them; the third triggers a <b>MERGE</b>.',
   bench:  'The field is full. Your monster went to the <b>RESERVE</b>. It cannot fight there, but <b>trains</b> for +50% HP and damage each wave. Merge it or sell it at the <b>Altar</b>.',
   train:  'Your <b>reserve trained</b>: +50% permanent HP and damage per wave waited (max +150%). They keep these bonuses on the field.',
@@ -350,15 +348,14 @@ const TIPS = {
   buy:    'Out of spins? Spend <b>souls</b> on an extra spin or card. Every defeated human grants 1 soul.',
   fight:  'Check your <b>cards</b>: combat cards are played during battle. When ready, click <b>DEFEND!</b>',
   cards:  'Click a <b>card</b> during battle. AIM cards slow time; click the field to target.',
-  terrain:'<b>PREPARATION</b> cards create terrain: select a card, then a field tile.',
   wall:   'Humans reached the Altar! Put <b>Zombies</b> in their path or play a card.',
   death:  'A monster fell. It revives next wave, or sooner with <b>Feast</b>.',
   empty:  'All your monsters fell! Use cards or buy one with souls. The Altar still fires lightning.',
   keep:   'Unused cards <b>carry over</b>. Only missing cards are drawn, marked NEW.',
-  layout: '<b>Terrain changes</b> each wave. Rearrange your monsters and check incoming humans. Drag surplus monsters to the <b>Altar</b> to sell them.',
-  k_bal:  '<b>Crossbowmen!</b> They shoot from afar. Your Wraiths outrange them, especially on hills.',
+  layout: 'Between waves, rearrange your monsters and check incoming humans. Drag surplus monsters to the <b>Altar</b> to sell them.',
+  k_bal:  '<b>Crossbowmen!</b> They shoot from afar. Your Wraiths outrange them.',
   k_cab:  '<b>Knights!</b> Armor reduces damage per hit. Damage cards ignore armor; dragons hit hard.',
-  k_jin:  '<b>Riders!</b> Fast but fragile. Swamps and Earth Hands slow them.',
+  k_jin:  '<b>Riders!</b> Fast but fragile. Mist slows them; Earth Hands roots them.',
   k_cle:  '<b>Clerics!</b> They heal nearby humans. Target them with Wraiths or area spells.',
   k_ant:  '<b>Arsonists!</b> They ignore monsters and rush the Altar for triple damage. Stop them!',
 };
@@ -379,7 +376,7 @@ let S, colors = {};
 
 function newGame(){
   S = {
-    wave:1, wallHp:80, wallMax:80, gold:0, spinsPer:3, spinsLeft:3, bought:0, cardBuys:0, holdsMax:2, handSize:3, startZombiee:1, relic:null, freeHill:false,
+    wave:1, wallHp:80, wallMax:80, gold:0, spinsPer:3, spinsLeft:3, bought:0, cardBuys:0, holdsMax:2, handSize:3, startZombiee:1, relic:null,
     grid:Array.from({ length:9 }, () => BAG[Math.floor(Math.random() * BAG.length)]), held:new Set(), wins:new Set(),
     units:[], enemies:[], fx:[], floats:[], zones:[], shots:[], parts:[], shake:0, queue:[], spawnT:0, phase:'relic', speed:1, kills:0, spunOnce:false, confirmFight:false, drag:null,
     deck:META.deck.slice(), hand:[], aim:null, aimP:null, buff:{ haste:0, slow:0 }, ter:new Map(),
@@ -392,10 +389,10 @@ function newGame(){
   <p>Humans march toward the Altar. Summon guardians, match symbols and prepare your defense.</p>
   <div class="deckbar"><span>Your starting deck: <b>${META.deck.length} cards</b></span><button class="link" data-act="deck">View deck</button></div>
   <p><b>Choose 1 relic</b> for this run:</p>
-  <div class="relics">${RELICS.map((r, i) => `<button class="relic-opt" data-act="relic" data-i="${i}"><span class="medal">${relicArt(r)}</span><span class="rn">${r.n}</span><span class="rd">${r.d}</span></button>`).join('')}</div>`);
+  <div class="relics">${RELICS.map((r, i) => r.disabled ? '' : `<button class="relic-opt" data-act="relic" data-i="${i}"><span class="medal">${relicArt(r)}</span><span class="rn">${r.n}</span><span class="rd">${r.d}</span></button>`).join('')}</div>`);
 }
 function startRun(i){
-  const r = RELICS[i]; S.relic = r; r.a();
+  const r = RELICS[i]; if(!r || r.disabled) return; S.relic = r; r.a();
   placeNew(makeUnit('W', S.startZombiee)); placeNew(makeUnit('A', 1));
   S.phase = 'prep';
   genTerrain();
@@ -405,65 +402,8 @@ function startRun(i){
   hideOv(); renderUI(); tip('spin'); sfx('horn');
 }
 
-/* ================= Terreno ================= */
-const tkey = (c, r) => c + ',' + r;
-const colOf = x => Math.floor(x / TILE), rowOf = y => clamp(Math.floor(y / TILE), 0, ROWS - 1);
-const tileAt = (x, y) => S.ter.get(tkey(colOf(x), rowOf(y))) || null;
-const tileCenter = (c, r) => ({ x:c * TILE + TILE / 2, y:r * TILE + TILE / 2 });
-const waterInCol = c => { let n = 0; for (let r = 0; r < ROWS; r++) if (S.ter.get(tkey(c, r)) === 'water') n++; return n; };
-function canPlaceTile(c, r, type){
-  // Reglas: solo en tu lado (casillas completas dentro de tu zona), sin tocar el Altar y una sola cosa por casilla.
-  if (c < 1 || r < 0 || r >= ROWS || (c + 1) * TILE > zoneMax()) return false;
-  if (S.ter.has(tkey(c, r))) return false;
-  if (type === 'water') {
-    if (waterInCol(c) >= ROWS - 2) return false;
-    if (S.units.some(u => colOf(u.x) === c && rowOf(u.y) === r)) return false;
-  }
-  return true;
-}
-function blob(type, c0, r0, n){
-  let c = c0, r = r0, placed = 0, tries = 0;
-  while (placed < n && tries++ < 30) {
-    if (canPlaceTile(c, r, type)) { S.ter.set(tkey(c, r), type); placed++; }
-    if (Math.random() < .5) c += Math.random() < .5 ? -1 : 1; else r += Math.random() < .5 ? -1 : 1;
-    r = clamp(r, 0, ROWS - 1);
-  }
-}
-function genTerrain(){
-  // El terreno se genera solo en tu lado y cambia en cada preparación.
-  S.ter = new Map();
-  const last = Math.floor(zoneMax() / TILE) - 1; // última columna completa dentro de tu zona
-  const ri = (a, b) => Math.floor(rnd(a, Math.max(a, b) + 1));
-  blob('hill', ri(1, last), ri(0, ROWS - 1), 1);
-  if (last >= 4) blob('hill', ri(1, last), ri(0, ROWS - 1), 1);
-  blob('water', ri(Math.min(2, last), last), ri(0, ROWS - 1), ri(2, 3));
-  blob('swamp', ri(Math.max(1, last - 1), last), ri(0, ROWS - 1), 2);
-  S.units.forEach(relocate);
-}
-function relocate(u){
-  if (tileAt(u.x, u.y) !== 'water') return;
-  const free = findFree(u, u.x, u.y);
-  if (free) { u.x = free.x; u.y = free.y; return; }
-  let best = null, bd = 1e9;
-  const zc = Math.floor(zoneMax() / TILE);
-  for (let c = 1; c < zc; c++) for (let r = 0; r < ROWS; r++) {
-    if (S.ter.get(tkey(c, r)) === 'water') continue;
-    const p = tileCenter(c, r); if (p.x < WALL_X + 16) continue;
-    const d = dist(p, u); if (d < bd) { bd = d; best = p; }
-  }
-  if (best) { u.x = best.x; u.y = best.y; }
-}
-function placeTerrain(p){
-  const c = S.hand[S.aim]; if (!c) return;
-  const C = CARDS[c.id], col = colOf(p.x), row = rowOf(p.y);
-  if (!canPlaceTile(col, row, C.tile)) { setResult('Invalid placement', 'Choose a free tile on your side. Terrain cannot overlap; water cannot cover monsters or block an entire column.'); renderUI(); return; }
-  S.ter.set(tkey(col, row), C.tile);
-  let extra = C.size - 1;
-  for (const [dc, dr] of shuffle([[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,-1]])) { if (extra <= 0) break; if (canPlaceTile(col + dc, row + dr, C.tile)) { S.ter.set(tkey(col + dc, row + dr), C.tile); extra--; } }
-  c.used = true; S.aim = null; sfx('place');
-  setResult('Terrain created', `${C.n} on the field.`);
-  renderUI();
-}
+/* Terrain temporarily disabled. Preserve empty map for save schema 14. */
+function genTerrain(){ S.ter = new Map(); }
 
 /* ================= Unidades ================= */
 function stats(type, lvl, u){
@@ -475,7 +415,6 @@ function stats(type, lvl, u){
   if (type === 'A') cd /= S.mods.archSpd;
   if (type === 'M') { dmg *= S.mods.mageDmg; splash *= S.mods.splash; }
   if (type === 'L') { hp = b.hp + 10 * S.wave; dmg = b.dmg + 2 * S.wave; }
-  if (u && b.ranged && u.y < WORLD_H && tileAt(u.x, u.y) === 'hill') { dmg *= 1.5; range *= 1.25; }
   if (u && u.train) { hp *= 1 + .5 * u.train; dmg *= 1 + .5 * u.train; } // entrenamiento en la reserva: +50% por oleada
   if (u && u.pile > 1) { hp *= u.pile; dmg *= u.pile; } // una pila de 2 pelea como 2 monsters juntos
   return { hp:Math.round(hp), dmg:Math.round(dmg), cd, range, splash };
@@ -493,7 +432,6 @@ const benchSlot = i => ({ x:WALL_X + 34 + i * 62, y:WORLD_H + 32 });
 function canStand(u, x, y, ignore){
   const r = radius(u);
   if (x < WALL_X + r + 4 || x > zoneMax() || y < r + 8 || y > WORLD_H - r - 12) return { ok:false, why:'fuera' };
-  if (tileAt(x, y) === 'water') return { ok:false, why:'agua' };
   const hit = fieldUnits().find(o => o !== u && o !== ignore && Math.hypot(o.x - x, o.y - y) < r + radius(o) + 2);
   return hit ? { ok:false, why:'ocupado', hit } : { ok:true };
 }
@@ -569,9 +507,7 @@ function drawHand(){
   while (keep.length + drawn.length < S.handSize && avail.length) { const i = avail.pop(); drawn.push({ id:S.deck[i], di:i, used:false, fresh:true }); }
   keep.forEach(h => { h.fresh = false; });
   S.hand = [...keep, ...drawn];
-  if (S.freeHill) S.hand.unshift({ id:'colina', di:-1, used:false, free:true });
   S.aim = null; S.cardBuys = 0;
-  if (S.hand.some(h => isPrepCard(h.id))) setTimeout(() => tip('terrain'), 600);
   if (keep.length && drawn.length) setTimeout(() => tip('keep'), 900);
 }
 const cardCost = () => 5 + S.cardBuys * 3;
@@ -590,7 +526,7 @@ function useCard(i){
   const c = S.hand[i];
   if (!c || c.used || !usableNow(c.id)) return;
   const C = CARDS[c.id];
-  if (C.aim || C.tile) { S.aim = S.aim === i ? null : i; renderHand(); return; }
+  if (C.aim) { S.aim = S.aim === i ? null : i; renderHand(); return; }
   C.play(); c.used = true; sfx('card'); renderHand();
 }
 function castAim(p){
@@ -702,17 +638,8 @@ function startFight(){
   sfx('horn'); renderUI(); tip('cards');
 }
 
-/* Mover a un humano evitando el agua: si el paso siguiente cae en agua, se desvía hacia la fila libre más cercana. */
-function moveHuman(e, dx, dy){
-  const lead = dx < 0 ? -e.r - 4 : dx > 0 ? e.r + 4 : 0;
-  if (tileAt(e.x + dx + lead, e.y + dy) !== 'water') { e.x += dx; e.y += dy; e.moving = true; return; }
-  const c = colOf(e.x + dx + lead), sp = Math.hypot(dx, dy);
-  let bestR = null, bd = 1e9;
-  for (let r = 0; r < ROWS; r++) { if (S.ter.get(tkey(c, r)) === 'water') continue; const d = Math.abs((r + .5) * TILE - e.y); if (d < bd) { bd = d; bestR = r; } }
-  if (bestR === null) return;
-  const ty = (bestR + .5) * TILE;
-  e.y += clamp(ty - e.y, -sp, sp); e.moving = true;
-}
+/* Unobstructed movement while terrain is disabled. */
+function moveHuman(e,dx,dy){ e.x += dx; e.y += dy; e.moving = true; }
 
 function update(dt){
   if (S.phase !== 'fight') return;
@@ -724,7 +651,6 @@ function update(dt){
   if (S.queue.length && S.spawnT <= 0) {
     const q = S.queue.shift();
     let y = rnd(30, WORLD_H - 28);
-    for (let t = 0; t < 8 && tileAt(Wd - 10, y) === 'water'; t++) y = rnd(30, WORLD_H - 28);
     S.enemies.push({ ...q, maxHp:q.hp, x:Wd + 20, y, cd:0, flash:0, root:0, ph:Math.random() * 6 });
     tip('k_' + q.kind);
     S.spawnT = q.kind === 'jin' ? 0.45 : 0.7;
@@ -794,10 +720,8 @@ function update(dt){
     e.root = Math.max(0, e.root - dt);
     e.moving = false;
     e.lunge = Math.max(0, (e.lunge || 0) - dt);
-    if (e.kbv > 1) { const nx = e.x + e.kbv * dt; if (tileAt(nx + e.r, e.y) !== 'water') e.x = nx; e.kbv *= Math.pow(.002, dt); }
+    if (e.kbv > 1) { const nx = e.x + e.kbv * dt; e.x = nx; e.kbv *= Math.pow(.002, dt); }
     let sp = e.root > 0 ? 0 : e.sp * slowF;
-    if (tileAt(e.x, e.y) === 'swamp') sp *= .5;
-    const onHill = tileAt(e.x, e.y) === 'hill';
 
     const lonelyCleric = e.kind === 'cle' && !S.queue.some(q => q.kind !== 'cle') && !alive.some(o => o.kind !== 'cle' && o.hp > 0);
     if (S.charge) sp *= 1.5;
@@ -815,13 +739,13 @@ function update(dt){
       continue;
     }
     if (e.kind === 'bal') {
-      let tgt = null, best = 1e9; const rng = e.range * (onHill ? 1.25 : 1);
+      let tgt = null, best = 1e9; const rng = e.range;
       for (const u of S.units) { if (u.down) continue; const d = dist(e, u); if (d <= rng && d < best) { best = d; tgt = u; } }
       const altarInRange = e.x - WALL_X <= rng;
       if (tgt || altarInRange) {
         e.cd -= dt;
         if (e.cd <= 0) {
-          e.cd = 1.6; const dmg = e.dmg * (onHill ? 1.5 : 1);
+          e.cd = 1.6; const dmg = e.dmg;
           if (tgt) S.shots.push({ k:'bolt', x:e.x - 8, y:e.y, tgt, tx:tgt.x, ty:tgt.y, sp:420, dmg });
           else S.shots.push({ k:'bolt', x:e.x - 8, y:e.y, altar:true, tx:WALL_X - 6, ty:e.y, sp:420, dmg });
           e.lunge = .12; sfx('bolt');
@@ -897,7 +821,6 @@ function zap(e, d, from){
 function stepUnit(u, tx, ty, step){
   const d = Math.hypot(tx - u.x, ty - u.y); if (d < 1) return;
   const s = Math.min(step, d), nx = u.x + (tx - u.x) / d * s, ny = clamp(u.y + (ty - u.y) / d * s, 14, WORLD_H - 14);
-  if (tileAt(nx, ny) === 'water') return;
   u.x = nx; u.y = ny; u.moving = true;
 }
 function burst(x, y, c, n, sp = 90){ for (let i = 0; i < n; i++) { const a = Math.random() * Math.PI * 2, v = rnd(sp * .4, sp); S.parts.push({ x, y, vx:Math.cos(a) * v, vy:Math.sin(a) * v - 30, t:rnd(.25, .5), T:.5, c, s:rnd(2, 3.5) }); } }
@@ -940,7 +863,7 @@ function endWave(){
   genTerrain();
   drawHand();
   S.nextQueue = rollWave(S.wave);
-  setResult(`Wave ${done} survived`, `+3 souls. Terrain changed. You have ${S.spinsLeft} spins and new cards.`);
+  setResult(`Wave ${done} survived`, `+3 souls. You have ${S.spinsLeft} spins and new cards.`);
   if (done % 2 === 0) {
     S.phase = 'reward';
     const blessings = shuffle(BLESS.filter(b => !b.ok || b.ok())).slice(0, 2).map(b => ({ ...b, kind:'Blessing' }));
@@ -981,7 +904,7 @@ function dropPlan(u){
   }
   const st = canStand(u, u.x, u.y);
   if (!st.ok && st.why === 'ocupado' && mergeable(st.hit, u)) return { kind:'merge', target:st.hit };
-  if (!st.ok) return { kind:'bad', msg:{ fuera:'Place monsters inside your zone.', agua:'Monsters cannot stand in water.', ocupado:'That spot is occupied. Monsters cannot overlap.' }[st.why] };
+  if (!st.ok) return { kind:'bad', msg:{ fuera:'Place monsters inside your zone.', ocupado:'That spot is occupied. Monsters cannot overlap.' }[st.why] };
   if (from === 'bench' && fieldCount() + u.pile > S.maxUnits) return { kind:'bad', msg:`Field is full (${S.maxUnits}). Buy a slot or play Expanded Crypt.` };
   return { kind:'place' };
 }
@@ -1022,13 +945,11 @@ function resolveDrop(){
   renderUI();
 }
 function enemyAt(p){ let hit = null; for (const e of S.enemies) if (dist(e, p) <= e.r + 8) hit = e; return hit; }
-const aimingTerrain = () => S.aim !== null && S.hand[S.aim] && CARDS[S.hand[S.aim].id].t === 'ter';
 cv.addEventListener('pointerdown', ev => {
   if (!S) return;
   audioInit();
   const p = toWorld(ev);
   if (S.phase === 'fight' && S.aim !== null) { castAim(p); return; }
-  if (S.phase === 'prep' && aimingTerrain()) { placeTerrain(p); return; }
   const u = mineAt(p);
   if (S.phase !== 'prep') { S.sel = u || null; renderIntel(); return; }
   if (!u) { if (S.sel) { S.sel = null; renderIntel(); } return; }
@@ -1146,10 +1067,10 @@ function renderIntel(){
   // Selected monster
   const ub = $('#unitBox'), u = S.sel && (S.units.includes(S.sel) || S.bench.includes(S.sel)) ? S.sel : null;
   if (!u) { ub.innerHTML = `<h3>Monster</h3><span class="empty">Select a monster to view its range and stats.</span>`; return; }
-  const st = stats(u.type, u.lvl, u), inBench = S.bench.includes(u), hill = !inBench && BASE[u.type].ranged && tileAt(u.x, u.y) === 'hill';
+  const st = stats(u.type, u.lvl, u), inBench = S.bench.includes(u);
   const role = { W:'Patrols and stops humans', A:'Ranged attacker', M:'Area fire', N:`Raises up to ${skelCap(u.lvl)} skeletons per wave`, B:`Aura: +${Math.round(bansheeBuff(u.lvl) * 100)}% damage and speed to nearby allies`, L:'Temporary, this wave only', K:'Temporary, this wave only' }[u.type];
   const bf = bansheeOn(u);
-  const tags = [inBench ? 'reserve' : '', u.down ? 'fallen' : '', hill ? 'hill +50%' : '', u.train ? `trained +${u.train * 50}%` : '', bf ? `<b class="bns">Banshee +${Math.round(bf * 100)}%</b>` : ''].filter(Boolean).join(' · ');
+  const tags = [inBench ? 'reserve' : '', u.down ? 'fallen' : '', u.train ? `trained +${u.train * 50}%` : '', bf ? `<b class="bns">Banshee +${Math.round(bf * 100)}%</b>` : ''].filter(Boolean).join(' · ');
   const reach = BASE[u.type].guard ? `patrol ${Math.round(guardOf(u))}` : BASE[u.type].support ? `area ${Math.round(st.range)}` : `range ${Math.round(st.range)}`;
   const up = v => `<b class="bns">${v}</b>`;
   const atk = BASE[u.type].support ? '' : bf
@@ -1255,10 +1176,19 @@ function restore(v){
  const s=JSON.parse(JSON.stringify(v.state));
  for(const u of [...s.units,...s.bench.filter(Boolean)])if(!BASE[u.type]||!Number.isFinite(u.x)||!Number.isFinite(u.hp))throw Error('Invalid unit');
  for(const e of s.enemies)if(!KIND[e.kind]||!Number.isFinite(e.hp))throw Error('Invalid enemy');
- if(!s.hand.every(c=>CARDS[c.id])||!s.deck.every(id=>CARDS[id]))throw Error('Invalid cards');
- s.held=new Set(s.held);s.wins=new Set(s.wins);s.seenKinds=new Set(s.seenKinds);s.ter=new Map(s.ter);s.relic=RELICS[s.relicIndex]||null;
+ if(!Array.isArray(s.hand)||!Array.isArray(s.deck)||!s.hand.every(c=>Object.hasOwn(CARDS,c.id)||RETIRED_TERRAIN_CARDS.has(c.id))||!s.deck.every(id=>Object.hasOwn(CARDS,id)||RETIRED_TERRAIN_CARDS.has(id)))throw Error('Invalid cards');
+ // Preserve hand-to-deck indices when removing disabled terrain cards.
+ const indexMap=new Map(),activeDeck=[];
+ s.deck.forEach((id,i)=>{if(Object.hasOwn(CARDS,id)){indexMap.set(i,activeDeck.length);activeDeck.push(id);}});
+ s.hand=s.hand.filter(c=>Object.hasOwn(CARDS,c.id)&&indexMap.has(c.di)&&s.deck[c.di]===c.id).map(c=>({...c,di:indexMap.get(c.di)}));
+ s.deck=activeDeck.length?activeDeck:START_DECK.slice();
+ s.endOffer=(s.endOffer||[]).filter(id=>Object.hasOwn(CARDS,id));
+ if(['win','over'].includes(s.phase)&&s.endOffer.length===0)s.endOffer=Object.keys(CARDS).slice(0,3);
+ s.freeHill=false;
+ if(typeof s.resultSub==='string')s.resultSub=s.resultSub.replace('Terrain changed. ','');
+ s.held=new Set(s.held);s.wins=new Set(s.wins);s.seenKinds=new Set(s.seenKinds);s.ter=new Map();s.relic=RELICS[s.relicIndex]||null;
  const refs=[...s.units,...s.bench.filter(Boolean),...s.enemies];s.shots=s.shots.map(q=>({...q,tgt:refs[q.targetIndex]||null}));
- s.offer=s.offer.map(o=>{const legacyNames={"Ectoplasma":"Ectoplasm","Carne dura":"Tough Flesh","Fuego antiguo":"Ancient Fire","Cosecha de almas":"Soul Harvest","Luna llena":"Full Moon","Garras firmes":"Steady Claws","Altar reforzado":"Fortified Altar","Necromancia":"Necromancy","Rugido del dragón":"Dragon Roar","Manos de la tierra":"Earth Hands","Lluvia de huesos":"Bone Rain","Festín":"Feast","Aullido":"Howl","Ofrenda":"Offering","Niebla":"Mist","Temblor":"Earthquake","Murciélagos":"Bats","Cripta ampliada":"Expanded Crypt","Cosecha":"Harvest","Lago maldito":"Cursed Lake","Colina":"Hill","Pantano":"Swamp","Bendición":"Blessing","Carta para esta partida":"Card for this run","Carta":"Card"};o={...o,n:legacyNames[o.n]||o.n,kind:legacyNames[o.kind]||o.kind};let b=BLESS.find(b=>b.n===o.n);if(o.kind==='Blessing'&&b)return {...b,kind:o.kind};let id=Object.keys(CARDS).find(id=>CARDS[id].n===o.n);if(!id)throw Error('Invalid reward');return {n:CARDS[id].n,ic:CARDS[id].ic,d:CARDS[id].d(),kind:o.kind,a:()=>S.deck.push(id)};});
+ s.offer=s.offer.map(o=>{const legacyNames={"Ectoplasma":"Ectoplasm","Carne dura":"Tough Flesh","Fuego antiguo":"Ancient Fire","Cosecha de almas":"Soul Harvest","Luna llena":"Full Moon","Garras firmes":"Steady Claws","Altar reforzado":"Fortified Altar","Necromancia":"Necromancy","Rugido del dragón":"Dragon Roar","Manos de la tierra":"Earth Hands","Lluvia de huesos":"Bone Rain","Festín":"Feast","Aullido":"Howl","Ofrenda":"Offering","Niebla":"Mist","Temblor":"Earthquake","Murciélagos":"Bats","Cripta ampliada":"Expanded Crypt","Cosecha":"Harvest","Lago maldito":"Cursed Lake","Colina":"Hill","Pantano":"Swamp","Bendición":"Blessing","Carta para esta partida":"Card for this run","Carta":"Card"};o={...o,n:legacyNames[o.n]||o.n,kind:legacyNames[o.kind]||o.kind};let b=BLESS.find(b=>b.n===o.n);if(o.kind==='Blessing'&&b)return {...b,kind:o.kind};let id=Object.keys(CARDS).find(id=>CARDS[id].n===o.n);if(!id && ['Cursed Lake','Hill','Swamp'].includes(o.n))id='cripta';if(!id)throw Error('Invalid reward');return {n:CARDS[id].n,ic:CARDS[id].ic,d:CARDS[id].d(),kind:o.kind,a:()=>S.deck.push(id)};});
  S=s;sessionRunId=v.runId||uid();runName=String(v.name||'Anonymous').slice(0,20);hideOv();$('#ov2').hidden=true;closeFront();renderUI();
  // Keep the original logical battlefield width across displays; pointer mapping uses the same scale.
  if(v.worldWidth){savedWorldWidth=v.worldWidth;resize();}

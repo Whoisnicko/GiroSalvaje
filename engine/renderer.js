@@ -20,26 +20,6 @@ function drawInkAltar(t){
  if(glow){ctx.globalCompositeOperation='lighter';ctx.fillStyle='rgba(158,215,185,.16)';ctx.fillRect(0,0,WALL_X+6,WORLD_H);}
  ctx.restore();bar(5,8,WALL_X-14,5,S.wallHp/S.wallMax,colors.soul);
 }
-function drawTerrain(t){
- ctx.save();ctx.lineWidth=1;
- for(const [key,type]of S.ter){
-  const[c,r]=key.split(',').map(Number),x=c*TILE,y=r*TILE;
-  ctx.save();ctx.beginPath();ctx.rect(x+1,y+1,TILE-2,TILE-2);ctx.clip();
-  ctx.fillStyle=type==='water'?'rgba(48,75,76,.85)':type==='hill'?'rgba(119,112,80,.65)':'rgba(65,73,59,.85)';ctx.fillRect(x+1,y+1,TILE-2,TILE-2);
-  ctx.strokeStyle=type==='water'?'#9cb7a6':type==='hill'?'#d1c39c':'#9aab79';
-  if(type==='hill'){
-   ctx.fillStyle='#575346';ctx.beginPath();ctx.moveTo(x+2,y+46);ctx.quadraticCurveTo(x+25,y-10,x+50,y+46);ctx.closePath();ctx.fill();
-   for(let i=0;i<6;i++){ctx.beginPath();ctx.moveTo(x+9+i*4,y+39-i*4);ctx.lineTo(x+20+i*3,y+32-i*3);ctx.stroke();}
-   ctx.fillStyle='#b4aa8c';ctx.beginPath();ctx.moveTo(x+24,y+11);ctx.lineTo(x+27,y+5);ctx.lineTo(x+31,y+12);ctx.lineTo(x+28,y+21);ctx.lineTo(x+23,y+21);ctx.closePath();ctx.fill();
-  }else if(type==='water'){
-   for(let i=0;i<7;i++){const off=Math.sin(t*1.3+i+c)*3;ctx.beginPath();ctx.moveTo(x+5+off,y+6+i*6);ctx.bezierCurveTo(x+18+off,y+3+i*6,x+27-off,y+10+i*6,x+44-off,y+6+i*6);ctx.stroke();}
-  }else{
-   for(let i=0;i<5;i++){const bx=x+9+i*8,by=y+13+(i*13)%29;ctx.globalAlpha=.45;ctx.beginPath();ctx.ellipse(bx,by,4+Math.sin(t+i),1.5,0,0,Math.PI*2);ctx.stroke();ctx.globalAlpha=1;ctx.beginPath();ctx.moveTo(bx,y+50);ctx.lineTo(bx-2,y+36-(i%3)*4);ctx.lineTo(bx+3,y+42);ctx.stroke();}
-  }
-  ctx.restore();ctx.strokeStyle=type==='water'?'#7c9b93':type==='hill'?'#a99b71':'#788363';ctx.strokeRect(x+1.5,y+1.5,TILE-3,TILE-3);
- }
- ctx.restore();
-}
 function drawInkReserve(W){
  ctx.save();ctx.fillStyle='#201d26';ctx.fillRect(0,WORLD_H,W,LOGIC_H-WORLD_H);ctx.strokeStyle='#695b65';ctx.lineWidth=1;
  for(let x=0;x<W;x+=38){ctx.beginPath();ctx.moveTo(x,WORLD_H+1);ctx.lineTo(x+7,WORLD_H+9);ctx.lineTo(x+34,WORLD_H+9);ctx.stroke();}
@@ -50,7 +30,6 @@ function draw(){
   ctx.save();
   if (!prefs.reduced && !motionPreference.matches && S.shake > 0) ctx.translate(rnd(-1, 1) * S.shake, rnd(-1, 1) * S.shake);
   drawInkBackdrop(W);
-  drawTerrain(t);
   if (S.phase === 'prep') {
     const zm = zoneMax();
     ctx.fillStyle = colors.soul; ctx.globalAlpha = 0.05; ctx.fillRect(WALL_X, 0, zm - WALL_X, WORLD_H); ctx.globalAlpha = 1;
@@ -58,11 +37,6 @@ function draw(){
     ctx.font = '600 11px Rubik, sans-serif'; ctx.textBaseline = 'alphabetic';
     ctx.textAlign = 'left'; ctx.fillStyle = colors.gold; ctx.fillText('YOUR VALLEY · drag your monsters', WALL_X + 8, WORLD_H - 8);
     ctx.textAlign = 'right'; ctx.fillStyle = colors.steel; ctx.fillText('invasion arrives here →', W - 8, WORLD_H - 8);
-  }
-  if (aimingTerrain() && S.aimP) {
-    const C = CARDS[S.hand[S.aim].id], c = colOf(S.aimP.x), r = rowOf(S.aimP.y), ok = canPlaceTile(c, r, C.tile);
-    ctx.strokeStyle = ok ? colors.soul : colors.red; ctx.lineWidth = 3; ctx.strokeRect(c * TILE + 2, r * TILE + 2, TILE - 4, TILE - 4);
-    ctx.fillStyle = ok ? colors.soul : colors.red; ctx.globalAlpha = .15; ctx.fillRect(c * TILE, r * TILE, TILE, TILE); ctx.globalAlpha = 1;
   }
   for (const z of S.zones) { ctx.fillStyle = colors.muted; ctx.globalAlpha = .14 + .06 * Math.sin(t * 12); ctx.beginPath(); ctx.arc(z.x, z.y, z.r, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1; }
 
@@ -136,7 +110,6 @@ function draw(){
       sprite(USPR[u.type], u.x + ox, u.y + oy, s, { flash:u.flash > 0, rot, sy, frame, level:u.temp ? 1 : u.lvl });
       ctx.globalAlpha = 1;
       if (u.lvl > 1 && !u.temp) { ctx.fillStyle = colors.gold; ctx.font = '11px Rubik, sans-serif'; ctx.fillText('★'.repeat(u.lvl), u.x, u.y - s / 2 - 8); }
-      if (BASE[u.type].ranged && u.y < WORLD_H && tileAt(u.x, u.y) === 'hill') { ctx.fillStyle = colors.gold; ctx.font = '600 10px Rubik, sans-serif'; ctx.fillText('▲+50%', u.x + s / 2, u.y - s / 2); }
       if (u.train) { ctx.fillStyle = colors.bg; ctx.fillRect(u.x - s / 2 - 12, u.y + s / 2 - 12, 30, 13); ctx.fillStyle = colors.leaf; ctx.font = '600 10px Rubik, sans-serif'; ctx.fillText(`+${u.train * 50}%`, u.x - s / 2 + 3, u.y + s / 2 - 5); }
       if (u.pile > 1) { ctx.fillStyle = colors.bg; ctx.fillRect(u.x + s / 2 - 16, u.y - s / 2 - 2, 26, 14); ctx.fillStyle = colors.gold; ctx.font = '600 10px Rubik, sans-serif'; ctx.fillText(`${u.pile}/${S.mods.mergeN}`, u.x + s / 2 - 3, u.y - s / 2 + 5); }
       bar(u.x - 14, u.y - s / 2 - 6, 34, 5, u.hp / u.maxHp, colors.leaf);
@@ -180,14 +153,14 @@ function draw(){
     ctx.globalAlpha = Math.max(0, f.t / f.T); ctx.fillStyle = colors[f.c]; ctx.font = `600 ${f.sz || 13}px Rubik, sans-serif`;
     ctx.fillText(f.text, f.x, f.y - (1 - f.t / f.T) * 30); ctx.globalAlpha = 1;
   }
-  if (S.aim !== null && S.aimP && !aimingTerrain()) {
+  if (S.aim !== null && S.aimP) {
     const c = CARDS[S.hand[S.aim].id];
     ctx.strokeStyle = colors.soul; ctx.lineWidth = 2; ctx.setLineDash([5, 4]);
     ctx.beginPath(); ctx.arc(S.aimP.x, S.aimP.y, c.aim, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
   }
-  if (S.aim !== null) { ctx.fillStyle = colors.soul; ctx.font = '600 12px Rubik, sans-serif'; ctx.fillText(aimingTerrain() ? 'Click a tile to create terrain' : 'Click the field to cast · time slowed', W / 2, 38); }
+  if (S.aim !== null) { ctx.fillStyle = colors.soul; ctx.font = '600 12px Rubik, sans-serif'; ctx.fillText('Click the field to cast · time slowed', W / 2, 38); }
   // Ficha al pasar el cursor
-  const info = hovU ? `${NAMES[hovU.type]}${hovU.type !== 'L' ? ' ' + '★'.repeat(hovU.lvl) : ''} · ♥ ${Math.ceil(hovU.hp)}/${hovU.maxHp}${BASE[hovU.type].ranged && tileAt(hovU.x, hovU.y) === 'hill' ? ' · on hill +50%' : ''}`
+  const info = hovU ? `${NAMES[hovU.type]}${hovU.type !== 'L' ? ' ' + '★'.repeat(hovU.lvl) : ''} · ♥ ${Math.ceil(hovU.hp)}/${hovU.maxHp}`
              : hovE ? `${KIND[hovE.kind].n} · ♥ ${Math.ceil(hovE.hp)}/${Math.ceil(hovE.maxHp)}${hovE.armor ? ' · armor ' + hovE.armor : ''}${hovE.kind === 'cle' ? ' · heals' : ''}${hovE.kind === 'ant' ? ' · rushes Altar' : ''}` : '';
   if (info) {
     const ent = hovU || hovE; ctx.font = '600 12px Rubik, sans-serif';
