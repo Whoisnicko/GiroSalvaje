@@ -20,8 +20,19 @@
 .wrap .vault-cta:not(:disabled){animation:vault-invite 2.8s ease-in-out 3}
 .wrap .vault-cta:not(:disabled):hover,.wrap .vault-cta:focus-visible{border-color:#fff1bd!important;box-shadow:inset 0 0 0 2px #563829,0 0 18px #f8c4789c;background:linear-gradient(110deg,#61402b,#86582f,#493026);outline:2px solid #f2c782;outline-offset:2px}
 .wrap .vault-cta:disabled{opacity:.65;cursor:default;animation:none;box-shadow:inset 0 0 0 2px #2c1b19}
-#heroHud .vault-warlord{margin-left:auto}
 @keyframes vault-invite{0%,100%{box-shadow:inset 0 0 0 2px #2c1b19,0 0 9px #e4a45b40}50%{box-shadow:inset 0 0 0 2px #2c1b19,0 0 18px #f6bf7590}}
-@media(max-width:680px){#magicHud .magic-mana{flex:1 1 100%;min-width:0}#magicHud .vault-sorcerer{flex:1 1 180px}#heroHud .vault-warlord{margin-left:0;flex:1 1 190px}}
+@media(max-width:680px){#magicHud .magic-mana{flex:1 1 100%;min-width:0}}
 @media(prefers-reduced-motion:reduce){.wrap .vault-cta:not(:disabled){animation:none}}
 .reduce-motion .vault-cta:not(:disabled){animation:none}
+
+/* Separate hero commands from the global marketplace. */
+.wrap>header #hadesRoom{flex:0 1 auto;margin-left:auto;min-height:54px;padding:5px 10px;gap:10px}
+#hadesRoom .hades-market-art{width:42px;height:42px;flex:none;border:1px solid #c19a68;background:#17141f;box-shadow:0 0 7px #f5bc6750;image-rendering:pixelated}
+#hadesRoom .vault-copy strong{font-size:16px}
+#hadesRoom .vault-copy small{font-size:11px}
+#magicHud #magicCast,#heroHud #heroDeploy{display:inline-flex;align-items:center;justify-content:center;gap:12px;min-height:44px;padding:9px 13px;white-space:normal;text-align:left;font:700 14px/1.2 Georgia,serif;letter-spacing:.01em;flex:0 0 auto}
+#magicHud #magicCast{border-color:#79bdce;background:linear-gradient(#2c4c64,#1c3046);color:#def5ff}
+#magicHud #magicCast kbd,#heroHud #heroDeploy kbd{display:inline-block;flex:none;margin:0;padding:4px 7px;border:1px solid currentColor;border-radius:4px;background:#111927;color:#c8e7f6;font:700 11px/1.1 system-ui,sans-serif}
+#heroHud #heroDeploy kbd{color:#edca9c}
+#magicHud #magicCast:focus-visible,#heroHud #heroDeploy:focus-visible{outline:2px solid #d9e6ee;outline-offset:2px}
+@media(max-width:680px){.wrap>header #hadesRoom{margin-left:0;flex:1 1 190px}#magicHud #magicCast{flex:1 1 auto}}

@@ -95,7 +95,7 @@ function magicRender(now=performance.now()){
  const m=magicData(),value=Math.floor(m.mana+1e-6),cast=magicEl('magicCast'),active=magicActive();
  magicEl('magicManaText').textContent=m.infinite?'∞':value+' / '+MAGIC_MAX;
  magicEl('magicManaFill').style.width=(m.infinite?100:m.mana)+'%';hud.querySelector('.magic-meter').setAttribute('aria-valuenow',String(m.infinite?100:value));
- cast.disabled=!active&&(!magicCanInteract()||now<magicReadyAt||!Object.keys(SPELL_DATA).some(magicAvailable));cast.setAttribute('aria-pressed',String(active));cast.innerHTML=active?'Cancel <kbd>Q / Esc</kbd>':'✧ CAST <kbd>Q</kbd>';
+ cast.disabled=!active&&(!magicCanInteract()||now<magicReadyAt||!Object.keys(SPELL_DATA).some(magicAvailable));cast.setAttribute('aria-pressed',String(active));const action=active?'<span>Cancel Spell</span><kbd>Q / Esc</kbd>':'<span>Cast Spells</span><kbd>Q</kbd>';if(cast.innerHTML!==action)cast.innerHTML=action;
  hud.dataset.mode=active?magicMode:'idle';
  magicEl('magicTimer').textContent=active?'TIME ×0.3 · '+Math.max(0,(magicDeadline-now)/1000).toFixed(1)+'s':now<magicReadyAt?'Recovery '+((magicReadyAt-now)/1000).toFixed(1)+'s':'';
  const msg=S.phase==='prep'?'Magic ready for battle.':magicMessage;if(magicEl('magicMessage').textContent!==msg)magicEl('magicMessage').textContent=msg;

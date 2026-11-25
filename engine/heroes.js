@@ -167,7 +167,7 @@ function heroRender(){
  document.getElementById('heroHudStatus').textContent=h.status==='fallen'?'Defeated · returns next wave':h.status==='active'?'Deployed · WASD / arrows · automatic attacks':h.status==='descending'?'Descending · impact incoming':heroAimActive()?'Click battlefield · Esc / right click to cancel':'On the throne · choose landing with Q';
  document.getElementById('heroHpText').textContent=Math.ceil(h.hp)+' / '+d.maxHp+' HP';
  document.getElementById('heroHpFill').style.width=(100*h.hp/d.maxHp)+'%';
- button.disabled=!heroCanControl()||h.status!=='throne';button.textContent=h.status==='fallen'?'FALLEN':h.status==='active'?'DEPLOYED':h.status==='descending'?'DESCENDING':heroAimActive()?'Q · CANCEL':'Q · DESCENT';martialRender(h);
+ button.disabled=!heroCanControl()||h.status!=='throne';const label=h.status==='fallen'?'Warrior Fallen':h.status==='active'?'Warrior Summoned':h.status==='descending'?'Summoning Warrior…':heroAimActive()?'Cancel Summon':'Summon Warrior';const action='<span>'+label+'</span>'+(h.status==='throne'?'<kbd>Q</kbd>':'');if(button.innerHTML!==action)button.innerHTML=action;martialRender(h);
 }
 
 /* Original procedural armor, cape and blade. All shapes render without remote assets. */
