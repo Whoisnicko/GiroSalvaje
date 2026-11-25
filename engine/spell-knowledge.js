@@ -61,7 +61,7 @@ function knowledgeAnnounce(ids){if(!ids.length)return '';const names=ids.map(id=
 function knowledgeBuyScroll(id){
  const u=SPELL_UNLOCKS[id],overlay=$('#ov2');
  if(!heroUsesMagic(S)||S.sandbox||!shopAvailable()||overlay.hidden||!overlay.querySelector('.hades-shop')||!u||u.kind!=='scroll'||knowledgeLearned(id)||S.gold<u.price)return false;
- if(!confirm('Steal '+u.title+' for '+u.price+' souls? This permanently learns '+magicDef(id).name+'. This purchase cannot be undone.'))return false;
+ // Explicit in-game confirmation is validated before this transaction by confirmScrollPurchase.
  const oldGold=S.gold,oldReceipts=S.paidSpellScrolls,oldSave=loadedSave;
  S.gold-=u.price;S.paidSpellScrolls=[...new Set([...(Array.isArray(oldReceipts)?oldReceipts:[]),id])];
  // Save the paid run state first. Never grant knowledge for an unpersisted debit.

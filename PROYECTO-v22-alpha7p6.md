@@ -1,0 +1,3 @@
+# Playtest feedback — v22-alpha.7.6
+
+Restore wide battlefield (no right card rail), horizontal portrait card hand with original art and explicit play prompt, smaller relic and shop artifacts, compact scroll library, in-game permanent purchase confirmation. Existing saved world dimensions, coordinates and combat rules preserved. Shop scroll remains as safety fallback for small windows. No enemy zone geometry changes in this phase. Next phases: physical summon lever with click/keyboard interaction and original roll logic; interactive first-run tutorial with practice, cards, merge, classes and shop. Browser layout and deployed validation pending.

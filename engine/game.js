@@ -1102,7 +1102,7 @@ function renderBuyCard(){
 }
 function renderHand(){
   const fight = S.phase === 'fight';
-  $('#handTitle').textContent = fight ? 'Spell cards · click to cast' : 'Spell cards · prepare your defense';
+  $('#handTitle').textContent = fight ? 'YOUR HAND · Click a card to cast' : 'YOUR HAND · Click a card to play';
   $('#deckLink').textContent = `View deck (${S.deck.length})`;
   $('#relic').innerHTML = S.relic ? `<span class="medal" title="${S.relic.d}">${relicArt(S.relic)}</span><span class="rn">${S.relic.n}</span><span class="rd">${S.relic.d}</span>` : '';
   const canBuy = buyable().length > 0 && S.gold >= cardCost();
@@ -1172,8 +1172,10 @@ document.addEventListener('click', e => {
   else if (a === 'fight') startFight();
   else if (a === 'shop') showShop();
   else if (a === 'artifactbuy') buyArtifact(b.dataset.id);
-  else if (a === 'scrollbuy') knowledgeBuyScroll(b.dataset.id);
-  else if (a === 'shopclose') {$('#ov2').hidden = true;renderPrepUndo();}
+  else if (a === 'scrollbuy') requestScrollPurchase(b.dataset.id);
+  else if (a === 'scrollconfirm') confirmScrollPurchase();
+  else if (a === 'scrollcancel') cancelScrollPurchase();
+  else if (a === 'shopclose') {cancelScrollPurchase(false);$('#ov2').hidden = true;renderPrepUndo();}
   else if (a === 'deck') showDeck();
   else if (a === 'closedeck') {$('#ov2').hidden = true;renderPrepUndo();}
   else if (a === 'mergeYes') closeMergeConfirm(true);
@@ -1187,7 +1189,7 @@ document.addEventListener('click', e => {
 });
 document.addEventListener('keydown', e => {
   if (!S) return;
-  if (e.key === 'Escape' && !$('#ov2').hidden) { if (S.pendingMerge) closeMergeConfirm(false); else {$('#ov2').hidden = true;renderPrepUndo();} return; }
+  if (e.key === 'Escape' && !$('#ov2').hidden) { if (S.pendingMerge) closeMergeConfirm(false); else if(scrollPurchasePending)cancelScrollPurchase();else {$('#ov2').hidden = true;renderPrepUndo();} return; }
   if (!$('#ov').hidden || !$('#ov2').hidden) return;
   if (e.key === 'Escape' && S.aim !== null) { S.aim = null; renderHand(); return; }
   if (e.key === 'Escape' && tacticalClose()) { e.preventDefault(); return; }
@@ -1279,7 +1281,7 @@ resize=function(){
  const w=stage.clientWidth;if(w<1)return;
  const targetH=window.innerWidth>=1100?Math.min(600,Math.max(460,window.innerHeight*.68)):Math.min(460,Math.max(280,window.innerHeight*.55));
  // New campaigns keep the previous wide-field sizing estimate; existing saves keep their exact logical width.
- const oldLaneW=compact?w+document.querySelector('.wrap>.table').offsetWidth+8:w;
+ const oldLaneW=w;
  const logicalW=savedWorldWidth||Math.max(420,oldLaneW/(targetH/LOGIC_H));savedWorldWidth=logicalW;
  const availH=compact?stage.clientHeight:Infinity;if(availH<1)return;
  const fit=fitBattlefield(w,availH,logicalW);

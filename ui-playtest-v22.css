@@ -1,0 +1,68 @@
+/* v22-alpha.7.6 — restore the horizontal card hand, wider arena, compact Hades Room. */
+@media(min-width:1100px) and (min-height:650px){
+ .wrap{grid-template-columns:clamp(164px,14vw,218px) minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto auto auto;gap:5px 8px}
+ .wrap>header{grid-template-columns:minmax(0,1fr) minmax(0,1.15fr) auto;padding:3px 6px}
+ .wrap>header .game-brand{height:clamp(48px,7vh,66px);width:clamp(145px,12vw,185px)}
+ .wrap>.lane{grid-column:2;grid-row:2}
+ .wrap>.cabinet{grid-column:1;grid-row:2/span 2}
+ .wrap>.intel{grid-column:1;grid-row:4}
+ .wrap .field-info summary{font-size:11px;padding:5px 6px}
+ .wrap .field-info-content{min-width:min(340px,90vw);grid-template-columns:1fr;right:auto}
+ .wrap>.save-line{grid-column:2;grid-row:4;align-self:center}
+ .wrap>.table{grid-column:2;grid-row:3;display:grid;grid-template-columns:74px minmax(0,1fr);grid-template-rows:minmax(0,1fr);height:clamp(150px,23vh,206px);min-height:0;gap:6px;padding:4px;border-width:5px}
+ .wrap>.table .relic{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;min-height:0;overflow:auto;gap:3px;border:0;border-right:1px solid #554538;text-align:center;padding:4px 4px 0 0;scrollbar-width:thin}
+ .wrap>.table .relic .medal{width:44px;height:44px;flex:none}.wrap>.table .relic .rd{font-size:9px}.wrap>.table .relic .rn{font-size:11px}
+ .wrap>.table .hand-col{min-height:0;gap:2px}
+ .wrap>.table .hand-h{flex-wrap:nowrap;min-height:17px}
+ .wrap>.table .hand-h #handTitle{font-size:12px;letter-spacing:.04em;color:#f6d7a0;font-weight:700;flex:1}
+ .wrap>.table .hand{flex-direction:row;justify-content:safe center;align-items:stretch;overflow-x:auto;overflow-y:hidden;gap:7px;padding:3px 4px 5px}
+ .wrap .hand .card{flex:0 0 clamp(112px,10vw,148px);width:auto;height:100%;min-height:0;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(26px,1fr) auto;gap:2px;padding:5px;aspect-ratio:auto;text-align:center}
+ .wrap .hand .card::before{border-width:7px}
+ .wrap .hand .card .cn{grid-column:1;grid-row:1;font:700 12px/1.15 Georgia,serif!important;text-align:center;padding:2px 3px;min-height:0;align-self:start}
+ .wrap .hand .card .art{grid-column:1;grid-row:2;min-height:0;height:100%;max-height:none;align-self:stretch}
+ .wrap .hand .card .art img{height:100%;width:100%;max-height:none;object-fit:contain}
+ .wrap .hand .card .cd{grid-column:1;grid-row:3;display:block;min-height:0;padding:0 2px 2px;font:10px/1.2 system-ui,sans-serif;text-align:center;align-self:end}
+ .wrap .hand .card .ty{display:block;margin:0;padding:1px 0;border-bottom:1px solid var(--edge);font-size:8px}
+ .wrap .hand .card .card-rules{display:block;padding:2px 1px;text-align:center}
+ .wrap .hand .card .tag{position:absolute;top:auto;bottom:2px;right:4px;font-size:7px;margin:0;background:#151a23}
+ .wrap .hand .card.buy{flex:0 0 86px;display:flex;flex-direction:column;justify-content:center;min-height:0;height:100%;gap:3px;padding:5px;border-style:dashed}
+ .wrap .hand .card:not(:disabled):not(.used):hover,.wrap .hand .card:focus-visible{filter:brightness(1.16);outline:2px solid var(--edge,#e8d2a5);outline-offset:-3px;transform:none}
+ .wrap .hand .card:not(:disabled):not(.used){cursor:pointer}
+ .wrap .hand .card.aim{outline:2px solid #7de8ff;outline-offset:-3px}
+ #lane #magicHud{padding:4px 7px;gap:2px}
+ #magicHud .magic-top{gap:3px 7px}
+ #magicHud .magic-message{flex:1 1 130px;min-width:120px}
+ #magicHud .magic-mana{flex:1 1 220px}
+ #magicHud .magic-spell{min-height:24px}
+ .wrap .wave-summary{min-height:34px;padding:2px 5px}
+ .wrap>.coach{max-height:32px;padding:3px 6px}
+}
+#ov2 .hades-shop.panel{box-sizing:border-box;width:min(1170px,100%);max-width:1170px;grid-template-columns:minmax(185px,24%) minmax(0,1fr);gap:0}
+.hades-shop .shop-content{position:relative;gap:8px;padding:10px;min-width:0}
+.hades-shop .artifact-library h3{margin:0 0 5px;color:#f0c98e;font:700 16px Georgia,serif}
+.hades-shop .artifact-library h3 small{font:11px system-ui,sans-serif;color:#b8ad9a}
+.hades-shop .shop-grid{gap:6px;grid-template-columns:repeat(3,minmax(0,1fr))}
+.hades-shop .shop-item{display:grid;grid-template-columns:64px minmax(0,1fr);grid-template-rows:1fr auto;gap:4px 6px;padding:7px;align-items:start}
+.hades-shop .shop-item::before{border-width:6px}
+.hades-shop .shop-art,.hades-shop .scroll-art{grid-column:1;grid-row:1;align-self:start;min-width:0;width:64px;height:50px;display:grid;place-items:center;overflow:hidden}
+.hades-shop .shop-art .artifact-thumb{width:100%;height:100%;aspect-ratio:auto}
+.hades-shop .shop-item-info{grid-column:2;grid-row:1;text-align:left}
+.hades-shop .shop-item-info h3{font-size:13px;margin:0 0 2px}
+.hades-shop .shop-item-info small{font-size:9px}
+.hades-shop .shop-item-info p{font-size:11px;line-height:1.25;padding:2px 0 0}
+.hades-shop .shop-buy{grid-column:1/-1;grid-row:2;min-height:29px;border-width:4px!important;padding:2px;font-size:11px}
+.hades-shop .scroll-library{margin:0;padding-top:6px}
+.hades-shop .scroll-library header{margin:0 0 4px;background:none}
+.hades-shop .scroll-grid{gap:6px}
+.hades-shop .scroll-paper{width:42px;height:40px}
+.hades-shop .shop-foot{gap:4px}
+.hades-shop .scroll-confirm{position:absolute;z-index:10;left:8px;right:8px;bottom:8px;padding:12px;background:linear-gradient(#2a2835,#111823);border:2px solid #c5a166;box-shadow:0 0 0 3px #15161c,0 6px 24px #000d}
+.hades-shop .scroll-confirm[hidden]{display:none}
+.hades-shop .scroll-confirm h3{font:700 18px Georgia,serif;margin:0;color:#ffe1a8}
+.hades-shop .scroll-confirm p{font:13px/1.4 system-ui,sans-serif;color:#e5ded2;margin:7px 0 10px}
+.hades-shop .scroll-confirm-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+.hades-shop .scroll-confirm-actions button{min-height:34px;padding:5px 10px}
+@media(min-width:801px) and (min-height:650px){#ov2 .hades-shop.panel{max-height:calc(100dvh - 24px);overflow:auto}.hades-shop .hades-portrait{min-height:0;align-self:stretch}.hades-shop .shop-top h2{font-size:28px}.hades-shop .hades-stage{width:min(100%,330px)}}
+@media(max-width:1000px){.hades-shop .shop-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:800px){#ov2 .hades-shop.panel{grid-template-columns:1fr}.hades-shop .hades-portrait{min-height:190px;max-height:220px}}
+@media(max-width:500px){.hades-shop .shop-grid,.hades-shop .scroll-grid{grid-template-columns:1fr}}

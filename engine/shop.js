@@ -36,12 +36,13 @@ function scrollShopHTML(){
 }
 function showShop(purchased=false){
  if(!shopAvailable())return;
+ scrollPurchasePending=null;
  const o=$('#ov2');
  const entries=Object.entries(SHOP_ARTIFACTS).map(([id,a])=>{
   const owned=artifactOwned(id),ok=!owned&&S.gold>=a.price;
   return '<article class="shop-item relic-'+id+'"><div class="shop-art">'+artifactArt(id)+'</div><div class="shop-item-info"><h3>'+a.name+'</h3><small>'+a.kind+' · run upgrade</small><p>'+a.desc+'</p></div><button class="btn shop-buy" data-act="artifactbuy" data-id="'+id+'" '+(ok?'':'disabled')+'>'+(owned?'✓ STOLEN':'STEAL · <span aria-hidden="true">◆</span> '+a.price+' souls')+'</button></article>';
  }).join('');
- o.innerHTML='<div class="panel soul-shop hades-shop" role="dialog" aria-modal="true" aria-labelledby="shopTitle"><div class="hades-portrait"><div class="hades-stage" aria-hidden="true"><div class="hades-aura"></div><div class="hades-gaze"></div><div class="hades-flame"></div></div><div class="hades-caption"><strong>HADES</strong><span>Lord of the Underworld</span><p role="status" aria-live="polite">… Zzz …</p></div></div><div class="shop-content"><header class="shop-top"><div><h2 id="shopTitle">Hades Room</h2><p>Spend souls to steal relics and forbidden knowledge from Hades</p></div><span class="shop-balance">◆ '+S.gold+' souls</span></header><div class="shop-grid">'+entries+'</div>'+scrollShopHTML()+'<footer class="shop-foot"><span>Relics: this run · Scrolls: permanent · Preparation only</span><button class="go" data-act="shopclose">Return to battle</button></footer></div></div>';
+ o.innerHTML='<div class="panel soul-shop hades-shop" role="dialog" aria-modal="true" aria-labelledby="shopTitle"><div class="hades-portrait"><div class="hades-stage" aria-hidden="true"><div class="hades-aura"></div><div class="hades-gaze"></div><div class="hades-flame"></div></div><div class="hades-caption"><strong>HADES</strong><span>Lord of the Underworld</span><p role="status" aria-live="polite">… Zzz …</p></div></div><div class="shop-content"><header class="shop-top"><div><h2 id="shopTitle">Hades Room</h2><p>Spend souls to steal relics and forbidden knowledge from Hades</p></div><span class="shop-balance">◆ '+S.gold+' souls</span></header><section class="artifact-library"><h3>Artifacts <small>· this run</small></h3><div class="shop-grid">'+entries+'</div></section>'+scrollShopHTML()+'<footer class="shop-foot"><span>Relics: this run · Scrolls: permanent · Preparation only</span><button class="go" data-act="shopclose">Return to battle</button></footer><section id="scrollConfirm" class="scroll-confirm" role="group" aria-labelledby="scrollConfirmTitle" hidden><h3 id="scrollConfirmTitle">Learn this spell?</h3><p id="scrollConfirmCopy"></p><div class="scroll-confirm-actions"><button type="button" class="btn" data-act="scrollcancel">Cancel</button><button type="button" class="go" data-act="scrollconfirm">Confirm purchase</button></div></section></div></div>';
  o.hidden=false;startHadesGaze(o.querySelector('.hades-portrait'),purchased);o.querySelector('[data-act="shopclose"]').focus();
 }
 function buyArtifact(id){
@@ -54,4 +55,26 @@ function buyArtifact(id){
   for(const u of allMine()){const hp=stats(u.type,u.lvl,u).hp,old=u.maxHp;u.maxHp=hp;u.hp=Math.min(hp,u.hp+Math.max(0,hp-old));}
  }
  S.confirmFight=false;setResult('Relic stolen',a.name+' · '+a.desc);sfx('coin');renderUI();showShop(true);return true;
+}
+
+/* Keep permanent purchases inside the game. Bind the pending request to the current run. */
+let scrollPurchasePending=null;
+function scrollPurchaseAllowed(id){const u=Object.hasOwn(SPELL_UNLOCKS,id)?SPELL_UNLOCKS[id]:null;return !!(S&&u&&u.kind==='scroll'&&heroUsesMagic(S)&&!S.sandbox&&shopAvailable()&&!$('#ov2').hidden&&$('#ov2 .hades-shop')&&!knowledgeLearned(id)&&S.gold>=u.price);}
+function requestScrollPurchase(id){
+ if(!scrollPurchaseAllowed(id))return false;
+ const u=SPELL_UNLOCKS[id],panel=$('#scrollConfirm');if(!panel)return false;
+ scrollPurchasePending={id,run:S};
+ $('#scrollConfirmCopy').textContent='Steal '+u.title+' for '+u.price+' souls. '+magicDef(id).name+' will be permanently learned for future runs. This purchase cannot be undone.';
+ panel.hidden=false;panel.querySelector('[data-act="scrollcancel"]').focus();return true;
+}
+function cancelScrollPurchase(refocus=true){
+ const p=scrollPurchasePending;scrollPurchasePending=null;
+ const panel=$('#scrollConfirm');if(panel)panel.hidden=true;
+ if(refocus&&p){const b=Array.from(document.querySelectorAll('#ov2 [data-act="scrollbuy"]')).find(b=>b.dataset.id===p.id);if(b&&!b.disabled)b.focus();}return !!p;
+}
+function confirmScrollPurchase(){
+ const p=scrollPurchasePending;if(!p)return false;
+ cancelScrollPurchase(false);
+ if(p.run!==S||!scrollPurchaseAllowed(p.id))return false;
+ return knowledgeBuyScroll(p.id);
 }
