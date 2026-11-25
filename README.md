@@ -1,5 +1,5 @@
 # Stop Humans!
-Dark-fantasy tactical autobattler. v22-alpha.7.13 — simple animated tutorial examples.
+Dark-fantasy tactical autobattler. v22-alpha.7.14 — campaign architecture and save foundation.
 Production: https://stophumans.pages.dev/
 Repository: https://github.com/Whoisnicko/StopHumans
-See ROADMAP-CAMPAIGN.md for the campaign architecture and persistence phase.
+See ROADMAP-CAMPAIGN.md and PROYECTO-v22-alpha7p14.md.
