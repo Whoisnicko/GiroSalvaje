@@ -932,7 +932,7 @@ function endWave(){
     const cid = shuffle(Object.keys(CARDS))[0];
     S.offer = [...blessings, { n:CARDS[cid].n, ic:CARDS[cid].ic || '✦', d:CARDS[cid].d(), kind:'Card for this run', a:()=>S.deck.push(cid) }];
     showOv(`<h2>Choose a reward</h2><p>Blessings last the entire run. A card joins your deck (${S.deck.length} cards).</p><div class="offers">${S.offer.map((o, i) => `<button class="offer" data-act="reward" data-i="${i}"><span class="ic">${rewardArt(o)}</span><span class="nm">${o.n} <small style="color:var(--soul)">· ${o.kind}</small></span><span class="ds">${o.d}</span></button>`).join('')}</div>`);
-  } else tip('layout');
+  } else { journeyEnter(); return; }
   renderUI();
 }
 function endRun(won){
@@ -1195,7 +1195,7 @@ document.addEventListener('click', e => {
   else if (a === 'speed') { S.speed = S.speed === 1 ? 2 : S.speed === 2 ? 4 : 1; renderUI(); }
   else if (a === 'relic') startRun(+b.dataset.i);
   else if (a === 'endcard') { if(menuOpen||$('#ov').hidden||!$('#ov').contains(b)||sandboxActive())return;if(campaignClaimEndCard(Number(b.dataset.i))||campaignEndClaimed()){showEndRestored();persist();}else {const notice=$('#endRewardNotice');if(notice)notice.textContent='Could not save your reward. Enable browser storage and retry.';} }
-  else if (a === 'reward') { if(!S||S.phase!=='reward'||menuOpen||$('#ov').hidden||!$('#ov').contains(b))return;const choice=S.offer[Number(b.dataset.i)];if(!choice)return;const wave=S.wave-1;const m=S.campaign||(S.campaign=CampaignSave.metadata(sessionRunId));if(m.claimedWaveRewards.includes(wave))return;choice.a();allMine().forEach(refreshHp);m.claimedWaveRewards.push(wave);S.offer=[];S.phase='prep';hideOv();renderUI();tip('layout'); }
+  else if (a === 'reward') { if(!S||S.phase!=='reward'||menuOpen||$('#ov').hidden||!$('#ov').contains(b))return;const choice=S.offer[Number(b.dataset.i)];if(!choice)return;const wave=S.wave-1;const m=S.campaign||(S.campaign=CampaignSave.metadata(sessionRunId));if(m.claimedWaveRewards.includes(wave))return;choice.a();allMine().forEach(refreshHp);m.claimedWaveRewards.push(wave);S.offer=[];journeyEnter(); }
 });
 document.addEventListener('keydown', e => {
   if (!S) return;
@@ -1262,7 +1262,7 @@ function restore(v){
  S=s;knowledgeFromSave(v,true);talentFromSave(v,true);sessionRunId=v.runId;runName=String(v.name||'Anonymous').slice(0,20);hideOv();$('#ov2').hidden=true;closeFront();renderUI();
  // Keep the original logical battlefield width across displays; pointer mapping uses the same scale.
  resize();
- if(S.phase==='reward')showRewardRestored();if(['win','over'].includes(S.phase))showEndRestored();
+ if(S.phase==='reward')showRewardRestored();if(S.phase==='journey')journeyShow();if(['win','over'].includes(S.phase))showEndRestored();
  persist();
 }
 function showRewardRestored(){showOv(`<h2>Choose your reward</h2><div class="offers">${S.offer.map((o,i)=>`<button class="offer" data-act="reward" data-i="${i}"><span class="ic">${rewardArt(o)}</span><span class="nm">${o.n}</span><span class="ds">${o.d}</span></button>`).join('')}</div>`);}
@@ -1321,7 +1321,7 @@ resize=function(){
 if(typeof ResizeObserver!=='undefined'){const stageObserver=new ResizeObserver(()=>{if(compactLayout())resize();});stageObserver.observe($('#battleViewport'));}
 document.addEventListener('click',ev=>{const b=ev.target.closest('[data-front]');if(!b||b.disabled)return;ev.preventDefault();const a=b.dataset.front;
  if(a==='home')showHome();if(a==='new'){$('#nameError').textContent='';$('#playerName').value=profile.name;front('newGameView');$('#playerName').focus();}if(a==='new-confirm')beginNew();if(a==='credits')front('creditsView');if(a==='confirm'&&!$('#confirmView').hidden)launchNew(heroPending);if(a==='back')showHome();if(a==='resume')closeFront();
- if(a==='continue'){try{if(S)closeFront();else if(loadedSave)restore(loadedSave);}catch(e){$('#homeError').textContent='Could not restore this run. Start a new one or import a backup.';}}
+ if(a==='continue'){try{if(S){closeFront();if(S.phase==='journey')journeyShow();}else if(loadedSave)restore(loadedSave);}catch(e){$('#homeError').textContent='Could not restore this run. Start a new one or import a backup.';}}
  if(a==='settings')showSettings();if(a==='scores')showScores();if(a==='cloud')cloudScores();if(a==='publish')publishScore();if(a==='export')exportSave();if(a==='import')$('#importFile').click();
 });
 $('#heroSelectView').addEventListener('click',ev=>{const b=ev.target.closest('[data-hero-class]');if(b&&!b.disabled)heroSelect(b.dataset.heroClass);});
