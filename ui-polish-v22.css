@@ -1,0 +1,72 @@
+/* v22-alpha.7.8 — command layout; retain engine, art and saved coordinates. */
+.wrap .command-tools{display:flex;align-items:center;flex-wrap:wrap;gap:4px;min-width:0}
+.wrap .command-dock{min-width:0;display:grid;gap:6px}
+.wrap .command-dock>.table{min-width:0;min-height:0;display:flex;flex-direction:column}
+.wrap .command-intel{min-width:0;background:#141c26;border:1px solid #80613f;padding:5px;display:flex;flex-direction:column;gap:5px}
+.wrap .command-intel .battle-wave{position:relative;inset:auto;width:100%;border:1px solid #705638;box-shadow:none;flex:0 0 auto}
+.wrap .command-intel .wave-summary{min-height:0;padding:5px;gap:3px}.wrap .command-intel .wave-banner{gap:5px;align-items:center}
+.wrap .command-intel .wave-heading{gap:4px}.wrap .command-intel .wave-heading strong{font-size:14px}.wrap .command-intel .wave-heading small,.wrap .command-intel .wave-count small{font-size:8px}.wrap .command-intel .wave-emblem{display:none}.wrap .command-intel .wave-count b{font-size:16px}.wrap .command-intel .wave-types{gap:3px}.wrap .command-intel .wave-type{min-height:23px}.wrap .command-intel .wave-type img{width:20px;height:20px}.wrap .command-intel .wave-detail-label{display:none}
+.wrap .command-intel .wave-breakdown{grid-template-columns:1fr;padding:4px;gap:4px;max-height:160px;overflow:auto}
+.wrap .command-intel .owned-upgrades{display:flex;flex-direction:column;gap:4px;min-width:0}
+.wrap .command-intel .relic{display:grid;grid-template-columns:32px minmax(0,1fr);gap:2px 6px;align-items:start;width:auto;min-width:0;padding:4px;border:1px solid #685038;text-align:left;background:#101722}.wrap .command-intel .relic:empty{display:none}.wrap .command-intel .relic .medal{width:30px;height:30px;grid-row:span 2}.wrap .command-intel .relic .rn{font:700 11px/1.2 Georgia,serif}.wrap .command-intel .relic .rd{font-size:10px;line-height:1.25;overflow-wrap:anywhere}
+.wrap .command-intel #artifactShelf{padding:3px;border:1px solid #685038;min-height:0;box-shadow:none}.wrap .command-intel #artifactShelf h3{font-size:11px;margin:0 0 3px}.wrap .command-intel #artifactShelf .artifact-owned{display:flex;flex-wrap:wrap;gap:3px}.wrap .command-intel #artifactShelf .artifact-owned>span{display:flex;flex-direction:column;gap:1px;padding:1px;max-width:64px;text-align:center}.wrap .command-intel #artifactShelf .artifact-thumb{flex:0 0 auto;width:36px;height:20px}.wrap .command-intel #artifactShelf .artifact-owned b{font-size:8px;line-height:1.1}.wrap .command-intel #artifactShelf .artifact-empty{font-size:10px;max-width:none}
+.wrap .command-intel .field-info-content{position:static;display:block;min-width:0;padding:0;border:0}.wrap .command-intel .field-info:not([open]) .field-info-content{display:none}.wrap .command-intel .field-info summary{font-size:11px;padding:4px 6px}
+@media(min-width:1100px) and (min-height:650px){
+ .wrap{display:grid;width:100%;max-width:1920px;height:100dvh;max-height:100dvh;padding:5px 8px 12px;grid-template-areas:'top top' 'machine field' 'machine dock' 'save save';grid-template-columns:clamp(200px,14vw,250px) minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) clamp(174px,24vh,214px) 12px;gap:5px 7px;overflow:hidden;align-items:stretch;box-sizing:border-box}
+ .wrap>header{grid-area:top;position:relative;inset:auto;display:grid;grid-template-columns:minmax(0,auto) minmax(0,1fr) auto;align-items:center;gap:7px;padding:3px 6px;min-height:52px;min-width:0}
+ .wrap>header .title{display:flex;flex-wrap:nowrap;gap:7px;align-items:center;min-width:0}.wrap>header .title:after{display:none}.wrap>header .game-brand{width:clamp(112px,10vw,166px);height:44px;aspect-ratio:auto;margin:0}.wrap>header .game-brand .official-logo{width:100%;height:100%;object-fit:contain}
+ .wrap .command-tools{max-width:235px;gap:3px}.wrap header .snd,.wrap header .speed{min-height:24px;padding:2px 4px!important;font-size:10px;border-width:3px!important}
+ .wrap>header .chips{display:flex;flex-wrap:wrap;min-width:0;gap:3px;justify-content:center;align-items:center}.wrap header .chip{min-height:24px;font-size:12px;padding:1px 5px;border-width:3px}.wrap header .minor-chip{font-size:10px}
+ .wrap>header #hadesRoom{margin:0;min-width:135px;min-height:42px;padding:3px 6px;justify-self:end}
+ .wrap>.cabinet{grid-area:machine;min-height:0;min-width:0;display:flex;flex-direction:column;gap:5px;padding:6px;overflow:auto;border-width:5px;scrollbar-width:thin}
+ .wrap>.cabinet .side{display:flex;flex-direction:column;gap:5px;min-width:0}.wrap>.cabinet .reels{margin:0;max-width:none}.wrap>.cabinet .cell{min-width:0;min-height:0}.wrap>.cabinet .btns{display:grid;gap:4px}.wrap>.cabinet .fight{margin-top:3px;min-height:37px}.wrap>.cabinet .result{font-size:12px;line-height:1.3;padding:5px}
+ .wrap>.lane{grid-area:field;min-width:0;min-height:0;display:flex;flex-direction:column;overflow:hidden;border-width:3px}.wrap>.lane .battle-viewport{flex:1 1 0;min-height:0;overflow:hidden;background:radial-gradient(ellipse,#1c2930,#101722 80%)}
+ #lane #magicHud{padding:5px 7px;gap:3px}#magicHud .magic-mana{flex:1 1 200px;min-width:150px}#magicHud .magic-meter{height:14px}#magicHud .magic-message{flex:0 1 190px;min-width:0}#magicHud .magic-spells{gap:3px}
+ #heroHud{padding:4px 6px;gap:3px 7px}#heroHud .hero-skills{gap:3px}#heroHud .hero-skill.btn{min-height:31px;padding:2px 4px}
+ .wrap>.command-dock{grid-area:dock;display:grid;grid-template-columns:minmax(0,1fr) clamp(220px,19vw,288px);grid-template-rows:minmax(0,1fr);gap:6px;min-height:0}
+ .wrap .command-dock>.table{height:100%;padding:4px 6px;border-width:4px;overflow:hidden;background:radial-gradient(ellipse at 50% 110%,#36313b,#101722 75%)}
+ .wrap .command-dock .hand-col{display:flex;flex-direction:column;flex:1 1 0;min-height:0;gap:0}.wrap .command-dock .hand-h{display:flex;flex:0 0 23px;flex-wrap:nowrap;justify-content:space-between;align-items:center;gap:6px;padding:1px 5px;border:0;min-height:0}
+ .wrap .command-dock #handTitle{font:700 13px/1.15 Georgia,serif;letter-spacing:.04em;color:#f4d6a0;display:flex;align-items:baseline;gap:8px;min-width:0}.wrap .command-dock #handTitle small{font:11px/1.2 system-ui,sans-serif;letter-spacing:0;color:#b9c6d3;white-space:nowrap}.wrap .command-dock #deckLink{font-size:11px;white-space:nowrap}
+ .wrap .command-dock .hand{display:flex;flex-direction:row;flex:1 1 0;min-height:0;min-width:0;align-items:flex-end;justify-content:safe center;gap:0;overflow-x:auto;overflow-y:hidden;padding:13px 14px 5px;scrollbar-width:thin;scroll-snap-type:none}
+ .wrap .command-dock .hand .card{flex:0 0 clamp(112px,9vw,156px);height:100%;max-height:none;min-height:0;width:auto;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(20px,1fr) auto;gap:2px;padding:5px;transform:rotate(var(--fan-angle,0deg)) translateY(var(--fan-offset,0px));transform-origin:50% 95%;z-index:var(--fan-z,1);overflow:hidden}
+ .wrap .command-dock .hand .card[data-cardi]+.card[data-cardi]{margin-left:-8px}.wrap .command-dock .hand .card .cn{grid-column:1;grid-row:1;font:700 12px/1.2 Georgia,serif!important;display:block;text-align:center;min-height:0;padding:2px;overflow-wrap:anywhere}.wrap .command-dock .hand .card .art{grid-column:1;grid-row:2;width:100%;height:100%;min-height:0;max-height:none;align-self:stretch}.wrap .command-dock .hand .card .art img{width:100%;height:100%;max-height:none;object-fit:contain}.wrap .command-dock .hand .card .cd{grid-column:1;grid-row:3;min-height:0;display:block;align-self:end;text-align:center;font:11px/1.2 system-ui,sans-serif;padding:0 2px 2px}.wrap .command-dock .hand .card .ty{display:block;font-size:8px;margin:0;padding:1px}.wrap .command-dock .hand .card .card-rules{display:block;padding:2px 0;text-align:center}
+ .wrap .command-dock .hand .card[data-cardi]:hover:not(:disabled),.wrap .command-dock .hand .card[data-cardi]:focus-visible,.wrap .command-dock .hand .card.aim{transform:translateY(-8px) rotate(0deg);z-index:30;outline:2px solid var(--edge,#f1d5a0);outline-offset:-3px;filter:brightness(1.15)}
+ .wrap .command-dock .hand .card.buy{flex:0 0 76px;height:84%;max-height:122px;min-height:0;align-self:center;display:flex;flex-direction:column;justify-content:center;margin-left:12px;transform:none;gap:3px;padding:4px}.wrap .command-intel{overflow:auto;scrollbar-width:thin;min-height:0}
+ .wrap>.save-line{grid-area:save;min-width:0;font-size:10px;line-height:1;align-self:center}.wrap>.save-line b{display:none}
+}
+@media(max-width:1099px),(max-height:649px){.wrap>.command-dock{order:3;grid-template-columns:minmax(0,1fr)}.wrap .command-dock .hand-col{min-width:0}.wrap .command-dock .hand-h{display:flex;justify-content:space-between}.wrap .command-dock #handTitle small{display:block;font-size:11px}.wrap .command-intel .owned-upgrades{flex-direction:row;flex-wrap:wrap}.wrap .command-intel #artifactShelf{flex:1 1 120px}.wrap .command-intel .relic{flex:1 1 180px}}
+/* Final geometry fixes after running both original heroes in Chromium. */
+@media(min-width:1100px) and (min-height:650px){
+ .wrap{grid-template-rows:52px minmax(0,1fr) clamp(164px,22vh,204px) 12px}
+ .wrap>header{min-height:0;height:52px;box-sizing:border-box;overflow:hidden}
+ .wrap>header .title{height:44px;min-height:0}
+ .wrap>header .game-brand{display:block;height:42px;max-height:42px;overflow:hidden;line-height:0;aspect-ratio:auto}
+ .wrap>header .game-brand .official-logo{display:block;height:42px;max-height:42px;width:100%;object-fit:contain;object-position:center}
+ .wrap>header .game-brand span{font-size:16px;line-height:1.1}
+ .wrap>header .command-tools{max-width:235px;max-height:44px;gap:2px 4px;align-content:center}
+ .wrap header .snd,.wrap header .speed{min-height:20px;padding:1px 4px!important;border:1px solid #775937!important;border-image:none!important;box-shadow:none;background:#19222c}
+ .wrap header .chip{border:1px solid #775937;border-image:none;min-height:25px;padding:2px 6px;background:#18222c}
+ .wrap>header #hadesRoom{min-height:36px;max-height:40px;padding:2px 6px}
+ #hadesRoom .hades-market-art{width:28px;height:28px}
+ .wrap .command-dock>.table{align-items:stretch}
+ .wrap .command-dock .hand-col{width:100%;align-items:stretch}
+ .wrap .command-dock .hand-h{width:100%;flex-basis:20px}
+ .wrap .command-dock .hand{width:100%;padding-top:11px;padding-bottom:4px}
+ .wrap .command-dock #handTitle{flex:1}
+ .wrap .command-intel .artifact-empty{display:block!important;max-width:none!important;width:100%;text-align:left;padding:1px 2px}
+ .wrap .command-intel .field-info summary{font-size:10px;padding:3px 5px}
+ #lane #magicHud{padding:3px 7px;gap:2px}
+ #magicHud .magic-mana-label{font-size:12px}#magicHud .magic-mana-label span{font-size:13px}
+ #magicHud #magicCast{min-height:30px;padding:4px 8px}
+ #magicHud .magic-spell{min-height:22px;padding:2px 4px}
+ .wrap>.cabinet .coach{font-size:10px;line-height:1.25}
+}
+@media(min-width:1100px) and (max-width:1350px) and (min-height:650px){.wrap>header .game-brand{width:104px}.wrap>header .command-tools{max-width:178px}.wrap header .chip{font-size:11px;padding:1px 4px}.wrap>header #hadesRoom{min-width:120px}.wrap .command-dock #handTitle small{font-size:10px}.wrap .command-dock .hand .card{flex-basis:112px}}
+@media(prefers-reduced-motion:reduce){.wrap .command-dock .hand .card{transition:none}}
+@media(min-width:1100px) and (min-height:650px){
+ .wrap .command-dock .hand .card .cn{white-space:normal;overflow-wrap:anywhere;letter-spacing:0;text-overflow:clip;padding-inline:4px}
+ .wrap .command-dock .hand .card[data-cardi]+.card[data-cardi]{margin-left:-4px}
+ .wrap .command-dock .hand .card{transform:rotate(calc(var(--fan-angle,0deg)*.7)) translateY(0);padding:6px}
+ .wrap .command-dock .hand .card[data-cardi]:hover:not(:disabled),.wrap .command-dock .hand .card[data-cardi]:focus-visible,.wrap .command-dock .hand .card.aim{transform:translateY(-6px) rotate(0deg)}
+ .wrap .command-intel .field-info{flex:none}
+}

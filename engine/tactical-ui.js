@@ -83,7 +83,7 @@ function tacticalCompactHTML(m){
  return '<div class="sanctuary-shell"><img class="sanctuary-art" src="'+SANCTUARY_ART+'" alt="" draggable="false" onload="this.parentElement.classList.add(\'sanctuary-art-loaded\')" onerror="this.hidden=true;this.parentElement.classList.remove(\'sanctuary-art-loaded\')"><div class="sanctuary-title"><strong>'+m.name+'</strong><span>'+m.stars+'</span></div><div class="sanctuary-health"><span class="sanctuary-fallback-heart" aria-hidden="true">♥</span><b>'+Math.ceil(m.hp)+' / '+Math.ceil(m.max)+'</b></div><div class="sanctuary-hp-track" role="meter" aria-label="Health" aria-valuemin="0" aria-valuemax="'+Math.ceil(m.max)+'" aria-valuenow="'+Math.ceil(Math.min(m.hp,m.max))+'"><i style="width:'+hp+'%"></i></div>'+sanctuaryStats(m).map((s,i)=>'<div class="sanctuary-stat sanctuary-stat-'+i+'" title="'+s.title+'"><span class="sanctuary-fallback-icon" aria-hidden="true">'+s.icon+'</span><span>'+s.label+'</span><b>'+s.value+'</b></div>').join('')+'</div>'+(tags.length?'<div class="sanctuary-buffs">'+tags.map(t=>'<span>'+t+'</span>').join('')+'</div>':'');
 }
 function tacticalHTML(m){return tacticalCompactHTML(m);}
-function bestiaryDialog(){return $('#unitBestiary');}
+function bestiaryDialog(){return document.getElementById('unitBestiary');}
 let bestiaryEntity=null,bestiaryState=null,bestiaryPhase=null,bestiaryMarkup='';
 function bestiaryHTML(e,m){
  const l=m.enemy?{title:'Invader of the living kingdom',lore:'Driven by the living kingdom’s fear of the dead, this invader marches toward the altar in the Valley of Souls.',tactic:m.note}:BESTIARY_LORE[e.type];

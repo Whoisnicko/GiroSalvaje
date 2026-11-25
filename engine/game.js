@@ -353,7 +353,7 @@ function cardHTML(id, attrs = '', extra = '', note = ''){
 
 /* ================= Tips ================= */
 const TIPS = {
-  spin:   'Humans invade the Valley of Souls. Click <b>SPIN</b>: 3 matching symbols in a line summon a guardian.',
+  spin:   'Humans invade the Valley of Souls. Pull the <b>summoning lever</b>: 3 matching symbols in a line summon a guardian.',
   hold:   'No match. Click up to 2 symbols to <b>HOLD</b> them for your next spin.',
   drag:   'New monster! <b>Drag</b> to place it and <b>click</b> to see its range.',
   near:   'You have <b>2 matching monsters</b>. Drag one <b>onto the other</b> to stack them; the third triggers a <b>MERGE</b>.',
