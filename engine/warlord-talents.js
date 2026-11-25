@@ -66,8 +66,8 @@ function talentOpen(mode='library'){
 function talentRender(){
  const p=talentInit(),test=talentMode==='sandbox',select=talentMode!=='library',el=id=>document.getElementById(id);
  el('talentTitle').textContent=test?'Warlord Lab · choose doctrine':select?'Choose your doctrine':'Path of the Warlord';
- el('talentIntro').textContent=test?'All nine talents available for testing. Choose any rank; no permanent progression.':'Earn one Valor Point on first reaching waves 1–8 and 10 as Warlord. Learn talents permanently; choose one branch for each new run.';
- el('talentWallet').textContent=test?'Sandbox · unlimited test access':talentPoints(p)+' Valor Points · Best completed wave '+p.best+'/10'+(talentDirty?' · Save pending':'');
+ el('talentIntro').textContent=test?'All nine talents available for testing. Choose any rank; no permanent progression.':'Earn one Valor Point on first reaching waves 1–8 and 10 as Warlord. Learn talents permanently; choose one branch for each new run. Classic mode is needed for milestones 6–10.';
+ el('talentWallet').textContent=test?'Sandbox · unlimited test access':talentPoints(p)+' Valor Points · Best completed wave '+p.best+'/10 (Classic)'+(talentDirty?' · Save pending':'');
  el('talentTree').innerHTML=Object.entries(TALENT_BRANCHES).map(([id,d])=>{
   const rank=p.ranks[id],available=test?3:rank;
   const nodes=d.nodes.map((n,i)=>{const tier=i+1,owned=tier<=available,canBuy=!test&&tier===rank+1&&talentPoints(p)>0;

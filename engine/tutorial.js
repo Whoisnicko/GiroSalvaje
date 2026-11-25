@@ -1,7 +1,7 @@
 /* First-campaign guide. Read-only lessons; no rewards, RNG changes or input locks. */
 const TUTORIAL_KEY='gs22.tutorial.v1';
 const TUTORIAL_LESSONS=Object.freeze([
- {id:'goal',title:'Protect the Altar',text:'Humans attack from the right. Keep this crystal alive for 10 waves. Your guardians fight automatically.',task:'Defend the crystal.',target:'altar',manual:true},
+ {id:'goal',title:'Protect the Altar',text:'Humans attack from the right. Keep this crystal alive for the entire campaign. Your guardians fight automatically.',task:'Defend the crystal.',target:'altar',manual:true},
  {id:'spin',title:'Summon a guardian',text:'Match 3 symbols in a row, column or diagonal to summon a guardian or earn souls. Wild skulls replace any symbol.',task:'Pull the lever once.',target:'#summonLever'},
  {id:'hold',title:'Keep useful symbols',text:'Lock a symbol to keep it for your next spin. This helps you complete matching lines.',task:'Click a symbol to HOLD it.',target:'#reels'},
  {id:'move',title:'Set your defense',text:'Place tough Zombies in front and ranged Wraiths behind them. Stay inside your marked defense zone.',task:'Drag a guardian to an empty position.',target:'formation'},
@@ -16,7 +16,7 @@ const TUTORIAL_LESSONS=Object.freeze([
  {id:'hero',title:'Use your hero',text:'',task:'Use your class ability.',target:''},
  {id:'survive',title:'Hold the line',text:'Your army fights automatically. Each defeated human earns one soul. Survive to refill free spins and replace spent cards.',task:'Survive the invasion.',target:'battle'},
  {id:'shop',title:'Visit Hades Room',text:'Spend souls on artifacts for this campaign. Sorcerers can also learn permanent spell scrolls.',task:'Open Hades Room. No purchase required.',target:'#hadesRoom'},
- {id:'finish',title:'The Valley is yours',text:'Summon → Prepare → Defend → Upgrade. Repeat until wave 10. Open Guide whenever you need a refresher.',task:'Finish the guide.',target:'#tutorialOpen',manual:true}
+ {id:'finish',title:'The Valley is yours',text:'Summon → Prepare → Defend → Upgrade. Repeat until the final wave. Open Guide whenever you need a refresher.',task:'Finish the guide.',target:'#tutorialOpen',manual:true}
 ]);
 let tutorialCompact=false,tutorialShownAt=0,tutorialWasHidden=true;
 const tutorialEl=id=>document.getElementById(id);
@@ -36,6 +36,8 @@ function tutorialSignal(kind){const r=tutorialRecord;if(tutorialOwner!==S||r?.st
 function tutorialLesson(){
  const s=TUTORIAL_LESSONS.find(x=>x.id===tutorialRecord.stage);if(!s)return null;
  const l={...s};
+ if(s.id==='goal')l.text=`Humans attack from the right. Keep this crystal alive for ${campaignLimit()} waves. Your guardians fight automatically.`;
+ if(s.id==='finish')l.text=`Summon → Prepare → Defend → Upgrade. Repeat until wave ${campaignLimit()}. Open Guide whenever you need a refresher.`;
  if(s.id==='spin'&&S.spinsLeft===0&&!spinning&&!tutorialRecord.spinStart)return {...l,text:'No free spins left. Buy more with souls or continue preparing.',task:'Continue when ready.',manual:true,target:'[data-act="buy"]'};
  if(s.id==='extraSpin')l.text=`Buy spin costs ${spinCost()} souls now. Each purchase adds one spin; its price rises. Buying is optional.`;
  if(s.id==='slot')l.text=`+1 slot costs ${slotCost()} souls now and increases field capacity from ${S.maxUnits} to ${S.maxUnits+1}. It does not summon a guardian.`;

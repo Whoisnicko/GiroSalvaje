@@ -1,0 +1,13 @@
+#homeView .sanctum-entry{background:linear-gradient(#4b3c48,#201d29);color:#f7dcad;border:1px solid #b99b69!important;min-height:34px;padding:6px 12px;font:700 15px Georgia,serif;white-space:normal;width:100%}
+#homeView .gate-progress{min-width:0;max-width:100%;padding:8px;border:1px solid #6b5946;border-radius:4px;background:#12151de8}
+#homeView .gate-progress p{margin:4px 0 0}
+.campaign-length{width:100%;padding:9px;color:#f3dfbd;background:#171c26;border:1px solid #887251;font:inherit}
+#sanctumView{width:min(1000px,100%);max-height:calc(100dvh - 32px);overflow:auto;background:linear-gradient(140deg,#26222d,#141b25);border:1px solid #ac8957;box-shadow:inset 0 0 0 3px #171a22,0 12px 40px #0008}
+#sanctumView h2{font:700 32px Georgia,serif;color:#ffe1ad;margin:10px 0}
+.sanctum-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:16px 0}
+.sanctum-stats>div{display:grid;gap:4px;background:#111823;border:1px solid #6a5b4c;padding:12px;text-align:center}
+.sanctum-stats strong{font:700 23px Georgia,serif;color:#f1c989}.sanctum-stats small{font:11px system-ui;color:#bdc8d1}
+.sanctum-history,.sanctum-group>p{font:12px/1.4 system-ui;color:#b9c4ca}.sanctum-group h3{font:700 19px Georgia,serif;color:#e2be8d;margin:22px 0 4px;border-bottom:1px solid #695745;padding-bottom:6px}
+.sanctum-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.sanctum-item{padding:10px;background:#151c25;border:1px solid #414b58;min-width:0}.sanctum-item>div{display:flex;align-items:start;justify-content:space-between;gap:6px;flex-wrap:wrap}.sanctum-item b{color:#f1dfc6;font:700 14px Georgia,serif}.sanctum-item p,.sanctum-item small{font:11px/1.5 system-ui;color:#c0c9ce;margin:6px 0}.sanctum-state{font:700 9px system-ui;color:#cba9b1;background:#332431;padding:3px 6px;border-radius:3px}.sanctum-state.unlocked{color:#a4e1cb;background:#203c37}.sanctum-item small{color:#9ce3e5}
+@media(min-width:1600px) and (min-height:850px){#sanctumView{max-height:calc((100dvh - 32px) / var(--ui-scale));width:min(1000px,calc((100vw - 40px) / var(--ui-scale)))}}
+@media(max-width:700px){.sanctum-stats,.sanctum-grid{grid-template-columns:repeat(2,minmax(0,1fr))}#sanctumView{padding:14px}}@media(max-width:420px){.sanctum-grid{grid-template-columns:1fr}}

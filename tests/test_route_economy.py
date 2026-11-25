@@ -18,10 +18,10 @@ with sync_playwright() as pw:
   shim='<script>window.__testDisk='+json.dumps(storage)+';Object.defineProperty(window,"localStorage",{value:{getItem(k){return Object.hasOwn(__testDisk,k)?__testDisk[k]:null},setItem(k,v){__testDisk[k]=String(v)},removeItem(k){delete __testDisk[k]}}});</script>'
   page.set_content(html.replace('<head>','<head>'+shim,1),wait_until='domcontentloaded');page.wait_for_function('!document.getElementById("artLoading")',timeout=18000)
  def ev(s):return page.evaluate(s)
- load();ev("profile.name='Tester';launchNew('sorcerer');startRun(RELICS.findIndex(r=>!r.disabled));tutorialStop('skipped');")
+ load();ev("profile.name='Tester';launchNew('sorcerer',null,10);startRun(RELICS.findIndex(r=>!r.disabled));tutorialStop('skipped');")
  # Every destination: preview, deterministic reward, failed write rollback and reload.
  for idx,kind in enumerate(['vault','crypt','shrine','forge','sanctuary']):
-  ev("launchNew('sorcerer');startRun(0);tutorialStop('skipped');S.gold=20;S.wallHp=30;")
+  ev("launchNew('sorcerer',null,10);startRun(0);tutorialStop('skipped');S.gold=20;S.wallHp=30;")
   page.evaluate('(kind)=>{for(let i=0;i<1000;i++){if(Journey.options(i,1).some(n=>n.icon===kind)){S.campaign.seed=i;break}}}',kind)
   ev('S.spinsLeft=0;startFight();endWave()');assert ev("S.phase==='journey'&&S.gold===20&&S.campaign.routeEconomy===1")
   opts=ev('journeyOptions()');target=next(n for n in opts if n['icon']==kind);before=ev('({gold:S.gold,hp:S.wallHp,count:allMine().length})')
@@ -46,12 +46,12 @@ with sync_playwright() as pw:
   ev('S.spinsLeft=0;startFight()');assert ev('routeDiscount("artifact")===0&&routeDiscount("infusion")===0')
   print(kind,'passed',flush=True)
  # Full reserve/field fallback and HP cap; actual legacy v16 arrival no duplicate payout.
- ev("launchNew('warlord');startRun(0);tutorialStop('skipped');S.gold=20;S.maxUnits=0;S.bench=[makeUnit('W',1),makeUnit('A',1),makeUnit('M',1)];S.spinsLeft=0;startFight();endWave()")
+ ev("launchNew('warlord',null,10);startRun(0);tutorialStop('skipped');S.gold=20;S.maxUnits=0;S.bench=[makeUnit('W',1),makeUnit('A',1),makeUnit('M',1)];S.spinsLeft=0;startFight();endWave()")
  ev("for(let i=0;i<1000;i++){if(Journey.options(i,1).some(n=>n.icon==='crypt')){S.campaign.seed=i;break}};prefs.reduced=true;journeyShow();journeyChoose(journeyOptions().find(n=>n.icon==='crypt').id)");page.wait_for_timeout(100);ev('journeyContinue()');assert ev('S.gold===23&&S.bench.every(Boolean)')
- ev("launchNew('sorcerer');startRun(0);tutorialStop('skipped');S.campaign.routeEconomy=0;S.gold=20;S.spinsLeft=0;startFight();endWave();journeyChoose(journeyOptions()[0].id);let v=snapshot();v.version=16;delete v.state.campaign.routeEconomy;localStorage.setItem(SAVE_KEY,JSON.stringify(v))")
+ ev("launchNew('sorcerer',null,10);startRun(0);tutorialStop('skipped');S.campaign.routeEconomy=0;S.gold=20;S.spinsLeft=0;startFight();endWave();journeyChoose(journeyOptions()[0].id);let v=snapshot();v.version=16;delete v.state.campaign.routeEconomy;localStorage.setItem(SAVE_KEY,JSON.stringify(v))")
  load();ev('restore(loadedSave)');assert ev('S.campaign.routeEconomy===0&&S.gold===23');page.locator('[data-journey-next]').click();assert ev('S.gold===23')
  # New campaign completes all nine transitions and original even-wave blessings.
- ev("launchNew('warlord');startRun(0);tutorialStop('skipped');prefs.reduced=true")
+ ev("launchNew('warlord',null,10);startRun(0);tutorialStop('skipped');prefs.reduced=true")
  for w in range(1,11):
   ev('S.spinsLeft=0;startFight();endWave()')
   if w==10:

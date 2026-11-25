@@ -1,5 +1,7 @@
 /* Campaign schema and permanent deck receipts. Route economy is versioned; legacy runs retain their original rewards. */
-const CAMPAIGN_SAVE_VERSION=17;
+const CAMPAIGN_SAVE_VERSION=18;
+const DEFAULT_CAMPAIGN_WAVES=5, CLASSIC_CAMPAIGN_WAVES=10;
+function campaignLimit(state=S){return state?.sandbox?CLASSIC_CAMPAIGN_WAVES:state?.campaign?.maxWaves===10?10:DEFAULT_CAMPAIGN_WAVES;}
 const CAMPAIGN_PROFILE_KEY='gs22.campaignProfile.v1';
 const CAMPAIGN_LEGACY_BACKUP='gs22.legacySave.v14';
 const CampaignSave=(()=>{
@@ -10,11 +12,12 @@ const CampaignSave=(()=>{
  function runId(v){return validId(v.runId)?v.runId:'legacy-'+hash([v.savedAt,v.name,v.worldWidth,JSON.stringify(v.state.grid)].join('|')).toString(16);}
  function metadata(id,raw,legacyTerminal=false){
   const m=object(raw)?raw:{};
-  return {version:1,id,routeEconomy:m.id===id&&m.routeEconomy===1?1:0,seed:m.id===id&&Number.isInteger(m.seed)&&m.seed>=0&&m.seed<=0xffffffff?m.seed:hash(id),nodeId:Journey.normalizeRoute(m.route).at(-1)||null,route:Journey.normalizeRoute(m.route),
-   claimedWaveRewards:Array.isArray(m.claimedWaveRewards)?[...new Set(m.claimedWaveRewards.filter(x=>Number.isInteger(x)&&x>=1&&x<=10))]:[],legacyTerminal:legacyTerminal||m.legacyTerminal===true};
+  const maxWaves=m.id===id&&m.maxWaves===5?5:10,route=Journey.normalizeRoute(m.route).filter(n=>Number(n.slice(1,-2))<maxWaves);
+  return {version:1,id,maxWaves,routeEconomy:m.id===id&&m.routeEconomy===1?1:0,seed:m.id===id&&Number.isInteger(m.seed)&&m.seed>=0&&m.seed<=0xffffffff?m.seed:hash(id),nodeId:route.at(-1)||null,route,
+   claimedWaveRewards:Array.isArray(m.claimedWaveRewards)?[...new Set(m.claimedWaveRewards.filter(x=>Number.isInteger(x)&&x>=1&&x<maxWaves))]:[],legacyTerminal:legacyTerminal||m.legacyTerminal===true};
  }
- function valid(v){const s=v?.state;return !!(object(v)&&[14,15,16,17].includes(v.version)&&object(s)&&!s.sandbox&&(['prep','fight','reward','win','over'].includes(s.phase)||(v.version>=16&&s.phase==='journey'&&s.wave>=2&&s.wave<=10))&&Number.isInteger(s.wave)&&s.wave>=1&&s.wave<=11&&['units','enemies','ter','bench','held','wins','seenKinds','shots','hand','deck','offer','grid','queue','nextQueue','fx','floats','parts','zones'].every(k=>Array.isArray(s[k]))&&s.bench.length===3&&s.grid.length===9&&Number.isFinite(s.gold)&&Number.isFinite(s.wallHp)&&Number.isFinite(s.maxUnits)&&(v.version===14||(validId(v.runId)&&s.campaign?.version===1&&s.campaign.id===v.runId)));}
- function decode(v){if(!valid(v))throw Error('Incompatible campaign');const id=runId(v);return {...v,version:CAMPAIGN_SAVE_VERSION,runId:id,state:{...v.state,runId:id,campaign:metadata(id,v.version<17?{...v.state.campaign,routeEconomy:0}:v.state.campaign,v.version===14&&terminal(v.state.phase))}};}
+ function valid(v){const s=v?.state;return !!(object(v)&&[14,15,16,17,18].includes(v.version)&&object(s)&&!s.sandbox&&(['prep','fight','reward','win','over'].includes(s.phase)||(v.version>=16&&s.phase==='journey'&&s.wave>=2&&s.wave<=10))&&Number.isInteger(s.wave)&&s.wave>=1&&s.wave<=11&&(v.version<18||([5,10].includes(s.campaign?.maxWaves)&&(s.phase==='win'?s.wave===s.campaign.maxWaves+1:s.wave<=s.campaign.maxWaves)))&&['units','enemies','ter','bench','held','wins','seenKinds','shots','hand','deck','offer','grid','queue','nextQueue','fx','floats','parts','zones'].every(k=>Array.isArray(s[k]))&&s.bench.length===3&&s.grid.length===9&&Number.isFinite(s.gold)&&Number.isFinite(s.wallHp)&&Number.isFinite(s.maxUnits)&&(v.version===14||(validId(v.runId)&&s.campaign?.version===1&&s.campaign.id===v.runId)));}
+ function decode(v){if(!valid(v))throw Error('Incompatible campaign');const id=runId(v);return {...v,version:CAMPAIGN_SAVE_VERSION,runId:id,state:{...v.state,runId:id,campaign:metadata(id,{...v.state.campaign,maxWaves:v.version<18?10:v.state.campaign.maxWaves,routeEconomy:v.version<17?0:v.state.campaign.routeEconomy},v.version===14&&terminal(v.state.phase))}};}
  return Object.freeze({metadata,valid,decode,validId,terminal});
 })();
 /* Keep legacy spell and talent stores authoritative. This store owns the starting
