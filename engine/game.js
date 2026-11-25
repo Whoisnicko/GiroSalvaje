@@ -1089,8 +1089,9 @@ function loop(now){
 /* ================= UI ================= */
 function setResult(a, b){ S.result = a; S.resultSub = b; }
 function renderChips(){
+  $('#hudHeroClass').textContent=heroClass(S).name;
+  $('#hudHeroClass').dataset.class=heroClass(S).id;
   $('#chips').innerHTML = `
-    <span class="chip hero-class-chip" data-class="${heroClass(S).id}"><b>${heroClass(S).name}</b></span>
     <span class="chip wave-chip"><span class="hud-icon" aria-hidden="true">⚔</span> Wave <b>${Math.min(S.wave, MAX_WAVE)}/${MAX_WAVE}</b></span>
     <span class="chip ${S.wallHp < S.wallMax * 0.35 ? 'bad' : ''}"><span class="hud-icon hp-icon" aria-hidden="true">♥</span> Altar <b>${S.wallHp}/${S.wallMax}</b></span>
     <span class="chip soul"><img src="${URL_.alma}" alt="" class="hud-gem"> Souls <b>${sandboxActive()?'∞':S.gold}</b></span>
@@ -1105,7 +1106,7 @@ function renderBuyCard(){
 }
 function renderHand(){
   const fight = S.phase === 'fight';
-  $('#handTitle').innerHTML = 'YOUR HAND<small>'+ (fight ? 'Click a card to cast' : 'Click a card to play')+'</small>';
+  $('#handTitle').innerHTML = 'YOUR HAND ('+S.hand.filter(c=>!c.used).length+')<small>'+ (fight ? 'Click a card to cast' : 'Combat cards activate during battle')+'</small>';
   $('#deckLink').textContent = `View deck (${S.deck.length})`;
   $('#relic').innerHTML = S.relic ? `<span class="medal" title="${S.relic.d}">${relicArt(S.relic)}</span><span class="rn">${S.relic.n}</span><span class="rd">${S.relic.d}</span>` : '';
   const canBuy = buyable().length > 0 && S.gold >= cardCost();
@@ -1309,6 +1310,8 @@ resize=function(){
    wrap.style.setProperty('--hand-left',(c.left-r.left)+'px');
    wrap.style.setProperty('--hand-top',(c.top-r.top+WORLD_H*scale)+'px');
    wrap.style.setProperty('--hand-width',Math.max(0,(benchSlot(0).x-32)*scale)+'px');
+   wrap.style.setProperty('--reserve-left',(c.left-r.left+(benchSlot(0).x-32)*scale)+'px');
+   wrap.style.setProperty('--reserve-width',Math.max(0,(logicalW-benchSlot(0).x+32)*scale)+'px');
  }
 };
 if(typeof ResizeObserver!=='undefined'){const stageObserver=new ResizeObserver(()=>{if(compactLayout())resize();});stageObserver.observe($('#battleViewport'));}
