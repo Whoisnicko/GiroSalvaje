@@ -5,9 +5,12 @@ const TUTORIAL_LESSONS=Object.freeze([
  {id:'spin',title:'Summon a guardian',text:'Match 3 symbols in a row, column or diagonal to summon a guardian or earn souls. Wild skulls replace any symbol.',task:'Pull the lever once.',target:'#summonLever'},
  {id:'hold',title:'Keep useful symbols',text:'Lock a symbol to keep it for your next spin. This helps you complete matching lines.',task:'Click a symbol to HOLD it.',target:'#reels'},
  {id:'move',title:'Set your defense',text:'Place tough Zombies in front and ranged Wraiths behind them. Stay inside your marked defense zone.',task:'Drag a guardian to an empty position.',target:'formation'},
- {id:'merge',title:'Upgrade guardians',text:'Stack matching guardians of the same rank to evolve a stronger guardian.',task:'Drag one matching guardian onto another.',target:'transfer'},
+ {id:'merge',title:'Upgrade guardians',text:'Stack matching guardians of the same rank to evolve a stronger guardian.',task:'Drag one matching guardian onto another.',target:'transfer',demo:'merge'},
  {id:'reserve',title:'Train in reserve',text:'Reserve guardians cannot fight. Each wave in reserve grants +50% health and damage, up to +150%.',task:'Drag a guardian into an empty reserve slot.',target:'transfer'},
  {id:'return',title:'Bring your guardian back',text:'Trained guardians keep their bonuses when they return to battle.',task:'Drag the reserve guardian back to the field.',target:'transfer'},
+ {id:'extraSpin',title:'Buy another spin',text:'',task:'Watch the example, then continue.',target:'[data-act="buy"]',manual:true,demo:'spin'},
+ {id:'slot',title:'Expand your army',text:'',task:'Watch the example, then continue.',target:'[data-act="slot"]',manual:true,demo:'slot'},
+ {id:'undo',title:'Undo a preparation action',text:'Undo reverses eligible moves, stacks and deterministic purchases. It cannot rewind a spin or combat.',task:'Watch the example, then continue.',target:'#undoBtn',manual:true,demo:'undo'},
  {id:'defend',title:'Start the invasion',text:'Use your remaining free spins and arrange your army. If spins remain, press DEFEND again to confirm.',task:'Click DEFEND!',target:'[data-act="fight"]'},
  {id:'cards',title:'Play a combat card',text:'Read a card, then click it to use its effect. Cards marked AIM need a battlefield target.',task:'Play one combat card.',target:'#hand'},
  {id:'hero',title:'Use your hero',text:'',task:'Use your class ability.',target:''},
@@ -28,12 +31,14 @@ function tutorialStart(force=false){
 }
 function tutorialStop(status){if(tutorialRecord?.status==='active'){tutorialRecord.status=status;tutorialWrite();}tutorialHide();}
 function tutorialHide(){document.getElementById('tutorialGuide').hidden=true;document.getElementById('tutorialSpot').hidden=true;tutorialEl('tutorialPointer').hidden=true;document.body.classList.remove('tutorial-visible','tutorial-combat');tutorialWasHidden=true;}
-function tutorialAdvance(){const r=tutorialRecord;if(r?.status!=='active')return;const i=TUTORIAL_LESSONS.findIndex(s=>s.id===r.stage);if(i===TUTORIAL_LESSONS.length-1){tutorialStop('done');return;}r.stage=TUTORIAL_LESSONS[Math.max(0,i+1)].id;if(r.stage==='return'&&!r.bench)r.stage='defend';tutorialWrite();tutorialPainted='';}
+function tutorialAdvance(){const r=tutorialRecord;if(r?.status!=='active')return;const i=TUTORIAL_LESSONS.findIndex(s=>s.id===r.stage);if(i===TUTORIAL_LESSONS.length-1){tutorialStop('done');return;}r.stage=TUTORIAL_LESSONS[Math.max(0,i+1)].id;if(r.stage==='return'&&!r.bench)r.stage='extraSpin';tutorialWrite();tutorialPainted='';}
 function tutorialSignal(kind){const r=tutorialRecord;if(tutorialOwner!==S||r?.status!=='active'||S.sandbox)return;const key={move:'moved',merge:'merged',bench:'bench',return:'returned',card:'card'}[kind];if(key&&!r[key]){r[key]=true;tutorialWrite();}}
 function tutorialLesson(){
  const s=TUTORIAL_LESSONS.find(x=>x.id===tutorialRecord.stage);if(!s)return null;
  const l={...s};
- if(s.id==='spin'&&S.spinsLeft===0&&!spinning&&!tutorialRecord.spinStart)return {...l,text:'No free spins left. Buy more with souls or continue preparing.',task:'Continue when ready.',manual:true,target:'[data-act="buyspin"]'};
+ if(s.id==='spin'&&S.spinsLeft===0&&!spinning&&!tutorialRecord.spinStart)return {...l,text:'No free spins left. Buy more with souls or continue preparing.',task:'Continue when ready.',manual:true,target:'[data-act="buy"]'};
+ if(s.id==='extraSpin')l.text=`Buy spin costs ${spinCost()} souls now. Each purchase adds one spin; its price rises. Buying is optional.`;
+ if(s.id==='slot')l.text=`+1 slot costs ${slotCost()} souls now and increases field capacity from ${S.maxUnits} to ${S.maxUnits+1}. It does not summon a guardian.`;
  if(s.id==='hold'){l.text+=` You may hold up to ${S.holdsMax} symbols.`;if(S.spinsLeft===0){l.text='No spins left. Remember to HOLD useful symbols before your next spin.';l.task='Continue to your formation.';l.manual=true;}}
  if(s.id==='merge'){l.text=`Stack ${S.mods.mergeN} identical guardians of the same rank to evolve one.`;if(!nearMerge()){l.text+=' You do not have a matching pair yet. Try it after summoning more.';l.task='Continue — you can merge later.';l.manual=true;}}
  if(s.id==='reserve'&&S.bench.every(Boolean))return {...l,text:'The reserve is full. Return a guardian to the field first, or continue.',task:'Continue when ready.',manual:true};
@@ -81,6 +86,7 @@ function tutorialPosition(lesson){
 }
 function tutorialTick(now){
  if(now-tutorialLast<100)return;tutorialLast=now;
+ if(guideDemo.tick()){tutorialHide();return;}
  const openBtn=document.getElementById('tutorialOpen');openBtn.disabled=!S||!!S.sandbox||!['prep','fight'].includes(S.phase);
  if(tutorialOwner!==S){tutorialOwner=S;const saved=tutorialRead();tutorialRecord=S&&!S.sandbox&&saved?.status==='active'&&saved.runId===tutorialRunId()&&TUTORIAL_LESSONS.some(x=>x.id===saved.stage)?saved:null;tutorialPainted='';}
  const r=tutorialRecord;
@@ -97,15 +103,17 @@ function tutorialTick(now){
  // Detect successful actions, not merely attempted clicks. No step is mandatory.
  if(r.stage==='spin'&&r.spinStart===0&&S.spinsLeft>0){r.spinStart=S.spinsLeft;tutorialWrite();}
  const pass=()=>({spin:!spinning&&S.spinsLeft<r.spinStart,hold:S.held.size>0,move:r.moved,merge:r.merged,reserve:r.bench,return:r.returned,defend:S.phase==='fight',cards:r.card,hero:r.hero}[r.stage]);
- for(let j=0;j<13&&pass();j++)tutorialAdvance();
+ for(let j=0;j<TUTORIAL_LESSONS.length&&pass();j++)tutorialAdvance();
  const lesson=tutorialLesson();if(!lesson){tutorialStop('skipped');return;}
  const panel=$('#tutorialGuide'),idx=TUTORIAL_LESSONS.findIndex(s=>s.id===r.stage),key=[r.stage,lesson.title,lesson.text,lesson.manual].join('|');
- if(tutorialPainted!==key||tutorialWasHidden){tutorialPainted=key;tutorialWasHidden=false;tutorialCompact=false;tutorialShownAt=now;$('#tutorialCount').textContent=`VALLEY GUIDE · ${idx+1}/${TUTORIAL_LESSONS.length}`;$('#tutorialTitle').textContent=lesson.title;$('#tutorialText').textContent=lesson.text;$('#tutorialTask').textContent=lesson.task;$('#tutorialProgress').style.width=((idx+1)/TUTORIAL_LESSONS.length*100)+'%';$('#tutorialNext').textContent=r.stage==='finish'?'Finish':lesson.manual?'Continue':'Skip step';$('#tutorialRune').hidden=!lesson.rune;}
+ if(tutorialPainted!==key||tutorialWasHidden){tutorialPainted=key;tutorialWasHidden=false;tutorialCompact=false;tutorialShownAt=now;$('#tutorialCount').textContent=`VALLEY GUIDE · ${idx+1}/${TUTORIAL_LESSONS.length}`;$('#tutorialTitle').textContent=lesson.title;$('#tutorialText').textContent=lesson.text;$('#tutorialTask').textContent=lesson.task;$('#tutorialProgress').style.width=((idx+1)/TUTORIAL_LESSONS.length*100)+'%';$('#tutorialNext').textContent=r.stage==='finish'?'Finish':lesson.manual?'Continue':'Skip step';$('#tutorialRune').hidden=!lesson.rune;$('#tutorialWatch').hidden=!lesson.demo||S.phase!=='prep';}
  if(r.stage==='survive'&&now-tutorialShownAt>8000&&!panel.matches(':hover')&&!panel.contains(document.activeElement))tutorialCompact=true;
  tutorialEl('tutorialCollapse').textContent=tutorialCompact?'Expand':'Minimize';tutorialEl('tutorialCollapse').setAttribute('aria-expanded',String(!tutorialCompact));
  panel.hidden=false;document.body.classList.add('tutorial-visible');document.body.classList.toggle('tutorial-combat',S.phase==='fight');tutorialPosition(lesson);
 }
 document.addEventListener('click',e=>{const b=e.target.closest('[data-tutorial]');if(!b||b.disabled)return;
+ if(b.dataset.tutorial==='examples'){guideDemo.open();return;}
+ if(b.dataset.tutorial==='watch'){const l=tutorialLesson();if(l?.demo)guideDemo.open(l.demo);return;}
  if(b.dataset.tutorial==='open'){if(tutorialRecord?.status==='active'&&tutorialOwner===S){tutorialCompact=!tutorialCompact;tutorialShownAt=performance.now();}else tutorialStart(true);}
  if(b.dataset.tutorial==='collapse'){tutorialCompact=!tutorialCompact;tutorialShownAt=performance.now();}
  if(b.dataset.tutorial==='next')tutorialAdvance();if(b.dataset.tutorial==='skip')tutorialStop('skipped');
