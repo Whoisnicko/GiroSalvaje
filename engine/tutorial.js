@@ -67,11 +67,11 @@ function tutorialRect(target){
  const el=target&&document.querySelector(target);if(!el||!el.getClientRects().length)return null;const c=el.getBoundingClientRect();return {left:c.left,top:c.top,width:c.width,height:c.height};
 }
 function tutorialPosition(lesson){
- const panel=tutorialEl('tutorialGuide'),spot=tutorialEl('tutorialSpot'),arrow=tutorialEl('tutorialPointer'),vw=innerWidth,vh=innerHeight,pad=10,gap=18;
+ const panel=tutorialEl('tutorialGuide'),spot=tutorialEl('tutorialSpot'),arrow=tutorialEl('tutorialPointer'),vw=innerWidth,vh=innerHeight,ui=Math.max(1,Number(document.documentElement.style.getPropertyValue('--ui-scale'))||1),pad=10*ui,gap=18*ui;
  const raw=tutorialRect(lesson.target),clamp=(v,a,b)=>Math.max(a,Math.min(Math.max(a,b),v));
  const valid=raw&&raw.width>0&&raw.height>0&&raw.left<vw&&raw.top<vh&&raw.left+raw.width>0&&raw.top+raw.height>0;
  const r=valid?{left:Math.max(3,raw.left-5),top:Math.max(3,raw.top-5),right:Math.min(vw-3,raw.left+raw.width+5),bottom:Math.min(vh-3,raw.top+raw.height+5)}:null;
- panel.classList.toggle('is-collapsed',tutorialCompact);panel.hidden=false;const sideRoom=r?Math.max(r.left,vw-r.right)-gap-pad:0;const desired=tutorialCompact?254:344;const width=r&&r.right-r.left>vw*.48&&sideRoom>=160?Math.min(desired,sideRoom):desired;panel.style.width=Math.min(vw-2*pad,width)+'px';panel.style.maxHeight=Math.max(100,vh-2*pad)+'px';
+ panel.classList.toggle('is-collapsed',tutorialCompact);panel.hidden=false;const sideRoom=r?Math.max(r.left,vw-r.right)-gap-pad:0;const desired=(tutorialCompact?254:344)*ui;const width=r&&r.right-r.left>vw*.48&&sideRoom>=160*ui?Math.min(desired,sideRoom):desired;panel.style.width=Math.min(vw-2*pad,width)+'px';panel.style.maxHeight=Math.max(100,vh-2*pad)+'px';
  const w=panel.offsetWidth,h=panel.offsetHeight;
  if(!r){spot.hidden=arrow.hidden=true;panel.style.left=clamp((vw-w)/2,pad,vw-w-pad)+'px';panel.style.top=pad+'px';return;}
  const cx=(r.left+r.right)/2,cy=(r.top+r.bottom)/2;

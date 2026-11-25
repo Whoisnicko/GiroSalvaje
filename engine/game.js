@@ -1207,7 +1207,7 @@ document.addEventListener('keydown', e => {
   if (/^[1-6]$/.test(e.key)) { useCard(+e.key - 1); return; }
   if (S.phase === 'prep' && e.code === 'Space' && !e.target.closest('button')) { e.preventDefault(); spin(); }
 });
-window.addEventListener('resize', () => { if(S?.phase==='prep')prepUndoClear();resize(); if (S) { const zm = zoneMax(); if(S.phase==='prep') S.units.forEach(u => u.x = Math.min(u.x, zm)); S.bench.forEach((u, i) => { if (u) Object.assign(u, benchSlot(i)); }); renderFrame(); } });
+window.addEventListener('resize', () => { if(S?.drag)cancelDrag();if(magicPointer!==null)magicCancel('Drawing interrupted by resize.');resize(); if(S)renderFrame(); });
 
 const BATTLEFIELD_ART='assets/battlefield.png';
 const HYBRID_ATLAS='assets/hybrid-atlas.png';
@@ -1290,10 +1290,12 @@ const compactLayout=()=>matchMedia('(min-width:1100px) and (min-height:650px)').
 function fitBattlefield(availableW,availableH,logicalW){const k=Math.min(availableW/logicalW,availableH/LOGIC_H);return {scale:k,w:logicalW*k,h:LOGIC_H*k};}
 resize=function(){
  const dpr=Math.min(2,window.devicePixelRatio||1),stage=$('#battleViewport'),compact=compactLayout();
+ const uiScale=compact?Math.max(1,Math.min(2.5,window.innerWidth/1920,window.innerHeight/1000)):1;
+ const root=document.documentElement,uiValue=String(uiScale);if(root.style.getPropertyValue('--ui-scale')!==uiValue)root.style.setProperty('--ui-scale',uiValue);
  const w=stage.clientWidth;if(w<1)return;
  const targetH=window.innerWidth>=1100?Math.min(600,Math.max(460,window.innerHeight*.68)):Math.min(460,Math.max(280,window.innerHeight*.55));
  // New campaigns keep the previous wide-field sizing estimate; existing saves keep their exact logical width.
- const oldLaneW=w;
+ const oldLaneW=compact&&window.innerWidth>=1600?Math.min(w/uiScale,1440):w;
  const logicalW=savedWorldWidth||Math.max(420,oldLaneW/(targetH/LOGIC_H));savedWorldWidth=logicalW;
  const wrap=document.querySelector('.wrap');
  const shared=compact&&logicalW>=650;
@@ -1302,10 +1304,11 @@ resize=function(){
  const availH=compact?stage.clientHeight:Infinity;if(availH<1)return;
  const fit=fitBattlefield(w,availH,logicalW);
  if(!Number.isFinite(fit.scale)||fit.scale<=0)return;
- const bw=Math.max(1,Math.round(fit.w*dpr)),bh=Math.max(1,Math.round(fit.h*dpr));
+ const density=Math.min(dpr,Math.sqrt(8294400/(fit.w*fit.h)));
+ const bw=Math.max(1,Math.round(fit.w*density)),bh=Math.max(1,Math.round(fit.h*density));
  cv.style.width=fit.w+'px';cv.style.height=fit.h+'px';scale=fit.scale;
  if(cv.width!==bw)cv.width=bw;if(cv.height!==bh)cv.height=bh;
- ctx.setTransform(scale*dpr,0,0,scale*dpr,0,0);ctx.imageSmoothingEnabled=false;
+ ctx.setTransform(bw/logicalW,0,0,bh/LOGIC_H,0,0);ctx.imageSmoothingEnabled=false;
  syncReservePositions();
  const c=cv.getBoundingClientRect(),r=wrap.getBoundingClientRect();
  wrap.style.setProperty('--field-top',Math.max(0,c.top-r.top-6)+'px');

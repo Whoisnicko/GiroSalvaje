@@ -92,9 +92,9 @@ function bestiaryHTML(e,m){
 }
 function bestiaryPosition(){
  const d=bestiaryDialog(),r=cv.getBoundingClientRect(),left=Math.max(0,r.left),right=Math.min(innerWidth,r.right),top=Math.max(0,r.top),bottom=Math.min(innerHeight,r.top+WORLD_H*scale);
- const w=d.offsetWidth,h=d.offsetHeight;
- d.style.left=Math.max(8,Math.min(innerWidth-w-8,(left+right-w)/2))+'px';
- d.style.top=Math.max(8,Math.min(innerHeight-h-8,(top+bottom-h)/2))+'px';
+ const {width:w,height:h}=d.getBoundingClientRect(),z=Number.parseFloat(getComputedStyle(d).zoom)||1;
+ d.style.left=Math.max(8,Math.min(innerWidth-w-8,(left+right-w)/2))/z+'px';
+ d.style.top=Math.max(8,Math.min(innerHeight-h-8,(top+bottom-h)/2))/z+'px';
 }
 function openBestiary(e){
  if(!S||menuOpen||!$('#ov').hidden||!$('#ov2').hidden||spinning||!['prep','fight'].includes(S.phase))return;
@@ -161,7 +161,7 @@ bestiaryEl.addEventListener('click',e=>{
 bestiaryEl.addEventListener('submit',e=>{e.preventDefault();e.stopImmediatePropagation();closeBestiary();});
 bestiaryEl.addEventListener('close',()=>{if(!bestiaryEl.open)clearBestiarySelection();});
 bestiaryEl.addEventListener('cancel',e=>{e.preventDefault();closeBestiary();});
-window.addEventListener('resize',()=>{if(bestiaryEl.open)bestiaryPosition();});
+window.addEventListener('resize',()=>{if(bestiaryEl.open)requestAnimationFrame(()=>{if(bestiaryEl.open)bestiaryPosition();});});
 document.addEventListener('keydown',e=>{if(!bestiaryEl.open)return;if(e.key==='Escape'){e.preventDefault();closeBestiary();}else if(e.key!=='Tab'&&e.key!=='Enter'&&e.key!==' '){e.preventDefault();}e.stopImmediatePropagation();},true);
 document.querySelector('#unitInspector .inspect-close').addEventListener('click',()=>tacticalClose());
 // Warm the cache; the real image element determines readiness, not this preloader.
