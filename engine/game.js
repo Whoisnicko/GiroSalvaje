@@ -562,13 +562,13 @@ function useCard(i){
   if(sandboxActive()&&((c.id==='cripta'&&S.maxUnits>=SANDBOX_MAX_UNITS)||(c.id==='aullido'&&S.units.length>=SANDBOX_MAX_ENTITIES)))return;
   if (C.aim) { S.aim = S.aim === i ? null : i; renderHand(); return; }
   if(S.phase==='prep'){if(spinning||S.drag||S.pendingMerge)return;prepUndoRecord('Play '+C.n);}
-  C.play(); c.used = !sandboxActive(); sfx('card'); renderHand();renderPrepUndo();
+  C.play(); c.used = !sandboxActive(); if(c.used&&S.phase==='fight')tutorialSignal('card'); sfx('card'); renderHand();renderPrepUndo();
 }
 function castAim(p){
   const c = S.hand[S.aim];
   if (!c) { S.aim = null; return; }
   if(sandboxActive()&&c.id==='aullido'&&S.units.length>=SANDBOX_MAX_ENTITIES){S.aim=null;renderHand();return;}
-  CARDS[c.id].play(p); c.used = !sandboxActive(); S.aim = null; sfx('card'); renderHand();
+  CARDS[c.id].play(p); c.used = !sandboxActive(); if(c.used&&S.phase==='fight')tutorialSignal('card'); S.aim = null; sfx('card'); renderHand();
 }
 
 /* ================= Máquina ================= */
@@ -1014,6 +1014,7 @@ function resolveDrop(){
   else if (plan.kind === 'bench') { removeUnit(u); S.bench[plan.slot] = u; Object.assign(u, benchSlot(plan.slot)); sfx('place'); }
   else { if (d.from === 'bench') { removeUnit(u); S.units.push(u); } sfx('place'); }
   S.sel = S.units.includes(u) || S.bench.includes(u) ? u : S.sel;
+  if(plan.kind==='bench')tutorialSignal('bench');else if(plan.kind==='place')tutorialSignal(d.from==='bench'?'return':'move');
   renderUI();
 }
 function enemyAt(p){ let hit = null; for (const e of S.enemies) if (dist(e, p) <= e.r + 8) hit = e; return hit; }
@@ -1083,6 +1084,7 @@ function loop(now){
     tacticalTick(now);
     if (S.phase === 'fight' && now-lastAutosave>150) { renderChips(); renderBuyCard(); heroRender();lastAutosave=now; }
   } else tacticalHide();
+  tutorialTick(now);
   requestAnimationFrame(loop);
 }
 
@@ -1277,7 +1279,7 @@ async function publishScore(){const r=scores()[0];if(!r)return;$('#publishScore'
 function exportSave(){if(sandboxActive())return;persist();const v=snapshot()||loadedSave;if(!validSave(v)){alert('Start a run and choose a relic first.');return;}const url=URL.createObjectURL(new Blob([JSON.stringify({...v,spellKnowledge:spellKnowledge,warlordTalents:talentInit()})],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='StopHumans-save.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),2000);}
 function showSettings(){front('settingsView');$('#mergeConfirmOpt').checked=askMerge;$('#volume').value=Math.round(prefs.volume*100);$('#musicOpt').checked=AU.music;$('#soundOpt').checked=AU.sfx;$('#motionOpt').checked=prefs.reduced;$('#effectsOpt').value=prefs.effects;}
 const oldEndRun=endRun;endRun=function(won){if(sandboxActive()){sandboxResetBattle('Test complete. Ready to retry.');return;}recordScore(won);oldEndRun(won);persist();};
-const oldStartRun=startRun;startRun=function(i){oldStartRun(i);persist();};
+const oldStartRun=startRun;startRun=function(i){oldStartRun(i);persist();if(S?.phase==='prep'&&!S.sandbox)tutorialStart();};
 const oldRenderUI=renderUI;renderUI=function(){oldRenderUI();if(S&&S.phase!=='relic')persist();};
 let savedWorldWidth=null;
 const oldWorldW=worldW;worldW=function(){return savedWorldWidth||oldWorldW();};
