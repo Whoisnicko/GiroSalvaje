@@ -1,0 +1,3 @@
+# Stop Humans! — Creative direction exploration
+
+Three new alternative concepts for approved Infernal Codex macro layout: Soul Engine (physical summoning machine and amber highlights), Last Stand (compact tactical interface and widest arena), Forbidden Grimoire (occult codex and parchment cards). Official logo, title art crops and embedded original v19 character atlas and battlefield. Preview only; no game mechanics or production UI changed. Local layout and simulated spin/undo/inspection checks passed at 1280×720, 1366×768, 1920×1080 with fallback sprites. Hosted real asset visual validation pending.
