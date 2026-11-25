@@ -1,4 +1,4 @@
-/* Seeded campaign map. No encounter effects until route economy is introduced. */
+/* Seeded campaign map. Versioned route rewards; legacy map geometry is preserved. */
 const Journey = (()=>{
  const types=Object.freeze([
   {id:'vault',name:'Hades Vault',icon:'vault',color:'#e8bd73',hint:'Merchant outpost · future shop stop'},
@@ -13,6 +13,34 @@ const Journey = (()=>{
  const options=(seed,done)=>generate(seed)[done-1]||[];
  return Object.freeze({generate,normalizeRoute,options});
 })();
+// Economy v1 applies only to new campaigns. Older runs keep their original stipend.
+const ROUTE_REWARDS=Object.freeze({
+ vault:Object.freeze({souls:3,artifactDiscount:2}),
+ crypt:Object.freeze({souls:0,recruit:true,overflow:3}),
+ shrine:Object.freeze({souls:6}),
+ forge:Object.freeze({souls:3,infusionDiscount:2}),
+ sanctuary:Object.freeze({souls:3,heal:15})
+});
+const ROUTE_RECRUITS=Object.freeze(['W','A','M','N','B']);
+function routeEconomyActive(){return !!S&&!S.sandbox&&S.campaign?.routeEconomy===1;}
+function routeRecruit(n){return ROUTE_RECRUITS[((S.campaign.seed>>>0)+n.wave*7+n.side*3)%ROUTE_RECRUITS.length];}
+function routeDiscount(kind){if(!routeEconomyActive()||S.phase!=='prep')return 0;const n=journeySelected();return n?(ROUTE_REWARDS[n.icon][kind+'Discount']||0):0;}
+function routeRewardText(n){
+ if(!routeEconomyActive())return 'Legacy destination · no additional reward';
+ const d=ROUTE_REWARDS[n.icon];
+ if(d.recruit)return 'Recruit '+NAMES[routeRecruit(n)]+' ★ free · '+d.overflow+' souls if no space';
+ if(d.heal)return '+'+d.souls+' souls · restore up to '+d.heal+' Altar HP ('+Math.max(0,Math.min(d.heal,S.wallMax-S.wallHp))+' now)';
+ if(d.artifactDiscount)return '+'+d.souls+' souls · −'+d.artifactDiscount+' souls per artifact this preparation';
+ if(d.infusionDiscount)return '+'+d.souls+' souls · −'+d.infusionDiscount+' souls per infusion this preparation';
+ return '+'+d.souls+' souls';
+}
+function routeApply(n){
+ if(!routeEconomyActive())return '';
+ const d=ROUTE_REWARDS[n.icon];S.gold+=d.souls;
+ if(d.recruit){const type=routeRecruit(n),u=makeUnit(type,1);if(fieldCount()<S.maxUnits&&placeNew(u))return NAMES[type]+' ★ recruited to field.';if(toBench(u))return NAMES[type]+' ★ recruited to reserve.';S.gold+=d.overflow;return '+'+d.overflow+' souls · no room for guardian.';}
+ if(d.heal){const heal=Math.max(0,Math.min(d.heal,S.wallMax-S.wallHp));S.wallHp+=heal;return '+'+d.souls+' souls · +'+heal+' Altar HP.';}
+ return routeRewardText(n);
+}
 const journeyDone=()=>S.wave-1;
 const journeyOptions=()=>Journey.options(S.campaign.seed,journeyDone());
 const journeySelected=()=>journeyOptions().find(n=>S.campaign.route.includes(n.id));
@@ -40,8 +68,8 @@ function journeyMap(animate=false){
 function journeyShow(animate=false){
  if(!S||S.sandbox||S.phase!=='journey')return;
  clearTimeout(journeyAnimation);const selected=journeySelected(),done=journeyDone();
- const cards=journeyOptions().map((n,i)=>`<button type="button" class="j-choice" style="--node-color:${n.color}" data-journey-choose="${n.id}"><span class="j-choice-icon"><svg viewBox="-18 -18 36 36" aria-hidden="true">${journeyIcon(n,0,0)}</svg></span><span><small>ROUTE ${i?'II':'I'}</small><strong>${n.name}</strong><span>${n.hint}</span></span><span aria-hidden="true">›</span></button>`).join('');
- showOv(`<section class="journey-screen" aria-labelledby="journeyTitle"><div class="j-heading"><div><small>CAMPAIGN · THE UNDERWORLD JOURNEY</small><h2 id="journeyTitle">${selected?'Arrival at '+selected.name:'Choose your path'}</h2><p>${selected?'The altar has reached its destination. Prepare for the next invasion.':`Wave ${done} survived · guide your altar to the next destination.`}</p></div><div class="j-progress"><b>${done} / 10</b><small>WAVES CLEARED</small><div><i style="width:${done*10}%"></i></div></div></div><div class="j-map">${journeyMap(animate)}</div><div class="j-legend"><span><i class="j-dot done"></i> Cleared</span><span><i class="j-dot available"></i> Route</span><span><i class="j-dot next"></i> Next battle</span><span>♛ Commander</span></div>${selected?`<div class="j-arrival"><b style="color:${selected.color}">${selected.name}</b><p>${selected.hint}. No resource or combat effects yet.</p><button type="button" id="journeyContinue" class="j-primary" data-journey-next ${animate?'disabled':''}>Prepare wave ${S.wave} →</button></div>`:`<div class="j-choices">${cards}</div>`}<div class="j-footer"><span>Map preview · route effects arrive in the next update. Existing rewards and Hades Room are unchanged.</span><button type="button" class="j-menu" data-front="home">Save &amp; menu</button></div><p id="journeyNotice" role="status"></p></section>`);
+ const cards=journeyOptions().map((n,i)=>`<button type="button" class="j-choice" style="--node-color:${n.color}" data-journey-choose="${n.id}"><span class="j-choice-icon"><svg viewBox="-18 -18 36 36" aria-hidden="true">${journeyIcon(n,0,0)}</svg></span><span><small>ROUTE ${i?'II':'I'}</small><strong>${n.name}</strong><span>${routeRewardText(n)}</span></span><span aria-hidden="true">›</span></button>`).join('');
+ showOv(`<section class="journey-screen" aria-labelledby="journeyTitle"><div class="j-heading"><div><small>CAMPAIGN · THE UNDERWORLD JOURNEY</small><h2 id="journeyTitle">${selected?'Arrival at '+selected.name:'Choose your path'}</h2><p>${selected?'The altar has reached its destination. Prepare for the next invasion.':`Wave ${done} survived · guide your altar to the next destination.`}</p></div><div class="j-progress"><b>${done} / 10</b><small>WAVES CLEARED</small><div><i style="width:${done*10}%"></i></div></div></div><div class="j-map">${journeyMap(animate)}</div><div class="j-legend"><span><i class="j-dot done"></i> Cleared</span><span><i class="j-dot available"></i> Route</span><span><i class="j-dot next"></i> Next battle</span><span>♛ Commander</span></div>${selected?`<div class="j-arrival"><b style="color:${selected.color}">${selected.name}</b><p>${routeRewardText(selected)}. ${routeEconomyActive()?"Reward is granted when you prepare the next wave.":"Legacy campaign · no additional reward."}</p><button type="button" id="journeyContinue" class="j-primary" data-journey-next ${animate?'disabled':''}>Prepare wave ${S.wave} →</button></div>`:`<div class="j-choices">${cards}</div>`}<div class="j-footer"><span>${routeEconomyActive()?"Choose carefully: destination benefits replace the usual +3 souls. Blessings and Hades access remain unchanged.":"Legacy campaign · original rewards and Hades Room access remain unchanged."}</span><button type="button" class="j-menu" data-front="home">Save &amp; menu</button></div><p id="journeyNotice" role="status"></p></section>`);
  $('#ov').querySelector('.panel').classList.add('journey-panel');tutorialHide();
  if(animate){const owner=S;journeyAnimation=setTimeout(()=>{if(S===owner&&S.phase==='journey'){const b=$('#journeyContinue');if(b){b.disabled=false;if(!menuOpen)b.focus();}}},prefs.reduced||motionPreference.matches?0:700);}
 }
@@ -54,8 +82,11 @@ function journeyChoose(id){
 }
 function journeyContinue(){
  if(!S||S.sandbox||S.phase!=='journey'||menuOpen||!journeySelected()||$('#journeyContinue')?.disabled)return false;
- const oldSave=loadedSave;S.phase='prep';
- if(!persist()){S.phase='journey';loadedSave=oldSave;$('#journeyNotice').textContent='Could not save preparation. Retry before continuing.';return false;}
+ const oldSave=loadedSave,old={gold:S.gold,wallHp:S.wallHp,units:S.units.slice(),bench:S.bench.slice(),result:S.result,resultSub:S.resultSub,campaign:S.campaign};
+ const selected=journeySelected();const reward=routeApply(selected);
+ if(reward)setResult(selected.name,reward);
+ S.phase='prep';
+ if(!persist()){Object.assign(S,old,{phase:'journey'});loadedSave=oldSave;$('#journeyNotice').textContent='Could not save preparation. No reward granted. Retry before continuing.';return false;}
  hideOv();renderUI();tip('layout');return true;
 }
 document.addEventListener('click',e=>{const b=e.target.closest('[data-journey-choose],[data-journey-next]');if(!b||b.disabled||$('#ov').hidden||!$('#ov').contains(b))return;if(b.hasAttribute('data-journey-next'))journeyContinue();else journeyChoose(b.dataset.journeyChoose);});

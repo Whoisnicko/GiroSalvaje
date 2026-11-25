@@ -21,7 +21,7 @@ with sync_playwright() as pw:
  load();ev("profile.name='Tester';launchNew('sorcerer');startRun(RELICS.findIndex(r=>!r.disabled));tutorialStop('skipped');")
  # Prior schema migration, no retroactive route selection.
  ev("(()=>{let v=snapshot();v.version=15;localStorage.setItem(SAVE_KEY,JSON.stringify(v))})()")
- load();ev('restore(loadedSave)');assert ev("S.phase==='prep'&&snapshot().version===16&&S.campaign.route.length===0")
+ load();ev('restore(loadedSave)');assert ev("S.phase==='prep'&&snapshot().version===17&&S.campaign.route.length===0")
  assert ev('JSON.stringify(Journey.generate(123))===JSON.stringify(Journey.generate(123))&&Journey.generate(123).every(r=>r[0].icon!==r[1].icon)')
  assert ev('JSON.stringify(Journey.generate(123))!==JSON.stringify(Journey.generate(456))')
  ev('S.spinsLeft=0;startFight();endWave()');assert ev("S.phase==='journey'&&S.wave===2&&S.campaign.route.length===0")
