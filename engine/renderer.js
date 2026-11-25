@@ -26,6 +26,7 @@ function drawInkReserve(W){
  ctx.strokeStyle='#b7a181';ctx.beginPath();ctx.moveTo(0,WORLD_H+1);ctx.lineTo(W,WORLD_H+1);ctx.stroke();ctx.restore();
 }
 function draw(){
+  syncReservePositions();
   const W = worldW(), t = (prefs.reduced || motionPreference.matches) ? 0 : performance.now() / 1000;
   ctx.save();
   const camera=feelCamera();ctx.translate(camera.x,camera.y);
@@ -54,7 +55,8 @@ function draw(){
   }
   ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.font = '600 11px Rubik, sans-serif';
   ctx.fillStyle = colors.gold; ctx.fillText('RESERVE ('+S.bench.filter(Boolean).length+'/3)', benchSlot(2).x + 40, WORLD_H + 22);
-  ctx.fillStyle = colors.muted; ctx.fillText(W < 600 ? 'train +50% / wave' : 'do not fight · train +50% per wave (max +150%)', benchSlot(2).x + 40, WORLD_H + 40);
+  ctx.fillStyle = colors.muted; ctx.fillText(sharedReserve() ? 'Train +50% / wave' : W < 600 ? 'train +50% / wave' : 'do not fight · train +50% per wave (max +150%)', benchSlot(2).x + 40, WORLD_H + 40);
+  if(sharedReserve()){ctx.font='500 9px Rubik, sans-serif';ctx.fillText('Max +150% · no combat',benchSlot(2).x+40,WORLD_H+52);}
   if (plan && plan.kind === 'sell') {
     ctx.fillStyle = colors.gold; ctx.globalAlpha = .35; ctx.fillRect(0, 0, WALL_X, WORLD_H); ctx.globalAlpha = 1;
     ctx.fillStyle = colors.gold; ctx.font = '600 13px Rubik, sans-serif'; ctx.fillText(`Sell: +${plan.value} souls`, WALL_X + 8, Math.max(20, dragU.y - 34));

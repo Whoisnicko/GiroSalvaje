@@ -453,7 +453,10 @@ function zoneMax(){ return Math.max(3 * TILE, Math.floor(Math.min(worldW() * 0.5
 /* Ocupación: cada monstruo ocupa un círculo según su tamaño y nunca se superpone con otro. */
 const fieldUnits = () => S.units.filter(u => !u.temp);
 const fieldCount = () => fieldUnits().reduce((s, u) => s + u.pile, 0);
-const benchSlot = i => ({ x:WALL_X + 34 + i * 62, y:WORLD_H + 32 });
+// Reserve slots keep their index; only the display position changes in the shared dock.
+function sharedReserve(){return document.querySelector('.wrap').classList.contains('shared-reserve');}
+const benchSlot = i => ({ x:(sharedReserve()?worldW()-330:WALL_X+34) + i * 62, y:WORLD_H + 32 });
+function syncReservePositions(){if(S)S.bench.forEach((u,i)=>{if(u&&S.drag?.u!==u)Object.assign(u,benchSlot(i));});}
 function canStand(u, x, y, ignore){
   const r = radius(u);
   if (x < WALL_X + r + 4 || x > zoneMax() || y < r + 8 || y > WORLD_H - r - 12) return { ok:false, why:'fuera' };
@@ -1287,6 +1290,10 @@ resize=function(){
  // New campaigns keep the previous wide-field sizing estimate; existing saves keep their exact logical width.
  const oldLaneW=w;
  const logicalW=savedWorldWidth||Math.max(420,oldLaneW/(targetH/LOGIC_H));savedWorldWidth=logicalW;
+ const wrap=document.querySelector('.wrap');
+ const shared=compact&&logicalW>=650;
+ // Do not relocate slots during a drag; cancel only if switching layout modes.
+ if(wrap.classList.contains('shared-reserve')!==shared){if(S?.drag)cancelDrag();wrap.classList.toggle('shared-reserve',shared);}
  const availH=compact?stage.clientHeight:Infinity;if(availH<1)return;
  const fit=fitBattlefield(w,availH,logicalW);
  if(!Number.isFinite(fit.scale)||fit.scale<=0)return;
@@ -1294,6 +1301,15 @@ resize=function(){
  cv.style.width=fit.w+'px';cv.style.height=fit.h+'px';scale=fit.scale;
  if(cv.width!==bw)cv.width=bw;if(cv.height!==bh)cv.height=bh;
  ctx.setTransform(scale*dpr,0,0,scale*dpr,0,0);ctx.imageSmoothingEnabled=false;
+ syncReservePositions();
+ const c=cv.getBoundingClientRect(),r=wrap.getBoundingClientRect();
+ wrap.style.setProperty('--field-top',Math.max(0,c.top-r.top-6)+'px');
+ if(shared){const bottom=document.querySelector('.lane').getBoundingClientRect().bottom;
+   wrap.style.setProperty('--hand-max-height',Math.max(0,bottom-c.top-WORLD_H*scale-3)+'px');
+   wrap.style.setProperty('--hand-left',(c.left-r.left)+'px');
+   wrap.style.setProperty('--hand-top',(c.top-r.top+WORLD_H*scale)+'px');
+   wrap.style.setProperty('--hand-width',Math.max(0,(benchSlot(0).x-32)*scale)+'px');
+ }
 };
 if(typeof ResizeObserver!=='undefined'){const stageObserver=new ResizeObserver(()=>{if(compactLayout())resize();});stageObserver.observe($('#battleViewport'));}
 document.addEventListener('click',ev=>{const b=ev.target.closest('[data-front]');if(!b||b.disabled)return;ev.preventDefault();const a=b.dataset.front;
