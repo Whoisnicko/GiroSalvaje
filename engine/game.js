@@ -1271,7 +1271,25 @@ const oldStartRun=startRun;startRun=function(i){oldStartRun(i);persist();};
 const oldRenderUI=renderUI;renderUI=function(){oldRenderUI();if(S&&S.phase!=='relic')persist();};
 let savedWorldWidth=null;
 const oldWorldW=worldW;worldW=function(){return savedWorldWidth||oldWorldW();};
-resize=function(){const dpr=Math.min(2,window.devicePixelRatio||1);const w=cv.clientWidth;const targetH=window.innerWidth>=1100?Math.min(600,Math.max(460,window.innerHeight*.68)):Math.min(460,Math.max(280,window.innerHeight*.55));const logicalW=savedWorldWidth||Math.max(420,w/(targetH/LOGIC_H));savedWorldWidth=logicalW;cv.style.height=(w/logicalW*LOGIC_H)+'px';scale=w/logicalW;cv.width=Math.round(w*dpr);cv.height=Math.round(cv.clientHeight*dpr);ctx.setTransform(scale*dpr,0,0,scale*dpr,0,0);ctx.imageSmoothingEnabled=false;};
+/* Fit the existing logical battlefield to the visible stage, without changing saved coordinates. */
+const compactLayout=()=>matchMedia('(min-width:1100px) and (min-height:650px)').matches;
+function fitBattlefield(availableW,availableH,logicalW){const k=Math.min(availableW/logicalW,availableH/LOGIC_H);return {scale:k,w:logicalW*k,h:LOGIC_H*k};}
+resize=function(){
+ const dpr=Math.min(2,window.devicePixelRatio||1),stage=$('#battleViewport'),compact=compactLayout();
+ const w=stage.clientWidth;if(w<1)return;
+ const targetH=window.innerWidth>=1100?Math.min(600,Math.max(460,window.innerHeight*.68)):Math.min(460,Math.max(280,window.innerHeight*.55));
+ // New campaigns keep the previous wide-field sizing estimate; existing saves keep their exact logical width.
+ const oldLaneW=compact?w+document.querySelector('.wrap>.table').offsetWidth+8:w;
+ const logicalW=savedWorldWidth||Math.max(420,oldLaneW/(targetH/LOGIC_H));savedWorldWidth=logicalW;
+ const availH=compact?stage.clientHeight:Infinity;if(availH<1)return;
+ const fit=fitBattlefield(w,availH,logicalW);
+ if(!Number.isFinite(fit.scale)||fit.scale<=0)return;
+ const bw=Math.max(1,Math.round(fit.w*dpr)),bh=Math.max(1,Math.round(fit.h*dpr));
+ cv.style.width=fit.w+'px';cv.style.height=fit.h+'px';scale=fit.scale;
+ if(cv.width!==bw)cv.width=bw;if(cv.height!==bh)cv.height=bh;
+ ctx.setTransform(scale*dpr,0,0,scale*dpr,0,0);ctx.imageSmoothingEnabled=false;
+};
+if(typeof ResizeObserver!=='undefined'){const stageObserver=new ResizeObserver(()=>{if(compactLayout())resize();});stageObserver.observe($('#battleViewport'));}
 document.addEventListener('click',ev=>{const b=ev.target.closest('[data-front]');if(!b||b.disabled)return;ev.preventDefault();const a=b.dataset.front;
  if(a==='home')showHome();if(a==='new'){$('#nameError').textContent='';$('#playerName').value=profile.name;front('newGameView');$('#playerName').focus();}if(a==='new-confirm')beginNew();if(a==='credits')front('creditsView');if(a==='confirm'&&!$('#confirmView').hidden)launchNew(heroPending);if(a==='back')showHome();if(a==='resume')closeFront();
  if(a==='continue'){try{if(S)closeFront();else if(loadedSave)restore(loadedSave);}catch(e){$('#homeError').textContent='Could not restore this run. Start a new one or import a backup.';}}

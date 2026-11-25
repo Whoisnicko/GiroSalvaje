@@ -1,0 +1,80 @@
+/* v22-alpha.7.5: same artwork and controls, denser desktop arrangement. */
+.battle-viewport{position:relative;display:flex;align-items:center;justify-content:center;min-width:0;background:#101722}
+.battle-viewport #cv{display:block;flex:none;max-width:100%;touch-action:none}
+.wrap .field-info{min-width:0;width:100%;color:#e9d5b1;border:1px solid #87663e;background:#171e28}
+.wrap .field-info summary{padding:7px 10px;font:700 12px Georgia,serif;cursor:pointer}
+.field-info-content{display:grid;gap:6px;min-width:0}
+.wrap .field-info:not([open]) .field-info-content{display:none}
+@media(min-width:1100px) and (min-height:650px){
+ .wrap{height:100dvh;max-height:100dvh;width:100%;max-width:1920px;padding:6px 8px 14px;box-sizing:border-box;display:grid;grid-template-columns:clamp(164px,14vw,225px) minmax(0,1fr) clamp(230px,21vw,320px);grid-template-rows:auto minmax(0,1fr) auto auto auto;gap:6px 8px;align-items:stretch;overflow:hidden}
+ .wrap>header{grid-column:1/-1;grid-row:1;position:relative;top:auto;padding:4px 7px;display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1.25fr) auto;gap:6px;align-items:center}
+ .wrap>header .title{min-width:0;gap:4px;flex-wrap:wrap}
+ .wrap>header .game-brand{width:clamp(148px,12vw,192px);aspect-ratio:1000/563;height:clamp(58px,8vh,78px);margin:0 3px 0 0}
+ .wrap>header .game-brand .official-logo{width:100%;height:100%;object-fit:contain}
+ .wrap header .snd,.wrap header .speed{min-height:27px;padding:3px 5px!important;border-width:3px!important;font-size:10px}
+ .wrap header .chips{min-width:0;gap:4px;justify-content:center}
+ .wrap header .chip{min-height:27px;padding:1px 5px;border-width:4px;font-size:12px;gap:4px}
+ .wrap header .minor-chip{min-height:24px;font-size:10px}
+ .wrap header .hud-icon{font-size:14px}.wrap header .hud-gem{width:15px;height:19px}
+ .wrap>header #hadesRoom{min-height:46px;padding:4px 7px;gap:6px;margin:0;max-width:190px}
+ #hadesRoom .hades-market-art{width:32px;height:32px}#hadesRoom .vault-copy strong{font-size:14px}#hadesRoom .vault-copy small{font-size:10px}
+ .wrap>.cabinet{grid-column:1;grid-row:2/span 3;min-height:0;overflow:auto;align-content:start;gap:5px;padding:4px;border-width:6px;scrollbar-width:thin}
+ .wrap .cabinet:before{font-size:16px;border-width:4px;padding:2px}
+ .wrap .reels{gap:3px;padding:3px}.wrap .cell{border-width:3px;min-width:0}
+ .wrap .cabinet .side,.wrap .cabinet .btns{gap:4px}.wrap .cabinet .btn{min-height:30px;padding:3px;border-width:3px!important;font-size:11px}
+ .wrap .cabinet .spin{min-height:39px;font-size:20px!important}
+ .wrap .result{padding:4px;font-size:11px}.wrap .result small{font-size:10px}.wrap .roster{gap:3px}
+ .wrap>.lane{grid-column:2;grid-row:2;display:flex;flex-direction:column;min-height:0;min-width:0;border-width:5px;overflow:hidden}
+ .wrap>.lane>*:not(.battle-viewport){flex:0 0 auto;min-width:0}
+ .wrap>.lane .battle-viewport{flex:1 1 0;min-height:0;overflow:hidden}
+ #lane #magicHud{padding:5px 8px;gap:3px}
+ #magicHud .magic-top{gap:4px 8px}
+ #magicHud .magic-mana{padding:0;flex:1 1 190px;min-width:160px;gap:6px}
+ #magicHud .magic-crystal{font-size:24px}
+ #magicHud .magic-meter{height:13px;margin-top:3px}
+ #magicHud #magicCast,#heroHud #heroDeploy{min-height:35px;padding:5px 9px;font-size:13px}
+ #magicHud .magic-message{font-size:10px;line-height:1.25}
+ #magicHud .magic-spells{gap:3px}
+ #magicHud .magic-spell{min-height:25px;padding:3px 5px}
+ #heroHud{gap:4px;padding:5px 7px}
+ #heroHud .hero-skills{gap:3px}
+ #heroHud .hero-skill.btn{min-height:35px;padding:3px}
+ #heroHud .hero-skill-state{font-size:8px}
+ .wrap .wave-summary{min-height:38px;padding:3px 6px}
+ .wrap .wave-summary .wave-heading strong{font-size:16px}
+ .wrap .wave-summary .wave-type{min-height:23px}
+ .wrap .wave-summary .wave-type img{width:23px;height:23px}
+ .wrap .wave-breakdown{max-height:110px;overflow:auto;padding:4px 6px;scrollbar-width:thin}
+ #sandboxPanel:not([hidden]){max-height:145px;overflow:auto;scrollbar-width:thin}
+ #magicSandbox:not([hidden]){max-height:75px;overflow:auto;scrollbar-width:thin}
+ .wrap .prep-undo-bar{padding:3px 5px;gap:5px}
+ .wrap>.table{grid-column:3;grid-row:2/span 3;display:flex;flex-direction:column;min-height:0;min-width:0;padding:4px;gap:6px;border-width:6px;overflow:hidden}
+ .wrap>.table .relic{display:grid;grid-template-columns:42px minmax(0,1fr);gap:3px 6px;flex:none;text-align:left;border:0;border-bottom:1px solid #554538;padding:3px 2px 5px;min-height:0}
+ .wrap>.table .relic:empty{display:none}
+ .wrap>.table .relic .medal{width:40px;height:40px;grid-row:span 2}
+ .wrap>.table .relic .rn{font-size:12px}.wrap>.table .relic .rd{font-size:10px;line-height:1.25}
+ .wrap>.table .hand-col{display:flex;flex-direction:column;flex:1 1 auto;min-height:0;gap:3px;min-width:0}
+ .wrap>.table .hand-h{flex:none;font-size:11px;gap:4px;flex-wrap:wrap;padding:0 2px}
+ .wrap>.table .hand-h #handTitle{flex:1 1 90px;font-size:11px}
+ .wrap>.table .hand{display:flex;flex-direction:column;justify-content:flex-start;align-items:stretch;gap:6px;flex:1 1 auto;min-height:0;overflow:auto;scrollbar-width:thin;scroll-snap-type:none;padding:3px 3px 6px}
+ .wrap .hand .card{flex:0 0 auto;width:100%;aspect-ratio:auto;min-height:82px;display:grid;grid-template-columns:54px minmax(0,1fr);grid-template-rows:auto auto;gap:3px 6px;padding:6px;scroll-snap-align:none;align-items:start;border-radius:3px!important}
+ .wrap .hand .card::before{border-width:7px}
+ .wrap .hand .card .art{grid-column:1;grid-row:1/span 2;align-self:stretch;min-height:55px;max-height:84px;width:100%}
+ .wrap .hand .card .art img{max-height:84px}
+ .wrap .hand .card .cn{grid-column:2;grid-row:1;min-height:0;font:700 12px/1.25 Georgia,serif!important;text-align:left;display:block;padding:2px 3px;overflow-wrap:anywhere}
+ .wrap .hand .card .cd{grid-column:2;grid-row:2;display:block;font:11px/1.28 system-ui,sans-serif;padding:2px 3px;min-height:0;border:0}
+ .wrap .hand .card .ty{display:inline-block;font:700 8px/1.2 system-ui,sans-serif;padding:1px 3px;margin:0 3px 0 0;border:0}
+ .wrap .hand .card .card-rules{display:inline}
+ .wrap .hand .card .tag{position:static;grid-column:1;grid-row:1;align-self:start;justify-self:start;z-index:4;pointer-events:none;font-size:7px;margin:1px}
+ .wrap .hand .card.buy{min-height:51px;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:5px;padding:5px}
+ .wrap .hand .card.buy .plus{font-size:22px;line-height:1}.wrap .hand .card.buy .bt,.wrap .hand .card.buy .bc{font-size:10px}
+ .wrap .hand .card:hover:not(:disabled){transform:none}
+ .wrap>.intel{grid-column:2;grid-row:3;min-height:0;display:block;position:relative}
+ .wrap .field-info-content{position:absolute;bottom:100%;left:0;right:0;z-index:7;max-height:170px;overflow:auto;background:#111923;grid-template-columns:1fr 1fr;padding:5px;border:1px solid #87663e}
+ .wrap #artifactShelf,.wrap #unitBox.inspection-guide{grid-row:auto;min-height:0}
+ .wrap>.save-line{grid-column:2;grid-row:4;font-size:10px;line-height:1.25;min-width:0}
+ .wrap>.coach{grid-column:1/-1;grid-row:5;min-height:0;max-height:44px;overflow:auto;font-size:11px;padding:4px 8px;margin:0}
+ .wrap>.coach[hidden]{display:none!important}
+ .version-stamp{bottom:2px;font-size:9px}
+}
+@media(max-width:1099px),(max-height:649px){.wrap .field-info-content{grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr))}}
