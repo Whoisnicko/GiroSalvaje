@@ -1102,7 +1102,7 @@ function renderBuyCard(){
 }
 function renderHand(){
   const fight = S.phase === 'fight';
-  $('#handTitle').textContent = fight ? 'YOUR HAND · Click a card to cast' : 'YOUR HAND · Click a card to play';
+  $('#handTitle').innerHTML = 'YOUR HAND<small>'+ (fight ? 'Click a card to cast' : 'Click a card to play')+'</small>';
   $('#deckLink').textContent = `View deck (${S.deck.length})`;
   $('#relic').innerHTML = S.relic ? `<span class="medal" title="${S.relic.d}">${relicArt(S.relic)}</span><span class="rn">${S.relic.n}</span><span class="rd">${S.relic.d}</span>` : '';
   const canBuy = buyable().length > 0 && S.gold >= cardCost();
@@ -1112,6 +1112,8 @@ function renderHand(){
     return cardHTML(c.id, `data-cardi="${i}" ${now ? '' : 'disabled'} title="${later ? (isPrepCard(c.id) ? 'Preparation only' : 'Play during combat') : ''}"`, `${c.used ? 'used' : ''} ${later ? 'later' : ''} ${S.aim === i ? 'aim' : ''} ${c.fresh && S.phase === 'prep' ? 'fresh' : ''}`, c.free ? ' · free' : c.fresh && S.phase === 'prep' ? ' · new' : '');
   }).join('')
     + (S.phase === 'prep' || fight ? `<button class="card buy" data-act="buycard" ${canBuy ? '' : 'disabled'}><span class="plus">+</span><span class="bt">Draw a random card from your deck</span><span class="bc">${cardCost()} souls</span></button>` : '');
+  const cards=[...$('#hand').querySelectorAll('[data-cardi]')],mid=(cards.length-1)/2;
+  cards.forEach((card,i)=>{const delta=i-mid,angle=Math.max(-6,Math.min(6,delta*3.6));card.style.setProperty('--fan-angle',angle+'deg');card.style.setProperty('--fan-offset',Math.min(4,Math.abs(delta)*2)+'px');card.style.setProperty('--fan-z',String(i+1));});
 }
 function renderPay(){
   $('#pay').innerHTML = `<div><b>3 matching symbols in a line</b> (row, column or diagonal):</div>
@@ -1127,8 +1129,10 @@ function renderUI(){
   $('#reels').innerHTML = S.grid.map((k, i) => `<button class="cell ${S.held.has(i) ? 'held' : ''} ${S.wins.has(i) ? 'win' : ''}" data-cell="${i}" ${prep && !spinning ? '' : 'disabled'} aria-label="${SYM[k].n}${S.held.has(i) ? ', held' : ''}">${cellHTML(k)}</button>`).join('');
   $('#result').innerHTML = `${S.result}<small>${S.resultSub}</small>`;
   const cost = spinCost(), canBuy = prep && S.gold >= cost && !spinning;
+  const lever=$('#summonLever');lever.disabled=!prep||S.spinsLeft<=0||spinning;lever.classList.toggle('is-pulling',spinning);lever.setAttribute('aria-busy',String(spinning));
+  $('#summonCaption').textContent=spinning?'Summoning…':prep&&S.spinsLeft>0?'Pull the lever to summon':prep?'No summons left · buy a spin':'Summoning locked during battle';
   $('#btns').innerHTML = `
-    <button class="btn spin ${prep && !S.spunOnce && S.spinsLeft > 0 ? 'nudge' : ''}" data-act="spin" ${prep && S.spinsLeft > 0 && !spinning ? '' : 'disabled'}>SPIN</button><div class="spin-counter" aria-live="polite">⟳ <b>${sandboxActive()?"∞":S.spinsLeft}</b> ${S.spinsLeft === 1 ? "spin" : "spins"} remaining</div>
+    <div class="spin-counter" aria-live="polite">⟳ <b>${sandboxActive()?"∞":S.spinsLeft}</b> ${S.spinsLeft === 1 ? "spin" : "spins"} remaining</div>
     <button class="btn ${prep && S.spinsLeft === 0 && canBuy ? 'nudge' : ''}" data-act="buy" ${canBuy ? '' : 'disabled'}>Buy spin · <span class="s">${cost} souls</span></button>
     <button class="btn" data-act="slot" ${prep && S.gold >= slotCost() && !spinning && (!sandboxActive()||S.maxUnits<SANDBOX_MAX_UNITS) ? '' : 'disabled'} title="Increase field capacity">+1 slot (${S.maxUnits}→${S.maxUnits + 1}) · <span class="s">${slotCost()} souls</span></button>
     <button class="btn fight ${S.confirmFight ? 'warn' : ''} ${prep && S.spinsLeft === 0 && !canBuy ? 'nudge' : ''}" data-act="fight" ${prep && !spinning ? '' : 'disabled'}>${S.confirmFight ? 'DEFEND ANYWAY' : 'DEFEND!'}</button>`;
