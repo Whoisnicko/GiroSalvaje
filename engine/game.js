@@ -510,7 +510,7 @@ function doMerge(target, src, chosenInfusion){
   if (total < S.mods.mergeN) {
     target.pile = total; target.train = train; if(keptInfusion)target.infusion=keptInfusion; infusionReset(target); refreshHp(target);
     S.fx.push({ k:'ring', x:target.x, y:target.y, r:26, c:'gold', t:.4, T:.4 }); sfx('place');
-    setResult('Stacked', `${NAMES[target.type]} ${target.pile}/${S.mods.mergeN}: drop another matching monster onto it to merge.`);
+    setResult('Stacked', `${NAMES[target.type]} ${target.pile}/${S.mods.mergeN}: drop another matching monster onto it to merge.`); tutorialSignal('merge');
     return;
   }
   const leftover = total - S.mods.mergeN, nu = makeUnit(target.type, target.lvl + 1);
@@ -525,7 +525,7 @@ function doMerge(target, src, chosenInfusion){
   burst(nu.x, nu.y, 'gold', 20, 160); burst(nu.x, nu.y, 'soul', 10, 110); S.shake = Math.max(S.shake, 3);
   const msg = `${NAMES[nu.type]} ${'★'.repeat(nu.lvl)}`;
   bigMsg('MERGE! ' + msg); sfx('fusion'); setTimeout(() => tip('merge'), 400);
-  setResult('Merge!', msg);
+  setResult('Merge!', msg); tutorialSignal('merge');
 }
 
 /* ================= Cards en juego ================= */
