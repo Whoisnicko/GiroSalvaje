@@ -58,3 +58,6 @@ User validated Crusader mechanics and selected option B: independent five-wave r
 
 ## v22-alpha.7.28 — Sandbox Encounter Director
 User requested immediate access to maps, waves and bosses. Free Sandbox exposes registry-driven region and boss selectors, load/play, and retry. Boss-only fights choose native region and wave automatically; full waves retain normal enemy queues. Switching while fighting resets transient state and retains army. No profile unlocks, ranking or campaign HUD changes.
+
+## v22-alpha.7.29 — Sandbox boss routing hotfix
+User reports Huntsman selection leads to Crusader. Boss dropdown now loads on change; top direct boss buttons route by immutable boss ID and immediately fight. Active map/wave/boss is shown from the real queued/spawned enemies. Validate exact runtime routing and preserve Academy/campaign isolation. Browser production reproduction pending.
