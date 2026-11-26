@@ -1,17 +1,18 @@
 /* v19 renderer: canvas presentation, shared state from game core. Classic script; loaded before core. */
 function forestArtReady(){return typeof forestBattlefieldArt!=='undefined'&&!!forestBattlefieldArt;}
+function frozenArtReady(){return typeof frozenBattlefieldArt!=='undefined'&&!!frozenBattlefieldArt;}
 function drawForestAltar(hurt,glow,frozen=false){
- const W=worldW(),x=W*(79/1100),y=WORLD_H*(198/500),bw=Math.min(68,W*.12),by=WORLD_H*.27;
+ const W=worldW(),illustratedIce=frozen&&frozenArtReady(),x=W*(illustratedIce?.078:79/1100),y=WORLD_H*(illustratedIce?.32:198/500),bw=Math.min(68,W*.12),by=WORLD_H*(illustratedIce?.18:.27);
  ctx.save();
  // Missing artwork must still show a crystal, never the obsolete wall.
- if(frozen||!forestArtReady()){
+ if(frozen?!frozenArtReady():!forestArtReady()){
   ctx.translate(x,y);ctx.fillStyle='#182b26';ctx.strokeStyle='#73937a';ctx.lineWidth=2;
   ctx.beginPath();ctx.ellipse(0,29,Math.max(20,W*.07),18,0,0,Math.PI*2);ctx.fill();ctx.stroke();
   ctx.strokeStyle='#76e4c1';ctx.beginPath();ctx.ellipse(0,26,18,8,0,0,Math.PI*2);ctx.stroke();
   ctx.fillStyle=frozen?'#5eb7eb':'#49bda6';ctx.strokeStyle=frozen?'#d4f6ff':'#b6f9d7';ctx.beginPath();ctx.moveTo(0,-26);ctx.lineTo(12,-11);ctx.lineTo(9,13);ctx.lineTo(0,24);ctx.lineTo(-9,13);ctx.lineTo(-12,-11);ctx.closePath();ctx.fill();ctx.stroke();
   ctx.fillStyle=frozen?'#d9f6ff':'#b7ffde';ctx.beginPath();ctx.moveTo(0,-24);ctx.lineTo(0,22);ctx.lineTo(-9,13);ctx.lineTo(-12,-11);ctx.closePath();ctx.fill();ctx.translate(-x,-y);
  }
- if(hurt||glow){const radius=Math.max(18,W*.065),g=ctx.createRadialGradient(x,y,0,x,y,radius);g.addColorStop(0,hurt?'rgba(255,80,68,.48)':'rgba(96,255,187,.44)');g.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=g;ctx.fillRect(x-radius,y-radius,radius*2,radius*2);}
+ if(hurt||glow){const radius=Math.max(18,W*.065),g=ctx.createRadialGradient(x,y,0,x,y,radius);g.addColorStop(0,hurt?'rgba(255,80,68,.48)':frozen?'rgba(97,224,255,.42)':'rgba(96,255,187,.44)');g.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=g;ctx.fillRect(x-radius,y-radius,radius*2,radius*2);}
  ctx.fillStyle='#10221d';ctx.fillRect(x-bw/2-2,by-2,bw+4,9);ctx.strokeStyle='#95a77f';ctx.lineWidth=1;ctx.strokeRect(x-bw/2-2,by-2,bw+4,9);bar(x-bw/2,by,bw,5,S.wallHp/S.wallMax,hurt?colors.red:colors.soul);ctx.restore();
 }
 function drawInkAltar(t){
@@ -274,11 +275,13 @@ function forestStaticLayer(W){
   forestComposite=layer;forestCompositeSource=source;forestCompositeW=W;forestCompositeH=WORLD_H;return layer;
  }catch(e){return null;}
 }
-let frozenField=null,frozenFieldW=0;
+let frozenField=null,frozenFieldW=0,frozenFieldSource=null;
 function frozenStaticLayer(W){
- if(frozenField&&frozenFieldW===W)return frozenField;
+ const source=frozenArtReady()?frozenBattlefieldArt:null;
+ if(frozenField&&frozenFieldW===W&&frozenFieldSource===source)return frozenField;
  const density=Math.min(2,1600/W,1000/WORLD_H),layer=inkCanvas(Math.ceil(W*density),Math.ceil(WORLD_H*density)),g=layer.getContext('2d');
  g.scale(layer.width/W,layer.height/WORLD_H);
+ if(source){g.imageSmoothingEnabled=false;g.drawImage(source,0,0,W,WORLD_H);biomeDraw(W,g);frozenField=layer;frozenFieldW=W;frozenFieldSource=source;return layer;}
  let seed=4137;const rnd=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
  const poly=(p,c)=>{g.fillStyle=c;g.beginPath();p.forEach(([x,y],i)=>i?g.lineTo(x,y):g.moveTo(x,y));g.closePath();g.fill();};
  const sky=g.createLinearGradient(0,0,0,WORLD_H);sky.addColorStop(0,'#223748');sky.addColorStop(.25,'#829aa9');sky.addColorStop(.55,'#93aab7');sky.addColorStop(1,'#354f62');g.fillStyle=sky;g.fillRect(0,0,W,WORLD_H);
@@ -286,7 +289,7 @@ function frozenStaticLayer(W){
  g.strokeStyle='#465c6a';g.lineWidth=55;g.beginPath();g.moveTo(0,WORLD_H*.5);g.bezierCurveTo(W*.3,WORLD_H*.35,W*.6,WORLD_H*.65,W,WORLD_H*.48);g.stroke();g.strokeStyle='#788c99';g.lineWidth=44;g.stroke();
  for(const z of biomeZones(S,W)){g.fillStyle='#5baac7';g.beginPath();g.ellipse(z.x,z.y,z.rx,z.ry,0,0,Math.PI*2);g.fill();g.strokeStyle='#c6edfa';g.lineWidth=1.5;g.stroke();for(let i=0;i<12;i++){const a=rnd()*Math.PI*2,k=.25+rnd()*.6,x=z.x+Math.cos(a)*z.rx*k,y=z.y+Math.sin(a)*z.ry*k;g.strokeStyle='#d4f3ff88';g.beginPath();g.moveTo(x,y);g.lineTo(x+8,y-4);g.lineTo(x+14,y+1);g.stroke();}}
  for(let x=0;x<W+25;x+=34+rnd()*28){const y=20+rnd()*15,k=22+rnd()*22;poly([[x-20,y+8],[x-12,y-k*.6],[x+2,y-k],[x+17,y-9],[x+23,y+8]],'#233c52');poly([[x-12,y-k*.6],[x+2,y-k],[x+17,y-9],[x+1,y-15]],'#bfd5e4');const b=WORLD_H-8+rnd()*8;poly([[x-14,b+9],[x-8,b-21],[x+4,b-36],[x+13,b-10],[x+25,b+9]],'#284658');poly([[x-8,b-21],[x+4,b-36],[x+13,b-10],[x+2,b-17]],'#9bbccc');}
- biomeDraw(W,g);frozenField=layer;frozenFieldW=W;return layer;
+ biomeDraw(W,g);frozenField=layer;frozenFieldW=W;frozenFieldSource=source;return layer;
 }
 function frostDrawWeather(W){
  if(!frostBlizzard())return;ctx.save();ctx.fillStyle='#a9d9f211';ctx.fillRect(0,0,W,WORLD_H);ctx.font='bold 11px monospace';ctx.textAlign='center';ctx.fillStyle='#122b40e8';ctx.fillRect(W/2-91,5,182,19);ctx.fillStyle='#d4f4ff';ctx.fillText('BLIZZARD · REACH −30%',W/2,18);ctx.restore();
