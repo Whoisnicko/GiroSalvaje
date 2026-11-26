@@ -262,7 +262,7 @@ const BANSHEE_RANGE = [120, 165, 220];
 function bansheeOn(u){
   if (!u || u.down || u.y >= WORLD_H || !S.units.includes(u)) return 0;
   let b = 0;
-  for (const s of S.units) if (s.type === 'B' && s !== u && !s.down && dist(s, u) <= stats('B',s.lvl,s).range) b = Math.max(b, bansheeBuff(s.lvl));
+  for (const s of S.units) if (s.type === 'B' && s !== u && !s.down && !frostFrozen(s) && dist(s, u) <= stats('B',s.lvl,s).range) b = Math.max(b, bansheeBuff(s.lvl));
   return b;
 }
 const MAX_UNITS = 8, MAX_WAVE = 10, WORLD_H = 260, LOGIC_H = 322, WALL_X = 40, TILE = 52, ROWS = 5; // debajo del campo (260-322) va la reserva
