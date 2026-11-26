@@ -218,7 +218,7 @@ function visualPose(u,t){
   let v=VISUAL.get(u);
   if(!v){v={down:!!u.down,cd:u.cd,skels:u.skels||0,attackUntil:0,attackStart:0,riseStart:-100};VISUAL.set(u,v);}
   if(v.down&&!u.down)v.riseStart=t;
-  const cast=(u.type==='N'&&(u.skels||0)>v.skels)||((u.type==='B'||(u.kind==='cle'&&S.fx.some(f=>f.k==='ring'&&f.c==='gold'&&f.x===u.x&&f.y===u.y))||u.kind==='bal'||(u.kind&&u.x<=WALL_X+(u.r||0)+3))&&u.cd>v.cd+.1);
+  const cast=(u.type==='N'&&(u.skels||0)>v.skels)||((u.type==='B'||(u.kind==='cle'&&S.fx.some(f=>f.k==='ring'&&f.c==='gold'&&f.x===u.x&&f.y===u.y))||(u.kind&&enemyRanged(u))||(u.kind&&u.x<=WALL_X+(u.r||0)+3))&&u.cd>v.cd+.1);
   if((u.lunge>0&&!(v.lunge>0))||cast){v.attackStart=t;v.attackUntil=t+.36;}
   v.down=!!u.down;v.cd=u.cd;v.skels=u.skels||0;v.lunge=u.lunge||0;
   if(prefs.reduced||motionPreference.matches)return {frame:u.down?0:t<v.attackUntil?10:0,rise:1};
@@ -276,6 +276,7 @@ const KIND = {
   cle:{ n:'Cleric',     spr:'clerigo',     hp:.8,  dmg:.5,  sp:.6,   r:11, healer:true },
   ant:{ n:'Arsonist', spr:'incendiario', hp:.8,  dmg:1,   sp:1.25, r:11, arson:true },
   com:{ n:'Commander',  spr:'comandante',  hp:14,  dmg:2.2, sp:.6,   r:22, boss:true },
+  ...REGIONAL_ENEMIES,
 };
 function waveInfo(w){
   const boss = w % 5 === 0;
@@ -290,8 +291,11 @@ function waveInfo(w){
 /* La oleada se sortea al empezar la preparación, así el panel muestra exactamente lo que viene. */
 function rollWave(w,region='valley'){
   const W = waveInfo(w);
-  const q = Array.from({ length:W.n }, () => {
-    const k = pickKind(W.table), K = KIND[k];
+  const regional=regionalSlots(w,region);
+  // Spread guaranteed regional units through the existing queue without increasing the wave size.
+  const slots=new Map(regional.slice(0,W.n).map((id,i)=>[Math.floor((i+.5)*W.n/regional.length),id]));
+  const q = Array.from({ length:W.n }, (_,i) => {
+    const k = slots.get(i)||pickKind(W.table), K = KIND[k];
     return { kind:k, hp:W.hp * K.hp, dmg:W.dmg * K.dmg, sp:rnd(.85, 1.15) * W.sp * K.sp, r:K.r, range:K.range || 0, armor:K.armor ? W.armor : 0 };
   });
   if (W.boss) q.splice(Math.floor(W.n / 2), 0, bossStamp({ kind:'com', hp:W.hp * KIND.com.hp, dmg:W.dmg * KIND.com.dmg, sp:W.sp * KIND.com.sp, r:22, boss:true, armor:W.armor },w,region));
@@ -791,14 +795,17 @@ function update(dt){
     }
     if (enemyRanged(e)) {
       let tgt = null, best = 1e9; const rng = e.range;
-      for (const u of (forcedHero?[forcedHero]:heroTargets())) { if (u.down||u.hp<=0||infusionHidden(u)) continue; const d = dist(e, u); if (d <= rng && d < best) { best = d; tgt = u; } }
+      const targets=forcedHero?[forcedHero]:heroTargets();
+      const cover=regionalRangerCover(e,targets,forcedHero,Wd);
+      if(cover&&sp>0){const d=dist(e,cover),step=Math.min(d,sp*dt);moveHuman(e,(cover.x-e.x)/d*step,(cover.y-e.y)/d*step);continue;}
+      for (const u of targets) { if (u.down||u.hp<=0||infusionHidden(u)) continue; const d = dist(e, u); if (d <= rng && d < best) { best = d; tgt = u; } }
       const altarInRange = !forcedHero && e.x - WALL_X <= rng;
       if (tgt || altarInRange) {
         e.cd -= dt;
         if (e.cd <= 0) {
-          e.cd = 1.6; const dmg = e.dmg;
-          if (tgt) S.shots.push({ k:'bolt', x:e.x - 8, y:e.y, tgt, tx:tgt.x, ty:tgt.y, sp:420, dmg });
-          else S.shots.push({ k:'bolt', x:e.x - 8, y:e.y, altar:true, tx:WALL_X - 6, ty:e.y, sp:420, dmg });
+          e.cd = 1.6; const dmg = e.dmg,ignoreCover=!!regionalDef(e)?.ignoreCover;
+          if (tgt) S.shots.push({ k:'bolt', x:e.x - 8, y:e.y, tgt, tx:tgt.x, ty:tgt.y, sp:420, dmg,ignoreCover });
+          else S.shots.push({ k:'bolt', x:e.x - 8, y:e.y, altar:true, tx:WALL_X - 6, ty:e.y, sp:420, dmg,ignoreCover });
           e.lunge = .12; sfx('bolt');
         }
       } else if(forcedHero){const d=dist(e,forcedHero);if(d>0)moveHuman(e,(forcedHero.x-e.x)/d*sp*dt,(forcedHero.y-e.y)/d*sp*dt);}else moveHuman(e, -sp * dt, 0);
@@ -903,7 +910,7 @@ function landShot(s){
     S.shake = Math.max(S.shake, 3); feelImpact(s.tx,s.ty,'fire',null,Math.max(24,s.splash));sfx('boom');
   } else if (s.k === 'bolt') {
     if (s.altar) hitAltar(s.dmg);
-    else if (s.tgt && s.tgt.hp > 0) { const dealt=heroDamageTarget(s.tgt,s.dmg*biomeProjectileFactor(s.tgt)); s.tgt.flash = .15; if(dealt)feelNumber(s.tgt.x,s.tgt.y-radius(s.tgt)-10,dealt,'ally');feelImpact(s.tgt.x,s.tgt.y,'steel',s.tgt); burst(s.tgt.x, s.tgt.y, 'steel', 5, 60); sfx('clash'); }
+    else if (s.tgt && s.tgt.hp > 0) { const dealt=heroDamageTarget(s.tgt,s.dmg*regionalShotFactor(s,s.tgt)); s.tgt.flash = .15; if(dealt)feelNumber(s.tgt.x,s.tgt.y-radius(s.tgt)-10,dealt,'ally');feelImpact(s.tgt.x,s.tgt.y,'steel',s.tgt); burst(s.tgt.x, s.tgt.y, 'steel', 5, 60); sfx('clash'); }
   }
 }
 
@@ -1131,7 +1138,7 @@ function renderPay(){
     <div class="row">${['W','A','M','C'].map(k => `<span>${img(SYM[k].spr)}<b>${SYM[k].n}</b> · ${SYM[k].role}</span>`).join('')}</div>
     <div><b>Merge:</b> during preparation, drop a monster onto another of the same type and level. With <b>3 stacked</b> they merge (★★, ★★★). Pay for everything with <b style="color:var(--soul)">souls</b>.</div>`;
 }
-const FOE_NOTE = { sol:'Melee', bal:'Range: 150 px', cab:'Armor reduces damage per hit', jin:'Very fast', cle:'Heals nearby humans', ant:'Ignores monsters, ×3 Altar damage', com:'Armored boss' };
+const FOE_NOTE = { sol:'Melee', bal:'Range: 150 px', cab:'Armor reduces damage per hit', jin:'Very fast', cle:'Heals nearby humans', ant:'Ignores monsters, ×3 Altar damage', com:'Armored boss',...Object.fromEntries(Object.entries(REGIONAL_ENEMIES).map(([id,d])=>[id,d.description])) };
 function renderIntel(){if(S){tacticalWave();tacticalTick(performance.now(),true);}}
 function renderUI(){
   if(sandboxActive())sandboxRefill();
