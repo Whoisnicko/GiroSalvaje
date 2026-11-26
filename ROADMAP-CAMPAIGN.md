@@ -85,3 +85,6 @@ Third five-wave campaign; Forest completion unlocks permanently, independent loc
 
 ## v22-alpha.7.37 — Sandbox Launchpad
 User approved control deck prototype and preconfiguration workflow. Preselect region, wave/boss/enemy, army preset, relic, damage and auto-start, then existing champion/doctrine. Reconfigure encounter without leaving sandbox or changing campaign. Compact toolbar and four advanced tabs, filtered regional roster. No artwork or combat changes. Approved Frozen art and Forest remake deferred to next art phase.
+
+## v22-alpha.7.38 — Frozen Wasteland illustrated art (staging)
+User approved all eleven Launchpad checks. Integrate the exact previously approved ice background, converted to 1100×500 WebP; keep ice hitboxes and dynamic indicators; avoid a duplicate drawn altar. Cache the static composite, preserve procedural fallback, no balance/UI changes. Binary asset must be uploaded before merging to main. Forest remake and exclusive sprites remain subsequent art approval phases.
