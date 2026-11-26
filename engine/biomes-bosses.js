@@ -76,9 +76,9 @@ function biomeDraw(W){
  ctx.save();ctx.beginPath();ctx.rect(0,0,W,WORLD_H);ctx.clip();
  for(const z of biomeZones(S,W)){
   const cover=z.kind==='cover',color=cover?'#8dc7a0':'#d5ad68';
-  ctx.fillStyle=cover?'#1d6544':'#664725';ctx.globalAlpha=.36;ctx.beginPath();ctx.ellipse(z.x,z.y,z.rx,z.ry,0,0,Math.PI*2);ctx.fill();
-  ctx.globalAlpha=.9;ctx.strokeStyle=color;ctx.lineWidth=1.5;ctx.setLineDash(cover?[5,4]:[2,4]);ctx.stroke();ctx.setLineDash([]);
-  ctx.fillStyle='#101c18';ctx.globalAlpha=.85;ctx.fillRect(z.x-31,z.y-z.ry+4,62,12);ctx.globalAlpha=1;ctx.fillStyle=color;ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='bold 9px monospace';ctx.fillText(cover?'COVER':'BRAMBLES',z.x,z.y-z.ry+10);
+  ctx.fillStyle=cover?'#1d6544':'#664725';ctx.globalAlpha=.13;ctx.beginPath();ctx.ellipse(z.x,z.y,z.rx,z.ry,0,0,Math.PI*2);ctx.fill();
+  ctx.globalAlpha=.72;ctx.strokeStyle=color;ctx.lineWidth=1.2;ctx.setLineDash(cover?[5,4]:[2,4]);ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle='#101c18';ctx.globalAlpha=.8;ctx.fillRect(z.x-31,z.y-z.ry+4,62,12);ctx.globalAlpha=1;ctx.fillStyle=color;ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='bold 9px monospace';ctx.fillText(cover?'COVER':'BRAMBLES',z.x,z.y-z.ry+10);
  }
  ctx.restore();
 }
