@@ -1,21 +1,21 @@
 /* First biome and boss data. Existing kind IDs, art and save schema stay compatible. */
 const BIOME_DATA=Object.freeze({
- valley:Object.freeze({id:'valley',name:'Valley of Souls',firstWave:1,lastWave:5,terrain:'Existing open battlefield',modifier:'None',bossId:'crusader'}),
- forest:Object.freeze({id:'forest',name:'Cursed Forest',firstWave:1,lastWave:5,terrain:'Cover and tangled ground',modifier:'Cover -25% projectile damage; brambles -30% walking speed',bossId:'huntsman'})
+ valley:Object.freeze({id:'valley',name:'Valley of Souls',firstWave:1,lastWave:5,terrain:'Existing open battlefield',modifier:'None',bossId:'crusader',backdrop:'valley'}),
+ forest:Object.freeze({id:'forest',name:'Cursed Forest',firstWave:1,lastWave:5,terrain:'Cover and tangled ground',modifier:'Cover -25% projectile damage; brambles -30% walking speed',bossId:'huntsman',backdrop:'forest'})
 });
 const BOSS_DATA=Object.freeze({
- crusader:Object.freeze({id:'crusader',name:'The Crusader',kind:'com',wave:5,ability:'Consecrated Sweep',radius:68,triggerRadius:56,windup:1.5,cooldown:8,damageFactor:.8,description:'Armored boss. Consecrated Sweep marks a fixed 68 px circle for 1.5 s, then deals 80% of its basic attack to guardians and the deployed hero inside. Spread out, use ranged guardians or root the boss to interrupt. Never damages the Altar.'}),
- huntsman:Object.freeze({id:'huntsman',name:'The Grand Huntsman',kind:'com',wave:5,ability:'Hunter’s Mark',radius:38,triggerRadius:180,windup:2,cooldown:8,damageFactor:1.4,range:150,hpFactor:.75,damageScale:.8,description:'Ranged boss. Marks the position of the nearest visible guardian or deployed hero within 180 px. After 2 s, a volley hits targets inside the fixed 38 px circle for 140% basic attack. Cover reduces damage; roots interrupt. No special Altar damage.'})
+ crusader:Object.freeze({id:'crusader',name:'The Crusader',sprite:'caballero',kind:'com',wave:5,ability:'Consecrated Sweep',radius:68,triggerRadius:56,windup:1.5,cooldown:8,damageFactor:.8,description:'Armored boss. Consecrated Sweep marks a fixed 68 px circle for 1.5 s, then deals 80% of its basic attack to guardians and the deployed hero inside. Spread out, use ranged guardians or root the boss to interrupt. Never damages the Altar.'}),
+ huntsman:Object.freeze({id:'huntsman',name:'The Grand Huntsman',sprite:'ballestero',kind:'com',wave:5,ability:'Hunter’s Mark',radius:38,triggerRadius:180,windup:2,cooldown:8,damageFactor:1.4,range:150,hpFactor:.75,damageScale:.8,description:'Ranged boss. Marks the position of the nearest visible guardian or deployed hero within 180 px. After 2 s, a volley hits targets inside the fixed 38 px circle for 140% basic attack. Cover reduces damage; roots interrupt. No special Altar damage.'})
 });
 function biomeId(state){return state?.biomeId==='forest'?'forest':'valley';}
 function biomeDef(state){return BIOME_DATA[biomeId(state)];}
 function bossForWave(w,region='valley'){const d=BOSS_DATA[BIOME_DATA[region]?.bossId];return d?.wave===w?d:null;}
 function bossDef(e){const d=BOSS_DATA[e?.bossId];return d&&e.kind===d.kind?d:null;}
 function bossStamp(q,w,region='valley'){const d=bossForWave(w,region);return d&&q.kind===d.kind?{...q,bossId:d.id,...(d.range?{range:d.range,hp:q.hp*d.hpFactor,dmg:q.dmg*d.damageScale}: {})}:q;}
-function enemySprite(e){return e.bossId==='huntsman'?'ballestero':KIND[e.kind].spr;}
+function enemySprite(e){return bossDef(e)?.sprite||KIND[e.kind].spr;}
 function enemyRanged(e){return e.kind==='bal'||bossDef(e)?.id==='huntsman';}
 function enemyDisplayName(e){return bossDef(e)?.name||KIND[e.kind]?.n||'Human';}
-function enemyDisplayNote(e){return bossDef(e)?.description||FOE_NOTE[e.kind]||'Human invader.';}
+function enemyDisplayNote(e){return bossDef(e)?.description||(e.kind==='com'?'Classic armored Commander. Uses ordinary melee attacks, without a regional special ability.':FOE_NOTE[e.kind]||'Human invader.');}
 function bossNormalize(e){
  if(!bossDef(e)){delete e.bossId;delete e.bossCast;delete e.bossCooldown;return;}
  const d=bossDef(e);
@@ -74,10 +74,6 @@ function biomeWalkFactor(u,state=S,W=worldW()){return biomeContains(u,'bramble',
 function biomeDraw(W){
  if(biomeId(S)!=='forest')return;
  ctx.save();ctx.beginPath();ctx.rect(0,0,W,WORLD_H);ctx.clip();
- ctx.fillStyle='#143e31';ctx.globalAlpha=.24;ctx.fillRect(0,0,W,WORLD_H);ctx.globalAlpha=1;
- // Static silhouettes at the edges; no extra image download or obstruction.
- for(let i=0;i<18;i++){const x=(i+.5)*W/18,y=i%2?WORLD_H-7:7,dir=i%2?-1:1;ctx.fillStyle='#162e24';ctx.globalAlpha=.8;ctx.fillRect(x-3,y-10,6,20);ctx.beginPath();ctx.moveTo(x,y+dir*18);ctx.lineTo(x-14,y-dir*9);ctx.lineTo(x+14,y-dir*9);ctx.closePath();ctx.fill();}
- ctx.globalAlpha=1;
  for(const z of biomeZones(S,W)){
   const cover=z.kind==='cover',color=cover?'#8dc7a0':'#d5ad68';
   ctx.fillStyle=cover?'#1d6544':'#664725';ctx.globalAlpha=.36;ctx.beginPath();ctx.ellipse(z.x,z.y,z.rx,z.ry,0,0,Math.PI*2);ctx.fill();
