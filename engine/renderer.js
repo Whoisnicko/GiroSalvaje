@@ -2,7 +2,7 @@
 function drawInkAltar(t){
  const hurt=S.fx.some(f=>f.k==='altar'),glow=S.fx.some(f=>f.k==='altarGlow');
  // The illustrated backdrop already contains the crystal altar. Only the dynamic overlay is drawn here.
- if(battlefieldArt){
+ if(battlefieldArt&&biomeDef(S).backdrop==='valley'){
   const W=worldW(),x=W*(79/1100),y=WORLD_H*(198/500),bw=Math.min(68,W*.12),by=WORLD_H*.27;
   ctx.save();
   if(hurt||glow){const r=Math.max(18,W*.065),g=ctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,hurt?'rgba(255,80,68,.48)':'rgba(97,224,255,.42)');g.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=g;ctx.fillRect(x-r,y-r,r*2,r*2);}
@@ -134,6 +134,7 @@ function draw(){
       const rot = !motionPreference.matches && e.moving ? Math.sin(t * 10 + e.ph) * .07 : 0;
       if (hovE === e || tacticalEnemySelected(e)) { ctx.strokeStyle = colors.red; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(e.x, e.y, s / 2 + 6, 0, Math.PI * 2); ctx.stroke(); }
       sprite(enemySprite(e), e.x - (!motionPreference.matches && e.lunge > 0 ? e.lunge / .12 * 6 : 0), e.y + walk, e.kind === 'jin' ? s * 1.15 : s, { flash:e.flash > 0, rot, frame:pose.frame });
+      if(e.boss){ctx.save();ctx.font='700 10px Rubik, sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';const label=enemyDisplayName(e),tw=ctx.measureText(label).width+10;ctx.fillStyle='#111821e8';ctx.fillRect(e.x-tw/2,e.y-s/2-22,tw,13);ctx.fillStyle=e.bossId==='huntsman'?'#a7d7aa':e.bossId==='crusader'?'#ffd18a':'#c9d3e8';ctx.fillText(label,e.x,e.y-s/2-15);ctx.restore();}
       if (e.kind === 'ant') { ctx.fillStyle = colors.m; ctx.globalAlpha = .5 + .5 * Math.sin(t * 20 + e.ph); ctx.beginPath(); ctx.arc(e.x - s * .34, e.y - s * .45 + walk, 3, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1; }
       if (e.root > 0) { ctx.strokeStyle = colors.leaf; ctx.lineWidth = 3; ctx.strokeRect(e.x - s / 2 - 2, e.y - s / 2 - 2, s + 4, s + 4); }
       bar(e.x - e.r, e.y - s / 2 - 6, e.r * 2, 5, e.hp / e.maxHp, colors.red);
@@ -204,7 +205,45 @@ function drawV18Field(W){
  for(let i=0;i<W*1.2;i++){let x=42+rnd()*(W-42),y=rnd()*WORLD_H;if(y>py-8&&y<py+77)continue;rect(x,y,2,3,rnd()<.5?'#354c32':'#98a05d');if(rnd()<.08)rect(x+2,y,2,2,'#c9aa68');}
  }ctx.drawImage(bgCache,0,0);
 }
-function drawInkBackdrop(W){if(!battlefieldArt){drawV18Field(W);return;}ctx.save();ctx.imageSmoothingEnabled=false;ctx.drawImage(battlefieldArt,0,0,W,WORLD_H);ctx.restore();}
+/* Forest has its own deterministic raster, built once per logical width.
+   No valley backdrop is used here. Combat geometry stays unchanged. */
+let forestFieldCache=null,forestFieldWidth=0;
+function drawForestBackdrop(W){
+ const width=Math.ceil(W);
+ if(!forestFieldCache||forestFieldWidth!==width){
+  forestFieldWidth=width;forestFieldCache=inkCanvas(width,WORLD_H);const g=forestFieldCache.getContext('2d');
+  let seed=2097;const rand=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
+  const rect=(x,y,w,h,c)=>{g.fillStyle=c;g.fillRect(Math.round(x),Math.round(y),w,h);};
+  const poly=(points,c)=>{g.fillStyle=c;g.beginPath();points.forEach(([x,y],i)=>i?g.lineTo(x,y):g.moveTo(x,y));g.closePath();g.fill();};
+  rect(0,0,width,WORLD_H,'#263a2b');
+  const moss=['#263a2b','#2c4030','#314633','#354933','#293d2c','#3d4d32'];
+  for(let y=0;y<WORLD_H;y+=6)for(let x=0;x<width;x+=6){rect(x,y,6,6,moss[Math.floor(rand()*moss.length)]);if(rand()<.24)rect(x+1,y+1,2,2,'#526047');}
+  // A winding earthen path, unlike the straight stone road of the Valley.
+  const pathY=x=>WORLD_H*.5+Math.sin(x/width*Math.PI*2)*27+Math.sin(x/width*Math.PI*4)*9;
+  const track=(color,lineWidth)=>{g.beginPath();for(let x=0;x<=width+12;x+=12){const y=pathY(x);x===0?g.moveTo(x,y):g.lineTo(x,y);}g.strokeStyle=color;g.lineWidth=lineWidth;g.lineCap='round';g.lineJoin='round';g.stroke();};
+  track('#1c2a24',82);track('#524e3d',72);track('#68604a',59);track('#777057',43);
+  for(let i=0;i<width*1.8;i++){const x=rand()*width,y=pathY(x)+(rand()-.5)*58;rect(x,y,2+rand()*4,1+rand()*2,rand()<.5?'#4b473b':'#8c8060');}
+  // Low moss, roots, fungi and stones make both flanks readable.
+  for(let i=0;i<width*.65;i++){const x=45+rand()*Math.max(1,width-45),y=rand()*WORLD_H;if(Math.abs(y-pathY(x))<43)continue;const c=rand();if(c<.7){rect(x,y,3,2,'#64734a');rect(x+2,y-2,2,5,'#3c5639');}else if(c<.93){rect(x,y,6,4,'#303f39');rect(x+1,y,4,1,'#7c8570');}else{rect(x,y,2,5,'#c6a477');rect(x-2,y,6,2,'#9d7254');}}
+  function tree(x,y,k){
+   g.save();g.translate(x,y);g.scale(k,k);
+   g.fillStyle='#0f211d';g.beginPath();g.ellipse(0,7,24,10,0,0,Math.PI*2);g.fill();
+   poly([[-8,10],[-5,-18],[-12,-39],[-5,-41],[3,-23],[10,-49],[15,-48],[9,-15],[7,10],[16,15],[0,12],[-17,15]],'#302d24');
+   poly([[-3,9],[0,-17],[4,-23],[5,10]],'#716044');
+   for(const [dx,dy,rad] of [[-18,-31,15],[15,-37,18],[0,-50,20],[-2,-28,20]]){
+    g.fillStyle='#142e25';g.beginPath();g.arc(dx,dy,rad,0,Math.PI*2);g.fill();
+    g.fillStyle='#284c36';g.beginPath();g.arc(dx-3,dy-4,rad*.72,0,Math.PI*2);g.fill();
+    g.fillStyle='#385a3d';g.beginPath();g.arc(dx-5,dy-7,rad*.4,0,Math.PI*2);g.fill();
+   }g.restore();
+  }
+  for(let x=65;x<width+35;x+=47){tree(x+rand()*14,18+rand()*12,.85+rand()*.38);tree(x+18+rand()*8,WORLD_H+17+rand()*7,.8+rand()*.24);}
+  // Tangled silhouettes in the far corners. Do not obstruct units or input.
+  const edge=g.createLinearGradient(0,0,0,WORLD_H);edge.addColorStop(0,'#0a191a88');edge.addColorStop(.23,'#0a191a00');edge.addColorStop(.77,'#0a191a00');edge.addColorStop(1,'#0a191a88');g.fillStyle=edge;g.fillRect(0,0,width,WORLD_H);
+  const mist=g.createLinearGradient(0,0,width,0);mist.addColorStop(0,'#8eab9222');mist.addColorStop(.4,'#8eab9200');mist.addColorStop(1,'#8eab9218');g.fillStyle=mist;g.fillRect(0,0,width,WORLD_H);
+ }
+ ctx.save();ctx.imageSmoothingEnabled=false;ctx.drawImage(forestFieldCache,0,0,W,WORLD_H);ctx.restore();
+}
+function drawInkBackdrop(W){if(biomeDef(S).backdrop==='forest'){drawForestBackdrop(W);return;}if(!battlefieldArt){drawV18Field(W);return;}ctx.save();ctx.imageSmoothingEnabled=false;ctx.drawImage(battlefieldArt,0,0,W,WORLD_H);ctx.restore();}
 function drawInkShot(s,t){
  ctx.save();ctx.translate(Math.round(s.x),Math.round(s.y));ctx.rotate(s.ang||0);
  const pal=HYBRID.palette[s.k==='fire'?'fire':'orb'];
