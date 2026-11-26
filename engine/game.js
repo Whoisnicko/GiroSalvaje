@@ -294,7 +294,7 @@ function rollWave(w){
     const k = pickKind(W.table), K = KIND[k];
     return { kind:k, hp:W.hp * K.hp, dmg:W.dmg * K.dmg, sp:rnd(.85, 1.15) * W.sp * K.sp, r:K.r, range:K.range || 0, armor:K.armor ? W.armor : 0 };
   });
-  if (W.boss) q.splice(Math.floor(W.n / 2), 0, { kind:'com', hp:W.hp * KIND.com.hp, dmg:W.dmg * KIND.com.dmg, sp:W.sp * KIND.com.sp, r:22, boss:true, armor:W.armor });
+  if (W.boss) q.splice(Math.floor(W.n / 2), 0, bossStamp({ kind:'com', hp:W.hp * KIND.com.hp, dmg:W.dmg * KIND.com.dmg, sp:W.sp * KIND.com.sp, r:22, boss:true, armor:W.armor },w));
   return q;
 }
 const HUM = { hp:20, grow:1.46, dmg:6.5, dmgW:1.95 }; // fuerza de los humans (ajustada con partidas simuladas)
@@ -676,7 +676,8 @@ function startFight(){
   S.queue = S.nextQueue.map(q => ({ ...q })); S.curQueue = S.nextQueue;
   S.queue.forEach(q => S.seenKinds.add(q.kind));
   S.spawnT = 0;
-  setResult(`Wave ${S.wave}${W.boss ? ' · COMMANDER' : ''}`, heroUsesMagic(S)?'Your monsters fight automatically. Time your cards carefully.':'Press Q to deploy the Warlord. WASD / arrows to move; basic attacks are automatic.');
+  const incomingBoss=S.queue.find(q=>q.boss);
+  setResult(`Wave ${S.wave}${incomingBoss ? ' · '+enemyDisplayName(incomingBoss).toUpperCase() : ''}`, heroUsesMagic(S)?'Your monsters fight automatically. Time your cards carefully.':'Press Q to deploy the Warlord. WASD / arrows to move; basic attacks are automatic.');
   $('#coach').hidden = true;
   sfx('horn'); renderUI(); tip('cards');
 }
@@ -769,6 +770,7 @@ function update(dt){
     e.lunge = Math.max(0, (e.lunge || 0) - dt);
     heroAdvanceKnockback(e,dt,Wd);
     if (e.kbv > 1) { const nx = e.x + e.kbv * dt; e.x = nx; e.kbv *= Math.pow(.002, dt); }
+    if (bossAdvance(e,dt)) continue;
     let sp = spellEnemyRooted(e) ? 0 : e.sp * spellEnemySpeedFactor(e);
 
     const forcedHero=martialTaunted(e)?S.hero:null;
@@ -1244,7 +1246,7 @@ function restore(v){
  s.artifacts=Array.isArray(s.artifacts)?[...new Set(s.artifacts.filter(id=>Object.hasOwn(SHOP_ARTIFACTS,id)))]:[];
  for(const u of [...s.units,...s.bench.filter(Boolean)])if(!BASE[u.type]||!Number.isFinite(u.x)||!Number.isFinite(u.hp))throw Error('Invalid unit');
  for(const u of [...s.units,...s.bench.filter(Boolean)])infusionNormalize(u);
- for(const e of s.enemies)if(!KIND[e.kind]||!Number.isFinite(e.hp))throw Error('Invalid enemy');
+ for(const e of s.enemies){if(!KIND[e.kind]||!Number.isFinite(e.hp))throw Error('Invalid enemy');bossNormalize(e);}
  if(!Array.isArray(s.hand)||!Array.isArray(s.deck)||!s.hand.every(c=>Object.hasOwn(CARDS,c.id)||RETIRED_TERRAIN_CARDS.has(c.id))||!s.deck.every(id=>Object.hasOwn(CARDS,id)||RETIRED_TERRAIN_CARDS.has(id)))throw Error('Invalid cards');
  // Preserve hand-to-deck indices when removing disabled terrain cards.
  const indexMap=new Map(),activeDeck=[];
