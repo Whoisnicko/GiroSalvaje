@@ -36,6 +36,7 @@ function tacticalHide(){const p=$('#unitInspector');if(p)p.hidden=true;}
 function tacticalClose(){if(bestiaryDialog().open){closeBestiary();return true;}if(!S)return false;tacReset();const p=$('#unitInspector');if(!S.sel&&!tacEnemy&&p.hidden)return false;S.sel=null;tacEnemy=null;tacSuppressed=true;tacticalHide();return true;}
 function tacticalModel(e){
  const enemy=S.enemies.includes(e),rows=[],tags=[],add=(icon,label,value)=>rows.push({icon,label,value:String(value)});
+ if(ashActive()&&e.ashBuffUntil>S.fightT)tags.push('Ember blessing +25%');if(ashActive()&&e.ashBurnUntil>S.fightT)tags.push('Burning');
  if(frostFrozen(e))tags.push('Glacial Prison');else if(frostChill(e)<1)tags.push('Chilled');
  const hp=Math.max(0,e.hp),max=Math.max(1,e.maxHp??e.hp);
  let name,portrait,role,note,stars='',combat;
@@ -43,8 +44,8 @@ function tacticalModel(e){
   const k=KIND[e.kind],cleric=e.kind==='cle',arson=e.kind==='ant',ranged=enemyRanged(e);
   name=enemyDisplayName(e);portrait=enemySprite(e);role=e.boss?'Boss · Human':regionalDef(e)?'Regional · '+(ranged?'Ranged':'Scout'):cleric?'Support · Human':ranged?'Ranged · Human':arson?'Siege · Human':'Melee · Human';note=enemyDisplayNote(e);
   if(cleric)note+=' Heals '+tacNum(5+S.wave*1.5)+' HP every 2.5s while supporting.';
-  add('sword','Attack',tacNum(e.dmg));add('clock','Attack interval',cleric?'1s melee / 2.5s heal':ranged?'1.6 s':'1 s');add('target','Reach',ranged?tacNum(frostRange(e,e.range),0)+' px':cleric?'100 px heal':'Contact');
-  const rate=ranged?1/1.6:1;combat={damage:e.dmg,attackRate:rate,dps:e.dmg*rate,range:ranged?frostRange(e,e.range):cleric?100:'Melee',armor:e.armor||0};
+  add('sword','Attack',tacNum(ashEnemyAttack(e)));add('clock','Attack interval',cleric?'1s melee / 2.5s heal':ranged?'1.6 s':'1 s');add('target','Reach',ranged?tacNum(frostRange(e,e.range),0)+' px':cleric?'100 px heal':'Contact');
+  const rate=ranged?1/1.6:1;combat={damage:ashEnemyAttack(e),attackRate:rate,dps:ashEnemyAttack(e)*rate,range:ranged?frostRange(e,e.range):cleric?100:'Melee',armor:e.armor||0};
   const sp=e.sp*spellEnemySpeedFactor(e)*(S.charge?1.5:1)*biomeWalkFactor(e);add('boot','Move speed',tacNum(spellEnemyRooted(e)?0:sp,0)+' px/s');add('shield','Armor',tacNum(e.armor||0));
   if(regionalDef(e)){tags.push(BIOME_DATA[regionalDef(e).region].name);if(regionalDef(e).brambleImmune)tags.push('Brambles immune');if(regionalDef(e).seekCover)tags.push('Cover seeker');if(regionalDef(e).ignoreCover)tags.push('Pierces Cover');if(regionalDef(e).slowResistance)tags.push('Slow resistant');if(regionalDef(e).blizzardImmune)tags.push('Blizzard immune');if(regionalDef(e).pulseRadius)tags.push('Chill aura');if(regionalDef(e).fireGroundImmune)tags.push('Burning ground immune');if(regionalDef(e).burnDuration)tags.push('Incendiary burn');if(regionalDef(e).buffRadius)tags.push('Attack aura');}
   if(arson)add('flame','Altar damage',tacNum(e.dmg*3));if(spellTimeLeft(e.arcaneFreezeUntil)>0)tags.push('Frozen '+tacNum(spellTimeLeft(e.arcaneFreezeUntil))+'s');if(spellTimeLeft(e.arcaneAfterSlowUntil)>0&&spellTimeLeft(e.arcaneGraspUntil)<=0)tags.push('Grave slow '+tacNum(spellTimeLeft(e.arcaneAfterSlowUntil))+'s');if(e.root>0)tags.push('Rooted '+tacNum(e.root)+'s');if(spellTimeLeft(e.arcaneGraspUntil)>0)tags.push("Death's Grasp "+tacNum(spellTimeLeft(e.arcaneGraspUntil))+'s');if(spellTimeLeft(e.arcaneFrostUntil)>0)tags.push('Frost Nova '+tacNum(spellTimeLeft(e.arcaneFrostUntil))+'s');if(spellHarvestActive(e))tags.push('Soul Harvest '+tacNum(spellTimeLeft(e.arcaneHarvestUntil))+'s');if(S.buff.slow>0)tags.push('Mist');if(S.charge)tags.push('Final charge');if(e.boss)tags.push(e.bossCast?'Commander · '+bossDef(e)?.ability:bossDef(e)?'Commander · '+bossDef(e).name:'Commander');tags.push('Invader');

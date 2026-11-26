@@ -807,7 +807,7 @@ function update(dt){
         if (e.cd <= 0) {
           e.cd = 1.6; const dmg = ashEnemyAttack(e),d=regionalDef(e),ignoreCover=!!d?.ignoreCover,burnDuration=d?.burnDuration||0,burnRate=d?.burnRate||0;
           if (tgt) S.shots.push({ k:'bolt', x:e.x - 8, y:e.y, tgt, tx:tgt.x, ty:tgt.y, sp:420, dmg,ignoreCover,burnDuration,burnRate });
-          else S.shots.push({ k:'bolt', x:e.x - 8, y:e.y, altar:true, tx:WALL_X - 6, ty:e.y, sp:420, dmg,ignoreCover });
+          else S.shots.push({ k:'bolt', x:e.x - 8, y:e.y, altar:true, tx:WALL_X - 6, ty:e.y, sp:420, dmg,ignoreCover,burnDuration,burnRate });
           e.lunge = .12; sfx('bolt');
         }
       } else if(forcedHero){const d=dist(e,forcedHero);if(d>0)moveHuman(e,(forcedHero.x-e.x)/d*sp*dt,(forcedHero.y-e.y)/d*sp*dt,dt);}else moveHuman(e, -sp * dt, 0,dt);
@@ -1256,6 +1256,7 @@ function persist(){if(sandboxActive()||!S||spinning||S.drag||S.pendingMerge||S.p
 function restore(v){
  v=CampaignSave.decode(v);
  const s=JSON.parse(JSON.stringify(v.state));s.biomeId=s.campaign?.maxWaves===5?biomeId(s):'valley';
+ s.ashPatches=biomeId(s)==='ashen'&&s.phase==='fight'&&Array.isArray(s.ashPatches)?s.ashPatches.filter(p=>p&&[p.x,p.y,p.r,p.until].every(Number.isFinite)&&p.r>0&&p.r<=65&&p.until>s.fightT&&p.until<=s.fightT+5).slice(0,8):[];s.ashGroundNext=Number.isFinite(s.ashGroundNext)&&s.ashGroundNext>s.fightT?s.ashGroundNext:Math.floor(s.fightT||0)+1;
  s.hero=heroNormalize(s,v.worldWidth);heroCancelAim(false);heroClearKeys();
  s.artifacts=Array.isArray(s.artifacts)?[...new Set(s.artifacts.filter(id=>Object.hasOwn(SHOP_ARTIFACTS,id)))]:[];
  for(const u of [...s.units,...s.bench.filter(Boolean)])if(!BASE[u.type]||!Number.isFinite(u.x)||!Number.isFinite(u.hp))throw Error('Invalid unit');

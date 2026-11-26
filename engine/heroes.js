@@ -25,7 +25,7 @@ function heroNormalize(state,width=420){
  if(old.status==='active'&&Number.isFinite(old.x)&&Number.isFinite(old.y)&&Number.isFinite(old.hp)){
   h.status=old.hp>0?'active':'fallen';h.down=h.status==='fallen';h.hp=Math.max(0,Math.min(d.maxHp,old.hp*(Number.isFinite(old.maxHp)&&old.maxHp>0?d.maxHp/old.maxHp:1)));
   h.x=Math.max(WALL_X+d.radius,Math.min(Math.max(420,width)-d.radius,old.x));h.y=Math.max(d.radius,Math.min(WORLD_H-d.radius,old.y));
-  h.cd=Number.isFinite(old.cd)?Math.max(0,Math.min(d.attackInterval,old.cd)):0;h.facing=old.facing===-1?-1:1;h.martial=martialNormalize(old.martial,h.facing,h);if(biomeId(state)==='frozen')for(const k of ['frostUntil','frostChillUntil','frostChillStrength','iceVX','iceVY'])if(Number.isFinite(old[k]))h[k]=old[k];if(h.down){h.martial.storm=null;h.martial.charge=null;}
+  h.cd=Number.isFinite(old.cd)?Math.max(0,Math.min(d.attackInterval,old.cd)):0;h.facing=old.facing===-1?-1:1;h.martial=martialNormalize(old.martial,h.facing,h);if(biomeId(state)==='frozen')for(const k of ['frostUntil','frostChillUntil','frostChillStrength','iceVX','iceVY'])if(Number.isFinite(old[k]))h[k]=old[k];if(biomeId(state)==='ashen')for(const k of ['ashBurnUntil','ashBurnNext','ashBurnRate'])if(Number.isFinite(old[k]))h[k]=old[k];if(h.down){h.martial.storm=null;h.martial.charge=null;}
  }
  return h;
 }

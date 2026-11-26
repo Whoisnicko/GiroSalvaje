@@ -119,7 +119,7 @@ const ASH_RULES=Object.freeze({first:12,period:18,duration:5,projectileFactor:.7
 function ashActive(state=S){return biomeId(state)==='ashen'&&state.phase==='fight';}
 function ashCloud(state=S){const t=state.fightT||0;return ashActive(state)&&t>=ASH_RULES.first&&(t-ASH_RULES.first)%ASH_RULES.period<ASH_RULES.duration;}
 function ashShotTrack(shot,state=S){if(ashCloud(state))shot.ashCrossed=true;}
-function ashShotFactor(shot){return shot.ashCrossed?ASH_RULES.projectileFactor:1;}
+function ashShotFactor(shot){return shot.ashCrossed&&ashActive()?ASH_RULES.projectileFactor:1;}
 function ashEnemyAttack(e,state=S){return e.dmg*(ashActive(state)&&e.ashBuffUntil>state.fightT?(e.ashBuffFactor||1):1);}
 function ashResetUnit(u){delete u.ashBurnUntil;delete u.ashBurnNext;delete u.ashBurnRate;delete u.ashBuffUntil;delete u.ashBuffFactor;delete u.ashPulseAt;}
 function ashResetBattle(){S.ashPatches=[];S.ashGroundNext=1;for(const u of [...S.units,...S.bench.filter(Boolean),S.hero].filter(Boolean))ashResetUnit(u);}
