@@ -1,0 +1,7 @@
+# Stop Humans — v22-alpha.7.48 — Replayability II-A
+
+2026-11-26. Replayability I v7.47 approved by player: 16/16 checks (8 difficulty, 3 contextual navigation, 5 persistence/regressions). Previous 7.46 13/13 and all historical documentation preserved.
+
+Regional challenges optional and independent of tier: Valley >=70% altar health on five-wave victory; Forest no guardian contacted by Hunter’s Mark (even when shielded); Frozen no guardian actually frozen by Glacial Prison; Ashen no guardian killed by permanent/residual Burning Ground (not projectile burn); Cathedral zero successful Hierophant revivals. Deployed Warlord is not a guardian for these checks. Failure persists in campaign metadata; older runs lack proof and cannot earn seals. Separate permanent seal list merges monotonically with imports; Classic/Sandbox cannot earn seals. Bronze/Silver/Gold status derives from existing mastery. Map and victory show textual status only; no balance or gameplay rewards changed.
+
+Original approved PNG sheets gothic_fantasy_ui_button_set.png and stop_humans_mastery_seal_reward_board.png were not found in GitHub, Drive or accessible Library search. Art, luminous VFX, and gothic button integration remain II-B; no invented replacement artwork. 113 assertions passed executing six repository test harnesses with in-memory filesystem/assertion adapters in V8; full Node/browser/deployment validation pending.

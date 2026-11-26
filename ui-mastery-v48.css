@@ -1,0 +1,7 @@
+/* Accessible text-only mastery badges until the approved art sheets are recovered. */
+.cm-challenge{border:1px solid var(--accent,#d5b87a);padding:10px;border-radius:6px;background:#17151b;margin:8px 0;color:#f2e5d3}
+.cm-challenge p{margin:6px 0 3px}.cm-challenge small{display:block;color:#c9c0b6;line-height:1.4}
+.cm-mastery-medals{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+.cm-mastery-medal{display:block;font-size:11px;text-align:center;padding:5px 2px;border:1px solid currentColor;border-radius:3px}
+.cm-mastery-medal.locked{color:#a59f9b;background:#242027}.cm-mastery-medal.tier-1.earned{color:#e7ad7f}.cm-mastery-medal.tier-2.earned{color:#d2e1ee}.cm-mastery-medal.tier-3.earned{color:#f5cf72}
+.cm-challenge-result{padding:8px;border:1px solid currentColor;border-radius:5px}.cm-challenge-result.earned{color:#e6c77e}.cm-challenge-result.missed{color:#e9b7aa}

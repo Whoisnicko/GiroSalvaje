@@ -78,8 +78,9 @@ function bossAdvance(e,dt){
   delete e.bossCast;e.bossCooldown=cooldown;e.cd=Math.max(e.cd||0,.4);
   for(const u of bossTargets()){
    if(Math.hypot(u.x-c.x,u.y-c.y)>d.radius)continue;
-   const dealt=heroDamageTarget(u,ashEnemyAttack(e)*d.damageFactor*(d.id==='huntsman'?biomeProjectileFactor(u):1));
-   if(d.freezeDuration&&u.hp>0&&!u.down&&!(heroIsTarget(u)&&martialInvulnerable())){u.frostUntil=Math.max(u.frostUntil||0,S.fightT+d.freezeDuration);frostClearMotion(u);floatText(u.x,u.y-32,'Frozen','soul',11);}
+   if(d.id==='huntsman'&&typeof challengeEvent==='function'&&S.units?.includes(u))challengeEvent('hunterMark');
+    const dealt=heroDamageTarget(u,ashEnemyAttack(e)*d.damageFactor*(d.id==='huntsman'?biomeProjectileFactor(u):1));
+   if(d.freezeDuration&&u.hp>0&&!u.down&&!(heroIsTarget(u)&&martialInvulnerable())){if(typeof challengeEvent==='function'&&S.units?.includes(u))challengeEvent('glacialPrison');u.frostUntil=Math.max(u.frostUntil||0,S.fightT+d.freezeDuration);frostClearMotion(u);floatText(u.x,u.y-32,'Frozen','soul',11);}
    if(dealt>0){u.flash=.15;feelNumber(u.x,u.y-radius(u)-10,dealt,'ally');feelImpact(u.x,u.y,'steel',u,0,false);}
   }
   if(d.burnGround&&biomeId(S)==='ashen'){S.ashPatches=(S.ashPatches||[]).filter(p=>p.until>S.fightT);S.ashPatches.push({x:c.x,y:c.y,r:d.radius,until:S.fightT+d.burnGround});}
@@ -133,7 +134,7 @@ function catShieldHP(e,state=S){return catActive(state)&&e.catShieldUntil>state.
 function catMitigate(e,d,o,state=S){if(!catActive(state)||d<=0)return d;if(o.directAbility)d*=1-(regionalDef(e)?.directResist||0);const blocked=Math.min(d,catShieldHP(e,state));if(blocked>0)e.catShield=Math.max(0,e.catShield-blocked);return d-blocked;}
 function catAdvance(){if(!catActive())return;const now=S.fightT;S.catCorpses=(S.catCorpses||[]).filter(c=>c.until>now);if(now>=(S.catTollNext||20)){S.catTollNext=(Math.floor(now/20)+1)*20;for(const e of S.enemies)if(e.hp>0){e.catShield=e.maxHp*CAT_RULES.shieldFactor;e.catShieldUntil=now+CAT_RULES.shieldDuration;}bigMsg('DIVINE TOLL · HUMAN SHIELDS');sfx('horn');}}
 function catRememberCorpse(e){if(!catActive()||e.boss||e.bossId||e.kind==='divineHierophant'||e.catResurrected)return;const c={kind:e.kind,x:e.x,y:e.y,maxHp:e.maxHp,dmg:e.dmg,sp:e.sp,r:e.r,range:e.range,armor:e.armor,until:S.fightT+CAT_RULES.corpseDuration};S.catCorpses=(S.catCorpses||[]).filter(q=>q.until>S.fightT);S.catCorpses.push(c);if(S.catCorpses.length>60)S.catCorpses.shift();}
-function catRevive(e){const d=regionalDef(e);if(!catActive()||!d?.reviveRadius||e.catReviveUsed||e.hp<=0||spellEnemyRooted(e))return false;const corpses=S.catCorpses||[];let best=-1,dist=d.reviveRadius;for(let i=0;i<corpses.length;i++){const c=corpses[i],n=Math.hypot(c.x-e.x,c.y-e.y);if(c.until>S.fightT&&n<=dist){dist=n;best=i;}}if(best<0)return false;const {until,...c}=corpses.splice(best,1)[0];e.catReviveUsed=true;S.enemies.push({...c,hp:c.maxHp*d.reviveFactor,cd:.3,flash:0,root:0,ph:0,catResurrected:true});S.fx.push({k:'ring',x:c.x,y:c.y,r:32,c:'gold',t:.7,T:.7});floatText(c.x,c.y-25,'Resurrected','gold',11);sfx('raise');return true;}
+function catRevive(e){const d=regionalDef(e);if(!catActive()||!d?.reviveRadius||e.catReviveUsed||e.hp<=0||spellEnemyRooted(e))return false;const corpses=S.catCorpses||[];let best=-1,dist=d.reviveRadius;for(let i=0;i<corpses.length;i++){const c=corpses[i],n=Math.hypot(c.x-e.x,c.y-e.y);if(c.until>S.fightT&&n<=dist){dist=n;best=i;}}if(best<0)return false;const {until,...c}=corpses.splice(best,1)[0];e.catReviveUsed=true;if(typeof challengeEvent==='function')challengeEvent('resurrection');S.enemies.push({...c,hp:c.maxHp*d.reviveFactor,cd:.3,flash:0,root:0,ph:0,catResurrected:true});S.fx.push({k:'ring',x:c.x,y:c.y,r:32,c:'gold',t:.7,T:.7});floatText(c.x,c.y-25,'Resurrected','gold',11);sfx('raise');return true;}
 const ASHEN_ZONES=Object.freeze([
  Object.freeze({kind:'burning',x:.28,y:.43,rx:.09,ry:19}),
  Object.freeze({kind:'burning',x:.50,y:.68,rx:.09,ry:21}),
@@ -152,7 +153,7 @@ function ashPriestPulse(e){const d=regionalDef(e);if(!ashActive()||!d?.buffRadiu
 function ashGroundAt(u,state=S,W){return biomeContains(u,'burning',state,W)||(state.ashPatches||[]).some(p=>p.until>state.fightT&&Math.hypot(u.x-p.x,u.y-p.y)<=p.r);}
 function ashDamage(u,amount,enemy){if(!(amount>0)||u.hp<=0||u.down)return;if(enemy){damage(u,amount,{quiet:true,pierce:true});}else{const dealt=heroDamageTarget(u,amount);if(dealt>0)feelNumber(u.x,u.y-radius(u)-10,dealt,'ally');}}
 function ashAdvance(W){if(!ashActive())return;const now=S.fightT;S.ashPatches=(S.ashPatches||[]).filter(p=>p.until>now);const ground=now>=(S.ashGroundNext||1);if(ground)S.ashGroundNext=Math.floor(now)+1;
- for(const u of heroTargets()){if(u.hp<=0||u.down)continue;if(ground&&ashGroundAt(u,S,W))ashDamage(u,u.maxHp*ASH_RULES.groundRate,false);if(u.ashBurnNext<=now&&u.ashBurnNext<=u.ashBurnUntil+1e-6){ashDamage(u,u.maxHp*(u.ashBurnRate||0),false);u.ashBurnNext+=1;}if(u.ashBurnUntil<now&&u.ashBurnNext>u.ashBurnUntil){delete u.ashBurnUntil;delete u.ashBurnNext;delete u.ashBurnRate;}}
+ for(const u of heroTargets()){if(u.hp<=0||u.down)continue;if(ground&&ashGroundAt(u,S,W)){ashDamage(u,u.maxHp*ASH_RULES.groundRate,false);if((u.hp<=0||u.down)&&typeof challengeEvent==='function'&&S.units?.includes(u))challengeEvent('burningGroundDeath');}if(u.ashBurnNext<=now&&u.ashBurnNext<=u.ashBurnUntil+1e-6){ashDamage(u,u.maxHp*(u.ashBurnRate||0),false);u.ashBurnNext+=1;}if(u.ashBurnUntil<now&&u.ashBurnNext>u.ashBurnUntil){delete u.ashBurnUntil;delete u.ashBurnNext;delete u.ashBurnRate;}}
  if(ground)for(const e of S.enemies){if(e.hp>0&&!regionalDef(e)?.fireGroundImmune&&ashGroundAt(e,S,W))ashDamage(e,e.maxHp*ASH_RULES.groundRate,true);}
 }
 const BLIZZARD=Object.freeze({first:12,period:18,duration:5,rangeFactor:.7});
