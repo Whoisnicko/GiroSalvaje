@@ -28,7 +28,7 @@ function campaignProfileNormalize(v){
  if(!v||v.version!==1||!Array.isArray(v.baseDeck)||!Array.isArray(v.claims))throw Error('Invalid permanent profile');
  const baseDeck=v.baseDeck.filter(campaignCardId);if(!baseDeck.length)throw Error('Empty starting deck');
  const claims=new Map();for(const r of v.claims){if(!CampaignSave.validId(r?.runId)||!campaignCardId(r?.cardId))throw Error('Invalid reward receipt');if(!claims.has(r.runId))claims.set(r.runId,{runId:r.runId,cardId:r.cardId});}
- return {version:1,baseDeck,claims:[...claims.values()]};
+ return {version:1,baseDeck,claims:[...claims.values()],forestUnlocked:v.forestUnlocked===true};
 }
 function campaignProfileDisk(){const raw=localStorage.getItem(CAMPAIGN_PROFILE_KEY);return raw===null?null:campaignProfileNormalize(JSON.parse(raw));}
 function campaignProfileMerge(a,b){
@@ -37,12 +37,12 @@ function campaignProfileMerge(a,b){
  const baseDeck=a.baseDeck.slice(),counts=new Map(),seen=new Map();for(const id of baseDeck)counts.set(id,(counts.get(id)||0)+1);
  for(const id of b.baseDeck){const n=(seen.get(id)||0)+1;seen.set(id,n);if(n>(counts.get(id)||0))baseDeck.push(id);}
  const claims=new Map(a.claims.map(r=>[r.runId,r]));for(const r of b.claims)if(!claims.has(r.runId))claims.set(r.runId,r);
- return {version:1,baseDeck,claims:[...claims.values()]};
+ return {version:1,baseDeck,claims:[...claims.values()],forestUnlocked:a.forestUnlocked===true||b.forestUnlocked===true};
 }
 function campaignProfileApply(p){campaignProfile=p;META.deck=[...p.baseDeck,...p.claims.map(r=>r.cardId)];}
 function campaignProfileInit(){
  if(campaignProfile)return campaignProfile;
- const fallback={version:1,baseDeck:META.deck.slice(),claims:[]};
+ const fallback={version:1,baseDeck:META.deck.slice(),claims:[],forestUnlocked:false};
  try{const p=campaignProfileDisk();if(p)campaignProfileApply(p);else{localStorage.setItem(CAMPAIGN_PROFILE_KEY,JSON.stringify(fallback));campaignProfileApply(fallback);}campaignProfileIssue=false;}
  catch(e){campaignProfileIssue=true;campaignProfileApply(fallback);}
  return campaignProfile;
