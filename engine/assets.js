@@ -12,7 +12,8 @@ function atlasFrame(src,state,f,name){
 }
 const FULL_BATTLEFIELD_ART='assets/battlefield-full-v19.webp';
 const FOREST_BATTLEFIELD_ART='assets/battlefield-cursed-forest.svg?v=22a7p31';
-let battlefieldArt=null,forestBattlefieldArt=null;
+const FROZEN_BATTLEFIELD_ART='assets/battlefield-frozen-v38.webp?v=22a7p38';
+let battlefieldArt=null,forestBattlefieldArt=null,frozenBattlefieldArt=null;
 // A bounded image request prevents a missing resource from blocking the menu.
 function loadArtImage(src){
  return new Promise((resolve,reject)=>{const im=new Image();const timer=setTimeout(()=>finish(false),12000);function finish(ok){clearTimeout(timer);im.onload=im.onerror=null;ok?resolve(im):reject(new Error('Artwork unavailable: '+src.slice(0,100)));}im.onload=()=>finish(true);im.onerror=()=>finish(false);im.src=src;});
@@ -24,9 +25,10 @@ function bakeForestBackdrop(image){
 }
 function assetFrame(image,sx,sy){return {image,sx,sy,width:96,height:96};}
 async function buildHybridArt(){
- const [backdrop,forest,...sheets]=await Promise.all([loadArtImage(FULL_BATTLEFIELD_ART).catch(()=>null),loadArtImage(FOREST_BATTLEFIELD_ART).catch(()=>null),...BAKED_ART.sheets.map((url,i)=>loadArtImage(url).then(im=>{if(im.width!==768||im.height%96||im.height!==(i===BAKED_ART.sheets.length-1?96:768))throw Error('Invalid sprite sheet dimensions');return im;}).catch(e=>{console.warn('Sprite sheet fallback',i,e);return null;}))]);
+ const [backdrop,forest,frozen,...sheets]=await Promise.all([loadArtImage(FULL_BATTLEFIELD_ART).catch(()=>null),loadArtImage(FOREST_BATTLEFIELD_ART).catch(()=>null),loadArtImage(FROZEN_BATTLEFIELD_ART).catch(()=>null),...BAKED_ART.sheets.map((url,i)=>loadArtImage(url).then(im=>{if(im.width!==768||im.height%96||im.height!==(i===BAKED_ART.sheets.length-1?96:768))throw Error('Invalid sprite sheet dimensions');return im;}).catch(e=>{console.warn('Sprite sheet fallback',i,e);return null;}))]);
  battlefieldArt=backdrop?.width===1100&&backdrop?.height===500?backdrop:null;
  forestBattlefieldArt=bakeForestBackdrop(forest);
+ frozenBattlefieldArt=frozen?.width===1100&&frozen?.height===500?frozen:null;
  let original=null;
  if(sheets.some(im=>!im))original=await loadArtImage(ILLUSTRATED_ATLAS).then(im=>im.width===384&&im.height===384?im:null).catch(()=>null);
  HYBRID.names.forEach((name,i)=>{
