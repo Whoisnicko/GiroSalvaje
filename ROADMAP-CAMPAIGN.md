@@ -76,3 +76,6 @@ User validated v7.32 dropdown and effects; Forest still feels slower and FPS hid
 
 ## v22-alpha.7.34 — Regional enemy pack: Cursed Forest
 Three forest-only units (Pathfinder, Forest Ranger, Forest Purifier) replace guaranteed slots without increasing wave sizes. Data-driven counts, cover-seeking ranger, Brambles immunity only for pathfinder, flaming cover-piercing bolts for purifier. Existing sprite art with P/R/F markers, Codex and Sandbox solo tests. Stats provisional. Valley and bosses unchanged. Next: validate pack, then Frozen Wasteland.
+
+## v22-alpha.7.35 — Sandbox damage clarity
+User approved all regional enemy checks but reported Huntsman not damaging targets. Real damage-path test confirmed both basic bolt and Hunter’s Mark deal damage when God mode is off and deal zero HP damage when on. Free Sandbox now starts with damage enabled; guided Academy remains protected, selected mode persists across encounters. God toggle moved to quick boss row, DAMAGE ON / IMMUNE indicator in summary. No boss balance changes. Pending browser confirmation; then Frozen Wasteland.
