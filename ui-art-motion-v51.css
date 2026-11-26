@@ -1,0 +1,7 @@
+/* Same existing pixel-edged frame across game overlays; preserve original layout and native controls. */
+#ov .panel,#ov2 .panel{border-image:url('assets/ui/frame-bronze-v19.svg') 12 stretch;border-image-width:8px}
+#ov .panel .btn,#ov2 .panel .btn,#ov .panel .go,#ov2 .panel .go{border-image:url('assets/ui/frame-bronze-v19.svg') 12 stretch;border-image-width:4px}
+#ov .panel button:focus-visible,#ov2 .panel button:focus-visible{outline:2px solid #ffe1a8;outline-offset:2px}
+#ov:not([hidden]) .panel,#ov2:not([hidden]) .panel{animation:infernal-screen-in .16s ease-out both}
+@media(prefers-reduced-motion:reduce){#ov .panel,#ov2 .panel{animation:none!important}}
+body.reduce-motion #ov .panel,body.reduce-motion #ov2 .panel{animation:none!important}

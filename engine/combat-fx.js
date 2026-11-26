@@ -42,7 +42,7 @@ function feelStep(dt){
  feelEvents=feelEvents.filter(e=>e.age<e.life);
 }
 function feelPose(entity,pose){
- if(feelReduced()||prefs.effects!=='full')return pose;
+ if(pose.still||feelReduced()||prefs.effects!=='full')return pose;
  const h=feelHold.get(entity);
  if(!h||h.until<=feelClock)return pose;
  if(h.frame===null)h.frame=pose.frame;

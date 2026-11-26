@@ -505,8 +505,8 @@ const countOf = (type, lvl) => allMine().filter(u => u.type === type && u.lvl ==
 const sellValue = u => [2, 6, 18][u.lvl - 1] * u.pile;
 function summon(type){
   const u = makeUnit(type, 1);
-  if (fieldCount() < S.maxUnits && placeNew(u)) return `+1 ${NAMES[type]}`;
-  if (toBench(u)) { setTimeout(() => tip('bench'), 300); return `+1 ${NAMES[type]} to reserve`; }
+  if (fieldCount() < S.maxUnits && placeNew(u)) {if(typeof animMark==='function')animMark(u,'summon');return `+1 ${NAMES[type]}`;}
+  if (toBench(u)) { if(typeof animMark==='function')animMark(u,'summon');setTimeout(() => tip('bench'), 300); return `+1 ${NAMES[type]} to reserve`; }
   S.gold += 3;
   return `No space: ${NAMES[type]} left 3 souls behind`;
 }
@@ -535,6 +535,7 @@ function doMerge(target, src, chosenInfusion){
   if (bi < 0) fieldUnits().forEach(o => { if (o !== nu && Math.hypot(o.x - nu.x, o.y - nu.y) < radius(o) + radius(nu) + 2) { const p = findFree(o, o.x, o.y, null); if (p) { o.x = p.x; o.y = p.y; } } });
   if (leftover > 0) { const lu = makeUnit(target.type, target.lvl); lu.pile = leftover; lu.train=train; refreshHp(lu); if (!(fieldCount() + leftover <= S.maxUnits && placeNew(lu)) && !toBench(lu)) S.gold += 3; }
   S.sel = nu;
+  if(typeof animMark==='function')animMark(nu,'fusion');
   S.fx.push({ k:'fusion', x:nu.x, y:nu.y, t:0.9, T:0.9 });
   burst(nu.x, nu.y, 'gold', 20, 160); burst(nu.x, nu.y, 'soul', 10, 110); S.shake = Math.max(S.shake, 3);
   const msg = `${NAMES[nu.type]} ${'★'.repeat(nu.lvl)}`;
@@ -845,6 +846,7 @@ function update(dt){
   const deadE = S.enemies.filter(e => e.hp <= 0);
   if (deadE.length) {
     deadE.forEach(e => {
+      if(typeof animCorpse==='function')animCorpse(e);
       if(e.catResurrected){burst(e.x,e.y,'red',10,110);feelImpact(e.x,e.y,'death');return;}
       catRememberCorpse(e);
       const bonus=spellHarvestDeath(e);
@@ -854,7 +856,7 @@ function update(dt){
       if (n) {
         const k = makeUnit('K', 1); k.temp = true; k.nl = n.lvl; refreshHp(k);
         k.x = clamp(e.x, WALL_X + 20, worldW() - 20); k.y = clamp(e.y, 20, WORLD_H - 20); k.hx = k.x; k.hy = k.y;
-        S.units.push(k); n.cd = stats('N', n.lvl, n).cd * synergyFactor(n,'raiseCooldown'); n.skels = (n.skels || 0) + 1;
+        S.units.push(k); if(typeof animMark==='function')animMark(k,'summon');n.cd = stats('N', n.lvl, n).cd * synergyFactor(n,'raiseCooldown'); n.skels = (n.skels || 0) + 1;
         S.fx.push({ k:'ring', x:k.x, y:k.y, r:30, c:'leaf', t:.6, T:.6 }); burst(k.x, k.y, 'leaf', 12, 90);
         S.fx.push({ k:'line', x1:n.x, y1:n.y, x2:k.x, y2:k.y, c:'leaf', t:.35, T:.35 });
         floatText(k.x, k.y - 24, 'Skeleton!', 'leaf', 11); sfx('raise'); tip('raise');

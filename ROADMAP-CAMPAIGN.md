@@ -124,3 +124,6 @@ Guardian training conservation, live Banshee aura, resource protection for no-ef
 
 ## v22-alpha.7.50 — Global Balance provisional lock / Advanced Animation I
 User delegates balance and defers 7.49 browser playtest to combined validation. Regional stats/economy and difficulty unchanged; Classic late HP growth 32% instead of 46% starting wave 6. Existing queue/save and progression preserved. Directional guardian poses, frozen/reduced motion, reused bronze frame and menu transitions. Art originals not substituted. Advance animation and UI integration; backlog unchanged.
+
+## v22-alpha.7.51 — Advanced Animation II
+Role-specific procedural motion using shipped artwork; visual-only summon/fusion and bounded death snapshots, shared frame for overlays. No balance or save schema changes. Targeted source checks passed, browser validation pending; next Advanced Animation III. Replayability backlog and historical validations preserved.
