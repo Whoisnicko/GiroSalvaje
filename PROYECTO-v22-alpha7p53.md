@@ -1,0 +1,5 @@
+# v22-alpha.7.53 — UI Art Integration I
+
+7.52 user playtest 7/7 OK: live version, automatic Necromancy evolution, training/infusion preservation, Warlord/Sorcerer/boss animation, no errors or fluency issue. Previous playtests and backlog retained.
+
+Champion selection displays existing Warlord combat model on a static local canvas, original six Sorcerer rune paths and existing Valley/Ashen landscape backgrounds; no fabricated Sorcerer portrait. Both original class emblems remain fallback. Shared dark metal palette, original bronze/card frames, consistent titles and buttons for secondary screens. Codex, Treasury and Sanctum reuse existing art; starting-deck cards and rune tiles now illustrated, sealed vs owned differentiated. Existing controls, focus, profile, navigation, campaign map, Dark Gate and battlefield HUD preserved by scope. No balance changes. Missing standalone gothic buttons/medals and champion portrait art remain pending, no invented replacements. 16 targeted checks in isolated JS with mock canvas, browser rendering pending. Next: UI Art Integration II (combat HUD/slots, rewards, Grimoire/Hades alignment).

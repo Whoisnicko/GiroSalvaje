@@ -172,8 +172,8 @@ function heroRender(){
 }
 
 /* Original procedural armor, cape and blade. All shapes render without remote assets. */
-function heroDraw(h,t,air=0,descending=false){
- const d=talentHeroStats(h),p=championHeroPose(h,t,descending),still=p.still,walk=p.walk,sw=p.swing,z=still?0:air;
+function heroDraw(h,t,air=0,descending=false,drawContext=ctx,preview=false){
+ const ctx=drawContext,d=preview?{maxHp:300}:talentHeroStats(h),p=preview?{still:true,walk:0,swing:0,lean:0,forward:0,cape:0,branch:null}:championHeroPose(h,t,descending),still=p.still,walk=p.walk,sw=p.swing,z=still?0:air;
  ctx.save();ctx.translate(Math.round(h.x),Math.round(h.y));ctx.fillStyle='#0a1017';ctx.globalAlpha=descending?.25:.55;ctx.beginPath();ctx.ellipse(0,17,Math.max(9,19-z*.11),5,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
  ctx.strokeStyle=p.branch||'#e4b675';ctx.lineWidth=1.3;ctx.beginPath();ctx.ellipse(0,14,20,7,0,0,Math.PI*2);ctx.stroke();
  ctx.translate(0,-z);ctx.save();ctx.scale(h.facing||1,1);ctx.translate(p.forward,-Math.abs(walk)*2);ctx.rotate(p.lean);
@@ -195,7 +195,7 @@ function heroDraw(h,t,air=0,descending=false){
  poly([[-8,-25],[-13,-31],[-14,-19],[-10,-18]],'#897d6a');poly([[8,-25],[13,-31],[14,-19],[10,-18]],'#897d6a');
  ctx.save();ctx.translate(16,3);ctx.rotate(descending?.28:-.65+sw*2.1);
  poly([[-4,-32],[0,-39],[4,-32],[5,3],[-5,3]],'#a6b1bd','#161e28');poly([[0,-37],[3,-31],[3,1],[0,1]],'#f1e7cc',null);poly([[-8,2],[-5,0],[5,0],[8,2],[7,6],[-7,6]],'#c7a269');rect(-2,6,4,10,'#4e3330');rect(-4,15,8,3,'#b39465');ctx.restore();ctx.restore();
- if(!descending){ctx.fillStyle='#15191f';ctx.fillRect(-22,-39,44,5);ctx.fillStyle='#cf624d';ctx.fillRect(-21,-38,42*Math.max(0,h.hp/d.maxHp),3);ctx.font='700 9px Georgia,serif';ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillStyle='#f3d6a2';ctx.fillText('WARLORD',0,-41);}
+ if(!descending&&!preview){ctx.fillStyle='#15191f';ctx.fillRect(-22,-39,44,5);ctx.fillStyle='#cf624d';ctx.fillRect(-21,-38,42*Math.max(0,h.hp/d.maxHp),3);ctx.font='700 9px Georgia,serif';ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillStyle='#f3d6a2';ctx.fillText('WARLORD',0,-41);}
  ctx.restore();
 }
 function heroDrawAim(){

@@ -1,0 +1,28 @@
+const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
+const read=p=>fs.readFileSync(path.join(__dirname,'..',p),'utf8');
+const source=read('engine/ui-art.js'),hero=read('engine/heroes.js'),g=read('engine/game.js'),html=read('index.html'),css=read('ui-art-integration-v53.css');
+const a=hero.indexOf('function heroDraw('),b=hero.indexOf('function heroDrawAim',a);
+const harness=`
+let drawCount=0,save=0,restore=0,fail=false,globalDraw=0;
+const no=()=>{},c=new Proxy({save(){save++},restore(){restore++},fill(){drawCount++},fillRect(){drawCount++},clearRect(){if(fail)throw Error('failed')}},{get:(o,k)=>k in o?o[k]:no,set:(o,k,v)=>(o[k]=v,true)});
+const canvas={dataset:{},hidden:true,width:154,height:140,getContext:()=>c},fallback={hidden:false},runes={dataset:{},hidden:true,innerHTML:''};
+const document={getElementById:id=>({uiWarlordPreview:canvas,uiWarlordFallback:fallback,uiSorcererRunes:runes})[id]};
+const ctx=new Proxy({},{get:()=>()=>globalDraw++}),talentHeroStats=()=>({maxHp:300}),championHeroPose=()=>({still:true,walk:0,swing:0,lean:0,forward:0,cape:0,branch:null});
+const escapeHTML=s=>String(s).replaceAll('<','&lt;').replaceAll('"','&quot;'),RUNE_DEFS=Array.from({length:6},(_,i)=>({id:'r'+i,color:'#abc',name:'Rune '+i,points:[[.1,.2],[.3,.4]]})),GOTHIC_DATA={cards:{a:'data:image/png;base64,abc'}};
+let res={};fail=true;res.failure=!uiArtChampionPreview()&&canvas.hidden&&!fallback.hidden;fail=false;
+res.preview=uiArtChampionPreview()&&drawCount>0&&!canvas.hidden&&fallback.hidden;
+res.context=globalDraw===0&&save===restore;const draws=drawCount;res.cached=!uiArtChampionPreview()&&drawCount===draws;
+res.runes=uiArtRunes()&&!runes.hidden&&(runes.innerHTML.match(/<svg /g)||[]).length===6;
+res.runeCached=!uiArtRunes();res.runePoints=uiArtRune(RUNE_DEFS[0]).includes('M10 20 L30 40');
+res.card=uiArtCard('a',{ic:'X'}).includes('data:image/png;base64,abc');
+res.fallback=uiArtCard('missing',{ic:'X'}).includes('X')&&!uiArtCard('missing',{ic:'X'}).includes('<img');
+res.escape=uiArtCard('missing',{ic:'<tag>'}).includes('&lt;tag>');
+return res;`;
+const res=new Function(hero.slice(a,b)+'\n'+source+'\n'+harness)();for(const [k,v] of Object.entries(res))assert.equal(v,true,k);
+assert.ok(html.includes('id="uiWarlordPreview"')&&html.includes('id="uiWarlordFallback"'),'preview fallback');
+assert.ok(html.indexOf('engine/ui-art.js')<html.indexOf('engine/game.js?v='),'script order');
+assert.ok(g.includes("uiArtOpen(panel)"),'screen hook');
+assert.ok(css.includes('assets/battlefield-full-v19.webp')&&css.includes('assets/battlefield-ashen-v43.webp')&&css.includes('assets/ui/card-frame-v19.png'),'existing art');
+assert.ok(!css.includes('#homeView')&&!css.includes('.wrap'),'no home/HUD selector');
+assert.ok(read('engine/sanctum.js').includes('uiArtCard(id,c)'),'collection hook');
+console.log(res);

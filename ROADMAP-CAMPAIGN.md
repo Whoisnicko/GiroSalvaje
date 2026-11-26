@@ -130,3 +130,6 @@ Role-specific procedural motion using shipped artwork; visual-only summon/fusion
 
 ## v22-alpha.7.52 — Advanced Animation III / Necromancy hotfix
 7.51 user visual validation 7/7, one separate Necromancy issue recorded. Exact two-copy stack auto-evolution on blessing and safe legacy restore. Warlord pose, Sorcerer rune release, five boss windups/release. No other balance change. Browser confirmation pending. Backlog intact. Next UI Art Integration.
+
+## v22-alpha.7.53 — UI Art Integration I
+7.52 user playtest 7/7 approved, Necromancy correction confirmed. Static Warlord combat model and original Sorcerer runes in class selection, existing art frames and palette across secondary screens, Sanctum card and spell art. No gameplay/balance change; Dark Gate/map/HUD preserved by scope; original missing PNGs still pending. Browser validation pending. Next UI Art Integration II. Backlog unchanged.

@@ -1,0 +1,35 @@
+/* Art pass I: shipped assets only. Title screen and battlefield layout untouched. */
+#front #heroSelectView{width:min(960px,100%);background:linear-gradient(145deg,#191b28,#101720 72%);padding:clamp(12px,2.4vw,26px)}
+#heroSelectView .hero-selection{gap:16px}
+#heroSelectView .hero-option{padding:12px;gap:9px;overflow:hidden;position:relative;box-sizing:border-box}
+#heroSelectView .hero-option strong{font-size:clamp(20px,2.5vw,28px)}
+#heroSelectView .ui-hero-stage{width:100%;height:clamp(130px,22vh,200px);position:relative;isolation:isolate;display:grid;place-items:center;overflow:hidden;border:1px solid #786447;background:#161b27}
+#heroSelectView .ui-hero-stage:before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(0deg,#131824 0%,#10182055 50%,#10182022),url('assets/battlefield-full-v19.webp') center/cover}
+#heroSelectView .ui-hero-martial:before{background:linear-gradient(0deg,#1c1822 0%,#261a1b66 50%,#24171433),url('assets/battlefield-ashen-v43.webp') center/cover}
+#heroSelectView .ui-hero-stage:after{content:"";position:absolute;inset:0;border:10px solid transparent;border-image:url('assets/ui/card-frame-v19.png') 22 stretch;pointer-events:none}
+#heroSelectView .hero-emblem{width:clamp(75px,12vw,115px);background:#121924dd;box-shadow:0 0 26px #000b}
+#uiWarlordPreview{width:154px;height:140px;max-width:100%;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 6px 4px #000b)}
+#heroSelectView [hidden],#sanctumView [hidden]{display:none!important}
+#heroSelectView .ui-sorcerer-runes{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));width:min(100%,234px);gap:4px}
+.ui-rune-tile{display:grid;place-items:center;aspect-ratio:1;background:#101824;border:1px solid #6b655c;color:var(--rune-color)}
+.ui-rune-tile svg{width:80%;height:80%;max-height:32px}
+#heroSelectView .hero-desc{max-width:33ch}
+#heroSelectView .hero-choose{padding:10px 4px;background:#111923;border:1px solid #826a48;box-sizing:border-box}
+#heroSelectView .hero-option:hover .hero-choose,#heroSelectView .hero-option:focus-visible .hero-choose{color:var(--hero-color);border-color:var(--hero-color)}
+#front :is(#treasuryView,#codexView,#sanctumView,#talentView,#academyView,#sandboxLaunchView,#newGameView,#settingsView,#scoresView,#creditsView,#confirmView){background:linear-gradient(150deg,#222330,#111923 62%);color:#e7decd}
+#front :is(#treasuryView,#codexView,#sanctumView,#talentView,#academyView,#sandboxLaunchView,#newGameView,#settingsView,#scoresView,#creditsView,#confirmView) .eyebrow{color:#dcb982;letter-spacing:.13em}
+#front :is(#treasuryView,#codexView,#sanctumView,#talentView) h2{color:#f4d8a5;text-shadow:0 2px #0b1018}
+#front :is(#treasuryView,#codexView,#sanctumView,#talentView) .btn{background:linear-gradient(#34313a,#171e28);color:#f0d8af}
+#front :is(#treasuryView,#codexView,#sanctumView,#talentView) .btn.primary{background:linear-gradient(#5e452e,#291e22);color:#ffe2ab}
+#codexView #codexTabs button[aria-pressed=true]{background:#23474c;color:#e0fff5}
+#front #codexContent .codex-entry,#front #sanctumView .sanctum-item,#front #treasuryGrid .treasury-item,#front #talentView .talent-branch{background:linear-gradient(145deg,#252731,#141b24);border:1px solid #796443;box-shadow:inset 0 0 0 2px #111720}
+#front #treasuryGrid .treasury-art,#front #codexView .codex-picture,.ui-collection-art{border:5px solid #846b4b;border-image:url('assets/ui/card-frame-v19.png') 22 stretch;background:radial-gradient(ellipse,#303342,#151922 72%);box-sizing:border-box}
+#front #treasuryGrid .treasury-item.unlocked .treasury-art{box-shadow:0 0 14px #ab8e4c35}
+#sanctumView .ui-collection-art{height:88px;display:grid;place-items:center;position:relative;overflow:hidden;margin-bottom:8px;color:#f2cb92;font-size:26px}
+#sanctumView .ui-collection-art img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+#sanctumView .ui-spell-art{color:var(--rune-color)}
+#sanctumView .ui-spell-art svg{width:64px;height:64px;max-width:90%}
+#sanctumView .is-sealed .ui-collection-art{filter:grayscale(.8);opacity:.72}
+#sanctumView .is-owned .ui-collection-art{box-shadow:0 0 10px #b5a07830}
+#front #talentView .talent-branch{border-top:3px solid var(--branch-color,#b08a58)}
+@media(max-width:540px){#heroSelectView .hero-selection{gap:10px}#heroSelectView .ui-hero-stage{height:132px}#heroSelectView #uiWarlordPreview{width:132px;height:120px}#heroSelectView .hero-option{padding:9px;gap:6px}#sanctumView .ui-collection-art{height:72px}}
