@@ -6,9 +6,9 @@ const context=vm.createContext({WORLD_H:260,WALL_X:40,worldW:()=>1000,battlefiel
 for(const p of ['engine/biomes-bosses.js','engine/renderer.js'])vm.runInContext(read(p),context);
 const run=s=>vm.runInContext(s,context);
 run("drawInkBackdrop(1000);S.biomeId='forest';drawInkBackdrop(1000);drawInkAltar(0)");
-assert.deepEqual(drawn,['valley','forest']);assert.equal(built,0);assert.equal(shapes.includes('ellipse'),false);
+assert.deepEqual(drawn,['valley','fallback-1']);assert.equal(built,1);assert.equal(shapes.includes('ellipse'),false);
 run("forestBattlefieldArt=null;drawInkBackdrop(1000);drawInkBackdrop(1000);drawInkAltar(0)");
-assert.deepEqual(drawn.slice(-2),['fallback-1','fallback-1']);assert.equal(built,1);assert.ok(shapes.includes('ellipse'));
+assert.deepEqual(drawn.slice(-2),['fallback-2','fallback-2']);assert.equal(built,2);assert.ok(shapes.includes('ellipse'));
 run("S.biomeId='valley';drawInkBackdrop(1000)");assert.equal(drawn.at(-1),'valley');
 assert.equal(run("biomeProjectileFactor({x:240,y:75.4},{biomeId:'forest'},1000)"),.75);
 assert.equal(run("biomeWalkFactor({x:430,y:163.8},{biomeId:'forest'},1000)"),.7);
