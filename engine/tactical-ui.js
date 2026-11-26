@@ -21,7 +21,7 @@ function tacticalWave(){
  details.hidden=!fight&&!prep;if(details.hidden)return;
  const src=fight?[...S.queue,...S.enemies.filter(e=>e.hp>0)]:(S.nextQueue||[]),groups={};
  for(const e of src)(groups[e.kind]??=[]).push(e);
- const order=['com','sol','cab','bal','cle','jin','ant'].filter(k=>groups[k]),total=src.length,initial=S.curQueue?.length||total;
+ const order=['com',...Object.keys(KIND).filter(k=>k!=='com')].filter(k=>groups[k]),total=src.length,initial=S.curQueue?.length||total;
  const html='<span class="wave-heading"><span class="wave-emblem">⚔</span><span><small>'+(fight?'BATTLE IN PROGRESS':'INCOMING INVASION')+'</small><strong>'+(fight?'Wave ':'Next wave ')+Math.min(S.wave,campaignLimit())+' <i>/ '+campaignLimit()+'</i></strong></span></span><span class="wave-count"><b>'+total+'</b><small>'+(fight?'humans remaining':'humans incoming')+'</small></span><span class="wave-types">'+order.map(k=>'<span class="wave-type'+(k==='com'?' commander':'')+'" title="'+enemyDisplayName(groups[k][0])+' ×'+groups[k].length+'">'+tacPic(enemySprite(groups[k][0]))+'<b>×'+groups[k].length+'</b><span class="sr-tactical">'+enemyDisplayName(groups[k][0])+'</span></span>').join('')+'</span>'+(fight?'<span class="wave-progress" title="Wave progress"><i style="width:'+Math.max(0,Math.min(100,100*(initial-total)/Math.max(1,initial)))+'%"></i></span>':'')+'<span class="wave-detail-label">Enemy details</span>';
  if(html!==waveMarkup){banner.innerHTML=html;waveMarkup=html;}
  const content=order.map(k=>{const es=groups[k],v=es[0],mean=es.reduce((sum,e)=>sum+e.sp,0)/es.length;return '<article class="wave-enemy">'+tacPic(enemySprite(groups[k][0]))+'<div><strong>'+enemyDisplayName(v)+' ×'+es.length+'</strong><small>HP '+tacNum(v.maxHp??v.hp,0)+' · ATK '+tacNum(v.dmg)+' · SPD '+tacNum(mean,0)+(v.armor?' · ARM '+v.armor:'')+'</small><p>'+enemyDisplayNote(v)+'</p></div></article>';}).join('')||'<p>No humans remaining.</p>';
@@ -40,11 +40,12 @@ function tacticalModel(e){
  let name,portrait,role,note,stars='',combat;
  if(enemy){
   const k=KIND[e.kind],cleric=e.kind==='cle',arson=e.kind==='ant',ranged=enemyRanged(e);
-  name=enemyDisplayName(e);portrait=enemySprite(e);role=e.boss?'Boss · Human':cleric?'Support · Human':ranged?'Ranged · Human':arson?'Siege · Human':'Melee · Human';note=enemyDisplayNote(e);
+  name=enemyDisplayName(e);portrait=enemySprite(e);role=e.boss?'Boss · Human':regionalDef(e)?'Regional · '+(ranged?'Ranged':'Scout'):cleric?'Support · Human':ranged?'Ranged · Human':arson?'Siege · Human':'Melee · Human';note=enemyDisplayNote(e);
   if(cleric)note+=' Heals '+tacNum(5+S.wave*1.5)+' HP every 2.5s while supporting.';
   add('sword','Attack',tacNum(e.dmg));add('clock','Attack interval',cleric?'1s melee / 2.5s heal':ranged?'1.6 s':'1 s');add('target','Reach',ranged?tacNum(e.range,0)+' px':cleric?'100 px heal':'Contact');
   const rate=ranged?1/1.6:1;combat={damage:e.dmg,attackRate:rate,dps:e.dmg*rate,range:ranged?e.range:cleric?100:'Melee',armor:e.armor||0};
-  const sp=e.sp*spellEnemySpeedFactor(e)*(S.charge?1.5:1);add('boot','Move speed',tacNum(spellEnemyRooted(e)?0:sp,0)+' px/s');add('shield','Armor',tacNum(e.armor||0));
+  const sp=e.sp*spellEnemySpeedFactor(e)*(S.charge?1.5:1)*biomeWalkFactor(e);add('boot','Move speed',tacNum(spellEnemyRooted(e)?0:sp,0)+' px/s');add('shield','Armor',tacNum(e.armor||0));
+  if(regionalDef(e)){tags.push('Cursed Forest');if(regionalDef(e).brambleImmune)tags.push('Brambles immune');if(regionalDef(e).seekCover)tags.push('Cover seeker');if(regionalDef(e).ignoreCover)tags.push('Pierces Cover');}
   if(arson)add('flame','Altar damage',tacNum(e.dmg*3));if(spellTimeLeft(e.arcaneFreezeUntil)>0)tags.push('Frozen '+tacNum(spellTimeLeft(e.arcaneFreezeUntil))+'s');if(spellTimeLeft(e.arcaneAfterSlowUntil)>0&&spellTimeLeft(e.arcaneGraspUntil)<=0)tags.push('Grave slow '+tacNum(spellTimeLeft(e.arcaneAfterSlowUntil))+'s');if(e.root>0)tags.push('Rooted '+tacNum(e.root)+'s');if(spellTimeLeft(e.arcaneGraspUntil)>0)tags.push("Death's Grasp "+tacNum(spellTimeLeft(e.arcaneGraspUntil))+'s');if(spellTimeLeft(e.arcaneFrostUntil)>0)tags.push('Frost Nova '+tacNum(spellTimeLeft(e.arcaneFrostUntil))+'s');if(spellHarvestActive(e))tags.push('Soul Harvest '+tacNum(spellTimeLeft(e.arcaneHarvestUntil))+'s');if(S.buff.slow>0)tags.push('Mist');if(S.charge)tags.push('Final charge');if(e.boss)tags.push(e.bossCast?'Commander · '+bossDef(e)?.ability:bossDef(e)?'Commander · '+bossDef(e).name:'Commander');tags.push('Invader');
  }else{
   const base=BASE[e.type],st=stats(e.type,e.lvl,e),bf=bansheeOn(e),bench=S.bench.includes(e),support=!!base.support;
