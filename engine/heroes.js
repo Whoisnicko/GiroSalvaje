@@ -156,7 +156,7 @@ function heroSelect(id){
  heroPending=id;
  if(id==='warlord'){talentOpen(heroChoiceMode==='sandbox'?'sandbox':'campaign');return true;}
  talentPending=talentBuild(null);
- if(heroChoiceMode==='sandbox'){sandboxEnter(id);return true;}
+ if(heroChoiceMode==='sandbox'){sandboxEnter(id,null,sandboxTakeSetup());return true;}
  if(validSave(loadedSave)){document.getElementById('confirmHeroName').textContent=HERO_CLASSES[id].name;front('confirmView');return true;}
  launchNew(id);return true;
 }
