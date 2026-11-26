@@ -97,3 +97,6 @@ v7.39 playtest 6/6; user approved three original regional designs. Transparent 2
 
 ## v22-alpha.7.41 — Frozen Wasteland Enemy Art
 v7.40 playtest 8/8; user approved all three ice designs. Extract main character poses from approved composition, exclude presentation labels and example animation strip, scale into transparent 288×96 PNG. Shared regional installer preserves Forest frames and provides optional Frozen sprites, 12-index movement/attack timing, cached white/gray variants and matching portraits. No changes to stats, attacks, terrain, progression, HUD or bosses. Next: regional boss art approval.
+
+## v22-alpha.7.42 — Regional Boss Art
+v7.41 playtest 8/8; user approved all three boss designs. Extract the three main figures from the approved illustration, remove presentation panels and decorative background; transparent 480×112 PNG atlas, 160×112 cells with body-centered anchors. Existing animation system and optional original sprite fallback. Codex and HUD share the boss sprite resolver. Classic Commander, boss mechanics, region progression, maps and balance unchanged. Next: Ashen Kingdom concept and art approval.
