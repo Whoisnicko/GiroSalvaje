@@ -1,0 +1,15 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
+const read=p=>fs.readFileSync(path.join(__dirname,'../',p),'utf8');
+const c=vm.createContext({KIND:{com:{hp:14,dmg:2.2,sp:.6,r:22}},MAX_WAVE:10,waveInfo:()=>({hp:20,dmg:10,sp:40,armor:3}),rollWave:(w,r)=>[{kind:'sol',w,r},{kind:'sol',w,r}]});
+vm.runInContext(read('engine/biomes-bosses.js')+'\n'+read('engine/sandbox.js'),c);
+const run=s=>vm.runInContext(s,c);
+assert.equal(run("sandboxEncounter('valley',1,'huntsman').region"),'forest');
+assert.equal(run("sandboxEncounter('valley',1,'huntsman').queue[0].bossId"),'huntsman');
+assert.equal(run("sandboxEncounter('forest',5,'crusader').region"),'valley');
+assert.equal(run("sandboxEncounter('forest',5,'crusader').queue.length"),1);
+assert.equal(run("sandboxEncounter('forest',1,'classic').w"),10);
+assert.equal(run("sandboxEncounter('forest',1,'classic').queue[0].bossId"),undefined);
+assert.equal(run("sandboxEncounter('forest',10).w"),5);
+assert.equal(run("sandboxEncounter('valley',3).queue.length"),2);
+assert.equal(run("sandboxEncounter('missing',1)"),null);
+console.log('Sandbox director: boss routing, wave limits, boss-only queues and validation OK');
