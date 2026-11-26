@@ -123,7 +123,7 @@ function renderSandbox(){
  sbEl('sbLoaded').textContent=biomeDef(S).name+' · Wave '+S.wave+' · '+(names.join(' / ')||'No boss');
  for(const b of p.querySelectorAll('[data-sb-boss]')){b.disabled=spinning||!ready;b.setAttribute('aria-pressed',String(S.sandboxEncounter?.bossId===b.dataset.sbBoss));}
  if(heroUsesMagic(S))magicRenderSandbox();
- sbEl('sbGod').textContent='God mode: '+(S.sandboxGod?'ON':'OFF');sbEl('sbGod').setAttribute('aria-pressed',String(S.sandboxGod));const damageMode=sbEl('sbDamageMode');damageMode.textContent=S.sandboxGod?'IMMUNE':'DAMAGE ON';damageMode.dataset.immune=String(S.sandboxGod);
+ sbEl('sbGod').textContent='God mode: '+(S.sandboxGod?'ON':'OFF');sbEl('sbGod').setAttribute('aria-pressed',String(S.sandboxGod));const damageMode=sbEl('sbDamageMode');damageMode.textContent=S.sandboxGod?'IMMUNE':'DAMAGE ON';damageMode.setAttribute('data-immune',String(S.sandboxGod));
  for(const b of p.querySelectorAll('[data-sb]')){const a=b.dataset.sb;b.disabled=spinning||!ready||(['fight','unit','clearUnits'].includes(a)&&!prep)||(a==='retry'&&!S.sandboxEncounter);}
 }
 function initSandboxControls(){
