@@ -100,3 +100,6 @@ v7.40 playtest 8/8; user approved all three ice designs. Extract main character 
 
 ## v22-alpha.7.42 — Regional Boss Art
 v7.41 playtest 8/8; user approved all three boss designs. Extract the three main figures from the approved illustration, remove presentation panels and decorative background; transparent 480×112 PNG atlas, 160×112 cells with body-centered anchors. Existing animation system and optional original sprite fallback. Codex and HUD share the boss sprite resolver. Classic Commander, boss mechanics, region progression, maps and balance unchanged. Next: Ashen Kingdom concept and art approval.
+
+## v22-alpha.7.43 — Ashen Kingdom
+Fourth five-wave region unlocked by defeating Frozen Wasteland. Approved illustrated background, unique sprites, three burning zones, periodic ash cloud, Vanguard, Marksman, Priest and Iron Paladin. Nonstacking ground and bolt burn, attack buff, Molten Judgment residual ground. Independent local score and Sandbox/Codex. Balance provisional.

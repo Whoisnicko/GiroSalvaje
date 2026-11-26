@@ -1,7 +1,7 @@
 /* Campaign schema and permanent deck receipts. Route economy is versioned; legacy runs retain their original rewards. */
 const CAMPAIGN_SAVE_VERSION=18;
 const DEFAULT_CAMPAIGN_WAVES=5, CLASSIC_CAMPAIGN_WAVES=10;
-function campaignLimit(state=S){return state?.sandbox?(['forest','frozen'].includes(state.biomeId)?5:CLASSIC_CAMPAIGN_WAVES):state?.campaign?.maxWaves===10?10:DEFAULT_CAMPAIGN_WAVES;}
+function campaignLimit(state=S){return state?.sandbox?(['forest','frozen','ashen'].includes(state.biomeId)?5:CLASSIC_CAMPAIGN_WAVES):state?.campaign?.maxWaves===10?10:DEFAULT_CAMPAIGN_WAVES;}
 const CAMPAIGN_PROFILE_KEY='gs22.campaignProfile.v1';
 const CAMPAIGN_LEGACY_BACKUP='gs22.legacySave.v14';
 const CampaignSave=(()=>{
@@ -28,7 +28,7 @@ function campaignProfileNormalize(v){
  if(!v||v.version!==1||!Array.isArray(v.baseDeck)||!Array.isArray(v.claims))throw Error('Invalid permanent profile');
  const baseDeck=v.baseDeck.filter(campaignCardId);if(!baseDeck.length)throw Error('Empty starting deck');
  const claims=new Map();for(const r of v.claims){if(!CampaignSave.validId(r?.runId)||!campaignCardId(r?.cardId))throw Error('Invalid reward receipt');if(!claims.has(r.runId))claims.set(r.runId,{runId:r.runId,cardId:r.cardId});}
- return {version:1,baseDeck,claims:[...claims.values()],forestUnlocked:v.forestUnlocked===true||v.frozenUnlocked===true,frozenUnlocked:v.frozenUnlocked===true};
+ return {version:1,baseDeck,claims:[...claims.values()],forestUnlocked:v.forestUnlocked===true||v.frozenUnlocked===true||v.ashenUnlocked===true,frozenUnlocked:v.frozenUnlocked===true||v.ashenUnlocked===true,ashenUnlocked:v.ashenUnlocked===true};
 }
 function campaignProfileDisk(){const raw=localStorage.getItem(CAMPAIGN_PROFILE_KEY);return raw===null?null:campaignProfileNormalize(JSON.parse(raw));}
 function campaignProfileMerge(a,b){
@@ -37,12 +37,12 @@ function campaignProfileMerge(a,b){
  const baseDeck=a.baseDeck.slice(),counts=new Map(),seen=new Map();for(const id of baseDeck)counts.set(id,(counts.get(id)||0)+1);
  for(const id of b.baseDeck){const n=(seen.get(id)||0)+1;seen.set(id,n);if(n>(counts.get(id)||0))baseDeck.push(id);}
  const claims=new Map(a.claims.map(r=>[r.runId,r]));for(const r of b.claims)if(!claims.has(r.runId))claims.set(r.runId,r);
- return {version:1,baseDeck,claims:[...claims.values()],forestUnlocked:a.forestUnlocked===true||b.forestUnlocked===true||a.frozenUnlocked===true||b.frozenUnlocked===true,frozenUnlocked:a.frozenUnlocked===true||b.frozenUnlocked===true};
+ return {version:1,baseDeck,claims:[...claims.values()],forestUnlocked:a.forestUnlocked===true||b.forestUnlocked===true||a.frozenUnlocked===true||b.frozenUnlocked===true||a.ashenUnlocked===true||b.ashenUnlocked===true,frozenUnlocked:a.frozenUnlocked===true||b.frozenUnlocked===true||a.ashenUnlocked===true||b.ashenUnlocked===true,ashenUnlocked:a.ashenUnlocked===true||b.ashenUnlocked===true};
 }
 function campaignProfileApply(p){campaignProfile=p;META.deck=[...p.baseDeck,...p.claims.map(r=>r.cardId)];}
 function campaignProfileInit(){
  if(campaignProfile)return campaignProfile;
- const fallback={version:1,baseDeck:META.deck.slice(),claims:[],forestUnlocked:false,frozenUnlocked:false};
+ const fallback={version:1,baseDeck:META.deck.slice(),claims:[],forestUnlocked:false,frozenUnlocked:false,ashenUnlocked:false};
  try{const p=campaignProfileDisk();if(p)campaignProfileApply(p);else{localStorage.setItem(CAMPAIGN_PROFILE_KEY,JSON.stringify(fallback));campaignProfileApply(fallback);}campaignProfileIssue=false;}
  catch(e){campaignProfileIssue=true;campaignProfileApply(fallback);}
  return campaignProfile;

@@ -16,7 +16,7 @@ with sync_playwright() as pw:
  def ev(s):return page.evaluate(s)
  def tab(id):page.locator(f'#codexTabs [data-codex={id}]').click()
  page.locator('[data-front=codex]').click();assert ev('!S&&!$("#codexView").hidden')
- for id,n in [('guardians',7),('humans',16),('cards',12),('upgrades',27),('heroes',22)]:
+ for id,n in [('guardians',7),('humans',20),('cards',12),('upgrades',27),('heroes',22)]:
   tab(id);assert page.locator('#codexContent article').count()==n,(id,page.locator('#codexContent article').count());assert not ev('$("#codexContent").textContent.includes("undefined")||$("#codexContent").textContent.includes("NaN")')
  tab('cards');page.locator('#codexSearch').fill('Bone Rain');assert page.locator('#codexContent article').count()==1;assert '25 area damage' in page.locator('#codexContent').inner_text();page.locator('#codexWave').select_option('5');assert '53 area damage' in page.locator('#codexContent').inner_text();page.locator('#codexSearch').fill('<script>');assert page.locator('#codexContent article').count()==0
  tab('humans');assert 'The Crusader' in page.locator('#codexContent').inner_text();assert 'The Grand Huntsman' in page.locator('#codexContent').inner_text();assert ev('codexEnemy("com",5).available&&!codexEnemy("ant",5).available&&codexEnemy("ant",6).available');tab('guardians');assert ev('codexPreview("W",1,1).hp===BASE.W.hp&&codexPreview("K",3,5).hp===Math.round((BASE.K.hp+18*5)*3.5)');page.locator('#codexWave').select_option('1');page.wait_for_timeout(400);page.screenshot(path='/mnt/data/StopHumans-codex-guardians.png')
@@ -26,4 +26,4 @@ with sync_playwright() as pw:
  saved=ev('JSON.stringify({...loadedSave,savedAt:0})');state=ev('JSON.stringify(S,(k,v)=>v instanceof Set?[...v]:v instanceof Map?[...v]:v)');profile=ev('JSON.stringify(campaignProfileBackup())');undo=ev('prepUndoStack.length');assert undo==1
  page.locator('[data-front=codex]').click();tab('heroes');page.locator('#codexWave').select_option('10');tab('guardians');assert ev('codexPreview("M",1,1).dmg===BASE.M.dmg&&stats("M",1).dmg===Math.round(BASE.M.dmg*S.mods.mageDmg)');assert ev('JSON.stringify(S,(k,v)=>v instanceof Set?[...v]:v instanceof Map?[...v]:v)')==state;assert ev('JSON.stringify(campaignProfileBackup())')==profile;assert ev('prepUndoStack.length')==undo
  page.keyboard.press('Escape');assert ev('JSON.stringify({...loadedSave,savedAt:0})')==saved;page.locator('#continueBtn').click();assert ev('!menuOpen&&S.phase==="prep"');assert not errs,errs
- print('Codex: 84 entries, wave preview, search, 4 viewports, run/profile/undo isolation; JS errors:',errs);b.close()
+ print('Codex: 88 entries, wave preview, search, 4 viewports, run/profile/undo isolation; JS errors:',errs);b.close()

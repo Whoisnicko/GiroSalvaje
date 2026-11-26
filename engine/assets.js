@@ -19,7 +19,8 @@ const FROZEN_ENEMY_CELLS=Object.freeze(['frostSentinel','iceMarksman','frostHera
 const REGIONAL_BOSS_ATLAS='assets/regional-bosses-v42.png?v=22a7p42';
 const REGIONAL_BOSS_CELLS=Object.freeze(['crusader','huntsman','inquisitor']);
 const FROZEN_BATTLEFIELD_ART='assets/battlefield-frozen-v38.webp?v=22a7p38';
-let battlefieldArt=null,forestBattlefieldArt=null,frozenBattlefieldArt=null;
+const ASHEN_BATTLEFIELD_ART='assets/battlefield-ashen-v43.webp?v=22a7p43',ASHEN_ENEMY_ATLAS='assets/ashen-enemies-v43.png?v=22a7p43',ASHEN_BOSS_ATLAS='assets/ashen-boss-v43.png?v=22a7p43';
+let battlefieldArt=null,forestBattlefieldArt=null,frozenBattlefieldArt=null,ashenBattlefieldArt=null;
 // A bounded image request prevents a missing resource from blocking the menu.
 function loadArtImage(src){
  return new Promise((resolve,reject)=>{const im=new Image();const timer=setTimeout(()=>finish(false),12000);function finish(ok){clearTimeout(timer);im.onload=im.onerror=null;ok?resolve(im):reject(new Error('Artwork unavailable: '+src.slice(0,100)));}im.onload=()=>finish(true);im.onerror=()=>finish(false);im.src=src;});
@@ -52,10 +53,10 @@ function installForestEnemyArt(sheet){return installRegionalEnemyArt(sheet,FORES
 function installFrozenEnemyArt(sheet){return installRegionalEnemyArt(sheet,FROZEN_ENEMY_CELLS);}
 function installRegionalBossArt(sheet){return installRegionalEnemyArt(sheet,REGIONAL_BOSS_CELLS,BOSS_DATA,160,112);}
 async function buildHybridArt(){
- const [backdrop,forest,frozen,forestEnemies,frozenEnemies,regionalBosses,...sheets]=await Promise.all([loadArtImage(FULL_BATTLEFIELD_ART).catch(()=>null),loadArtImage(FOREST_BATTLEFIELD_ART).catch(()=>null),loadArtImage(FROZEN_BATTLEFIELD_ART).catch(()=>null),loadArtImage(FOREST_ENEMY_ATLAS).catch(()=>null),loadArtImage(FROZEN_ENEMY_ATLAS).catch(()=>null),loadArtImage(REGIONAL_BOSS_ATLAS).catch(()=>null),...BAKED_ART.sheets.map((url,i)=>loadArtImage(url).then(im=>{if(im.width!==768||im.height%96||im.height!==(i===BAKED_ART.sheets.length-1?96:768))throw Error('Invalid sprite sheet dimensions');return im;}).catch(e=>{console.warn('Sprite sheet fallback',i,e);return null;}))]);
+ const [backdrop,forest,frozen,forestEnemies,frozenEnemies,regionalBosses,ashen,ashenEnemies,ashenBoss,...sheets]=await Promise.all([loadArtImage(FULL_BATTLEFIELD_ART).catch(()=>null),loadArtImage(FOREST_BATTLEFIELD_ART).catch(()=>null),loadArtImage(FROZEN_BATTLEFIELD_ART).catch(()=>null),loadArtImage(FOREST_ENEMY_ATLAS).catch(()=>null),loadArtImage(FROZEN_ENEMY_ATLAS).catch(()=>null),loadArtImage(REGIONAL_BOSS_ATLAS).catch(()=>null),loadArtImage(ASHEN_BATTLEFIELD_ART).catch(()=>null),loadArtImage(ASHEN_ENEMY_ATLAS).catch(()=>null),loadArtImage(ASHEN_BOSS_ATLAS).catch(()=>null),...BAKED_ART.sheets.map((url,i)=>loadArtImage(url).then(im=>{if(im.width!==768||im.height%96||im.height!==(i===BAKED_ART.sheets.length-1?96:768))throw Error('Invalid sprite sheet dimensions');return im;}).catch(e=>{console.warn('Sprite sheet fallback',i,e);return null;}))]);
  battlefieldArt=backdrop?.width===1100&&backdrop?.height===500?backdrop:null;
  forestBattlefieldArt=bakeForestBackdrop(forest);
- frozenBattlefieldArt=frozen?.width===1100&&frozen?.height===500?frozen:null;
+ frozenBattlefieldArt=frozen?.width===1100&&frozen?.height===500?frozen:null;ashenBattlefieldArt=ashen?.width===1100&&ashen?.height===500?ashen:null;
  let original=null;
  if(sheets.some(im=>!im))original=await loadArtImage(ILLUSTRATED_ATLAS).then(im=>im.width===384&&im.height===384?im:null).catch(()=>null);
  HYBRID.names.forEach((name,i)=>{
@@ -70,6 +71,7 @@ async function buildHybridArt(){
  installForestEnemyArt(forestEnemies);
  installFrozenEnemyArt(frozenEnemies);
  installRegionalBossArt(regionalBosses);
+ installRegionalEnemyArt(ashenEnemies,['ashenVanguard','emberMarksman','cinderPriest']);installRegionalEnemyArt(ashenBoss,['paladin'],BOSS_DATA,160,112);
  Object.assign(GOTHIC_DATA.cards,BAKED_ART.cards);
  GOTHIC_DATA.relics=['dragon','esqueleto','alma','nigromante','comodin','caballero'].map(n=>URL_[n]);
  const strip=$('#heroCast');strip.innerHTML=['zombi','espectro','dragon','caballero'].map(n=>`<img src="${URL_[n]}" alt="${n}">`).join('');

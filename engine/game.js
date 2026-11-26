@@ -673,7 +673,7 @@ function startFight(){
   if (S.drag) { cancelDrag(); }
   prepUndoClear();
   S.phase = 'fight'; heroResetWave(); magicResetWave(); S.held.clear(); S.wins.clear(); S.confirmFight = false; S.drag = null; S.aim = null; S.sel = null;
-  S.buff = { haste:0, slow:0 }; S.zones = []; S.fightT = 0; S.charge = false;
+  S.buff = { haste:0, slow:0 }; S.zones = []; S.fightT = 0; S.charge = false;ashResetBattle();
   const W = waveInfo(S.wave);
   S.units.forEach(u => { frostResetUnit(u);u.hx = u.x; u.hy = u.y; u.skels = 0; infusionReset(u); u.cd = Math.min(u.cd, .3); });
   S.altarCd = 0;
@@ -696,7 +696,7 @@ function update(dt){
   magicAdvance(dt);
   const Wd = worldW();
   S.buff.haste = Math.max(0, S.buff.haste - dt); S.buff.slow = Math.max(0, S.buff.slow - dt);
-  const wasBlizzard=frostBlizzard();S.fightT += dt;if(!wasBlizzard&&frostBlizzard()){bigMsg('BLIZZARD · RANGED REACH −30%');sfx('horn');}
+  const wasBlizzard=frostBlizzard(),wasAsh=ashCloud();S.fightT += dt;if(!wasAsh&&ashCloud()){bigMsg('ASH CLOUD · PROJECTILE DAMAGE −25%');sfx('horn');}if(!wasBlizzard&&frostBlizzard()){bigMsg('BLIZZARD · RANGED REACH −30%');sfx('horn');}
   if (!S.charge && S.fightT > 40 && !S.queue.length) { S.charge = true; bigMsg('FINAL CHARGE!'); sfx('horn'); }
   S.spawnT -= dt;
   if (S.queue.length && S.spawnT <= 0) {
@@ -709,7 +709,7 @@ function update(dt){
   for (const z of S.zones) { z.t -= dt; S.enemies.forEach(e => { if (dist(e, z) <= z.r + e.r) damage(e, z.dps * dt, { quiet:true, pierce:true }); }); }
   S.zones = S.zones.filter(z => z.t > 0);
 
-  heroAdvance(dt);
+  heroAdvance(dt);ashAdvance(Wd);
   const alive = S.enemies.filter(e => e.hp > 0);
   const banshees = S.units.filter(u => u.type === 'B' && !u.down);
   for (const u of S.units) {
@@ -759,6 +759,7 @@ function update(dt){
   }
   // Proyectiles: persiguen a su objetivo y aplican el daño al impactar.
   for (const s of S.shots) {
+    ashShotTrack(s);
     if (s.tgt && s.tgt.hp > 0) { s.tx = s.tgt.x; s.ty = s.tgt.y; }
     const dx = s.tx - s.x, dy = s.ty - s.y, d = Math.hypot(dx, dy), step = s.sp * dt;
     if (d <= step + 4) { s.done = true; landShot(s); continue; }
@@ -775,7 +776,7 @@ function update(dt){
     heroAdvanceKnockback(e,dt,Wd);
     if (e.kbv > 1) { const nx = e.x + e.kbv * dt; e.x = nx; e.kbv *= Math.pow(.002, dt); }
     if (bossAdvance(e,dt)){frostClearMotion(e);continue;}
-    if(spellEnemyRooted(e))frostClearMotion(e);frostHeraldPulse(e);
+    if(spellEnemyRooted(e))frostClearMotion(e);frostHeraldPulse(e);ashPriestPulse(e);
     let sp = spellEnemyRooted(e) ? 0 : e.sp * spellEnemySpeedFactor(e);
 
     const forcedHero=martialTaunted(e)?S.hero:null;
@@ -804,8 +805,8 @@ function update(dt){
       if (tgt || altarInRange) {
         e.cd -= dt;
         if (e.cd <= 0) {
-          e.cd = 1.6; const dmg = e.dmg,ignoreCover=!!regionalDef(e)?.ignoreCover;
-          if (tgt) S.shots.push({ k:'bolt', x:e.x - 8, y:e.y, tgt, tx:tgt.x, ty:tgt.y, sp:420, dmg,ignoreCover });
+          e.cd = 1.6; const dmg = ashEnemyAttack(e),d=regionalDef(e),ignoreCover=!!d?.ignoreCover,burnDuration=d?.burnDuration||0,burnRate=d?.burnRate||0;
+          if (tgt) S.shots.push({ k:'bolt', x:e.x - 8, y:e.y, tgt, tx:tgt.x, ty:tgt.y, sp:420, dmg,ignoreCover,burnDuration,burnRate });
           else S.shots.push({ k:'bolt', x:e.x - 8, y:e.y, altar:true, tx:WALL_X - 6, ty:e.y, sp:420, dmg,ignoreCover });
           e.lunge = .12; sfx('bolt');
         }
@@ -824,11 +825,11 @@ function update(dt){
     }
     if (tgt) {
       const d = dist(e, tgt);
-      if (d <= e.r + radius(tgt) + 3) { e.cd -= dt; if (e.cd <= 0) { e.cd = 1; const dealt=heroDamageTarget(tgt,e.dmg); tgt.flash = 0.15; if(dealt)feelNumber(tgt.x,tgt.y-radius(tgt)-10,dealt,'ally');feelImpact(tgt.x,tgt.y,'steel',tgt,0,e.dmg>=25); e.lunge = .12; S.fx.push({k:'sword',x:(e.x+tgt.x)/2,y:(e.y+tgt.y)/2,angle:Math.atan2(tgt.y-e.y,tgt.x-e.x)+Math.PI,t:.24,T:.24}); burst((e.x + tgt.x) / 2, (e.y + tgt.y) / 2, 'steel', 6, 70); sfx('clash'); } }
+      if (d <= e.r + radius(tgt) + 3) { e.cd -= dt; if (e.cd <= 0) { e.cd = 1; const dealt=heroDamageTarget(tgt,ashEnemyAttack(e)); tgt.flash = 0.15; if(dealt)feelNumber(tgt.x,tgt.y-radius(tgt)-10,dealt,'ally');feelImpact(tgt.x,tgt.y,'steel',tgt,0,e.dmg>=25); e.lunge = .12; S.fx.push({k:'sword',x:(e.x+tgt.x)/2,y:(e.y+tgt.y)/2,angle:Math.atan2(tgt.y-e.y,tgt.x-e.x)+Math.PI,t:.24,T:.24}); burst((e.x + tgt.x) / 2, (e.y + tgt.y) / 2, 'steel', 6, 70); sfx('clash'); } }
       else moveHuman(e, (tgt.x - e.x) / d * sp * dt, (tgt.y - e.y) / d * sp * dt,dt);
     } else if (e.x <= WALL_X + e.r + 2) {
       e.cd -= dt;
-      if (e.cd <= 0) { e.cd = 1; hitAltar(e.dmg * (e.kind === 'ant' ? 3 : 1)); }
+      if (e.cd <= 0) { e.cd = 1; hitAltar(ashEnemyAttack(e) * (e.kind === 'ant' ? 3 : 1)); }
     } else moveHuman(e, -sp * dt, 0,dt);
   }
   if(biomeId(S)==='frozen'){for(const u of S.units)frostCoast(u,dt,Wd);for(const e of alive)frostCoast(e,dt,Wd);}
@@ -904,15 +905,15 @@ function hitEnemy(e, d, c, o = {}){
   if (armored) sfx('clank');
 }
 function landShot(s){
-  if (s.k === 'orb') { if (s.tgt && s.tgt.hp > 0) { hitEnemy(s.tgt, s.dmg*biomeProjectileFactor(s.tgt), 'a', { kb:0,source:s.source }); sfx('orbHit'); } else burst(s.x, s.y, 'a', 4, 40); }
+  if (s.k === 'orb') { if (s.tgt && s.tgt.hp > 0) { hitEnemy(s.tgt, s.dmg*ashShotFactor(s)*biomeProjectileFactor(s.tgt), 'a', { kb:0,source:s.source }); sfx('orbHit'); } else burst(s.x, s.y, 'a', 4, 40); }
   else if (s.k === 'fire') {
-    S.enemies.forEach(e => { if (e.hp > 0 && Math.hypot(e.x - s.tx, e.y - s.ty) <= s.splash) hitEnemy(e, s.dmg*biomeProjectileFactor(e), 'm',{source:s.source}); });
+    S.enemies.forEach(e => { if (e.hp > 0 && Math.hypot(e.x - s.tx, e.y - s.ty) <= s.splash) hitEnemy(e, s.dmg*ashShotFactor(s)*biomeProjectileFactor(e), 'm',{source:s.source}); });
     S.fx.push({ k:'ring', x:s.tx, y:s.ty, r:s.splash, c:'m', t:.35, T:.35 });
     burst(s.tx, s.ty, 'm', 14, 140); burst(s.tx, s.ty, 'gold', 8, 100);
     S.shake = Math.max(S.shake, 3); feelImpact(s.tx,s.ty,'fire',null,Math.max(24,s.splash));sfx('boom');
   } else if (s.k === 'bolt') {
-    if (s.altar) hitAltar(s.dmg);
-    else if (s.tgt && s.tgt.hp > 0) { const dealt=heroDamageTarget(s.tgt,s.dmg*regionalShotFactor(s,s.tgt)); s.tgt.flash = .15; if(dealt)feelNumber(s.tgt.x,s.tgt.y-radius(s.tgt)-10,dealt,'ally');feelImpact(s.tgt.x,s.tgt.y,'steel',s.tgt); burst(s.tgt.x, s.tgt.y, 'steel', 5, 60); sfx('clash'); }
+    if (s.altar) hitAltar(s.dmg*ashShotFactor(s));
+    else if (s.tgt && s.tgt.hp > 0) { const dealt=heroDamageTarget(s.tgt,s.dmg*ashShotFactor(s)*regionalShotFactor(s,s.tgt));ashApplyBurn(s.tgt,s,dealt); s.tgt.flash = .15; if(dealt)feelNumber(s.tgt.x,s.tgt.y-radius(s.tgt)-10,dealt,'ally');feelImpact(s.tgt.x,s.tgt.y,'steel',s.tgt); burst(s.tgt.x, s.tgt.y, 'steel', 5, 60); sfx('clash'); }
   }
 }
 
@@ -931,6 +932,7 @@ function endWave(){
   const done = S.wave;
   if(done===5&&biomeId(S)==='valley'&&!biomeUnlockForest())bigMsg('Region unlock could not be saved');
   if(done===5&&biomeId(S)==='forest'&&!biomeUnlockFrozen())bigMsg('Region unlock could not be saved');
+  if(done===5&&biomeId(S)==='frozen'&&!biomeUnlockAshen())bigMsg('Region unlock could not be saved');
   const learned=knowledgeWave(done),knowledgeNote=knowledgeAnnounce(learned),valor=talentWave(done),valorNote=valor?' · +'+valor+' permanent Valor Point'+(valor===1?'':'s')+'.':'';if(valor){bigMsg('VALOR · +'+valor+' POINT');sfx('fusion');}
   S.wave++;
   if(heroClass(S).id==='warlord')S.hero=heroNew('warlord',S.hero.build,S.wave);
@@ -1281,17 +1283,17 @@ function restore(v){
  persist();
 }
 function showRewardRestored(){showOv(`<h2>Choose your reward</h2><div class="offers">${S.offer.map((o,i)=>`<button class="offer" data-act="reward" data-i="${i}"><span class="ic">${rewardArt(o)}</span><span class="nm">${o.n}</span><span class="ds">${o.d}</span></button>`).join('')}</div>`);}
-function showEndRestored(){const claimed=campaignEndClaimed(),legacy=S.campaign?.legacyTerminal;showOv(`<h2>${S.phase==='win'?'The Altar stands!':'The Altar has fallen'}</h2><p>${S.phase==='win'?'You survived all '+campaignLimit()+' waves.':'You reached wave '+S.wave+' of '+campaignLimit()+'.'} ${S.kills} humans defeated.</p>${S.phase==='win'&&biomeId(S)==='valley'&&biomeUnlocked('forest')?'<p>Cursed Forest unlocked · select it in New Game.</p>':S.phase==='win'&&biomeId(S)==='forest'&&biomeUnlocked('frozen')?'<p>Frozen Wasteland unlocked · select it in New Game.</p>':''}${claimed?`<p>${legacy?'This completed legacy run is archived. Its reward status cannot be recovered safely.':'Your permanent card reward has been saved.'}</p><button class="go" data-front="home">Return to menu</button>`:`<p>Choose one card for your next run.</p><div class="cards-row">${S.endOffer.map((id,i)=>cardHTML(id,`data-act="endcard" data-i="${i}"`)).join('')}</div><p id="endRewardNotice" role="status"></p>`}<button class="btn" data-front="scores">View scores</button>`);}
+function showEndRestored(){const claimed=campaignEndClaimed(),legacy=S.campaign?.legacyTerminal;showOv(`<h2>${S.phase==='win'?'The Altar stands!':'The Altar has fallen'}</h2><p>${S.phase==='win'?'You survived all '+campaignLimit()+' waves.':'You reached wave '+S.wave+' of '+campaignLimit()+'.'} ${S.kills} humans defeated.</p>${S.phase==='win'&&biomeId(S)==='valley'&&biomeUnlocked('forest')?'<p>Cursed Forest unlocked · select it in New Game.</p>':S.phase==='win'&&biomeId(S)==='forest'&&biomeUnlocked('frozen')?'<p>Frozen Wasteland unlocked · select it in New Game.</p>':S.phase==='win'&&biomeId(S)==='frozen'&&biomeUnlocked('ashen')?'<p>Ashen Kingdom unlocked · select it in New Game.</p>':''}${claimed?`<p>${legacy?'This completed legacy run is archived. Its reward status cannot be recovered safely.':'Your permanent card reward has been saved.'}</p><button class="go" data-front="home">Return to menu</button>`:`<p>Choose one card for your next run.</p><div class="cards-row">${S.endOffer.map((id,i)=>cardHTML(id,`data-act="endcard" data-i="${i}"`)).join('')}</div><p id="endRewardNotice" role="status"></p>`}<button class="btn" data-front="scores">View scores</button>`);}
 function front(panel){heroCancelAim(false);heroClearKeys();magicCancel();closeBestiary();tacticalHide();$('#front').hidden=false;menuOpen=true;document.querySelector('.wrap').inert=true;$('#ov').inert=true;$('#ov2').inert=true;for(const el of document.querySelectorAll('.front-view'))el.hidden=el.id!==panel;$('#'+panel+' button:not([disabled]),#'+panel+' input')?.focus();}
 function closeFront(){menuOpen=false;$('#front').hidden=true;document.querySelector('.wrap').inert=false;$('#ov').inert=false;$('#ov2').inert=false;last=performance.now();resize();if(S)renderPrepUndo();}
 function showHome(){if(spinning)return;if(sandboxActive()){sandboxExit();return;}if(S){cancelDrag();persist();}if(!S||storageOK)loadedSave=store.get(SAVE_KEY,null);if(!validSave(loadedSave))loadedSave=null;knowledgeFromSave(loadedSave);knowledgeFromScores();talentFromSave(loadedSave);talentFromScores();if(talentDirty)talentFlush();if(knowledgeDirty)knowledgeFlush();knowledgeSummaryRender();$('#knowledgeSummary').textContent+=' · Starting deck: '+META.deck.length+' cards'+(campaignProfileIssue?' · Profile storage unavailable':'');$('#playerName').value=profile.name;const canContinue=!!(S||loadedSave);$('#continueBtn').disabled=!canContinue;$('#homeView').classList.toggle('has-save',canContinue);$('#homeError').textContent='';$('#continueInfo').textContent=loadedSave?`${loadedSave.name} · ${heroClass(loadedSave.state).name} · Wave ${Math.min(loadedSave.state.wave,loadedSave.version<18?10:campaignLimit(loadedSave.state))}/${loadedSave.version<18?10:campaignLimit(loadedSave.state)} · ${new Date(loadedSave.savedAt).toLocaleString('en')}`:'The invasion awaits.';if(S&&!loadedSave)$('#continueInfo').textContent='Current run · ready to resume';$('#continueBtn').title=$('#continueInfo').textContent;front('homeView');}
 function beginNew(){let name=$('#playerName').value.trim().slice(0,20);if(!name){$('#nameError').textContent='Enter your name (1–20 characters).';$('#playerName').focus();return;}profile.name=name;durableWrite(PROFILE_KEY,profile);heroChoose('campaign');}
 function launchNew(heroId=heroPending,build=talentPending,maxWaves=Number($('#campaignLength').value)===10?10:5){const region=biomeRegionChoice();if(region!=='valley')maxWaves=5;if(talentDirty&&!talentFlush()){alert('Your Valor progress could not be saved. Enable browser storage before replacing this run.');return;}if(knowledgeDirty&&!knowledgeFlush()){alert('Your permanent spell knowledge could not be saved. Enable browser storage before replacing this run.');return;}campaignProfileInit();runName=profile.name;sessionRunId=uid();loadedSave=null;try{localStorage.removeItem(SAVE_KEY);}catch(e){}savedWorldWidth=null;closeFront();newGame(false,heroId,build,maxWaves===10?10:5,region);$('#saveStatus').textContent='Choose a relic to create your first save.';}
 function scores(){const v=store.get(SCORES_KEY,[]);return Array.isArray(v)?v:[];}
-function recordScore(won){if(sandboxActive())return;const list=scores();if(list.some(r=>r.runId===sessionRunId))return;const maxWaves=campaignLimit(),wave=won?maxWaves:Math.max(0,S.wave-1);const r={runId:sessionRunId,name:runName,heroClass:heroClass(S).id,kills:S.kills,wave,maxWaves,biomeId:biomeId(S),won,score:wave*100+S.kills*10+(won?500:0),date:Date.now()};list.push(r);durableWrite(SCORES_KEY,[5,10,'forest','frozen'].flatMap(n=>list.filter(r=>scoreRegion(r)===n).sort((a,b)=>b.score-a.score).slice(0,50)));}
+function recordScore(won){if(sandboxActive())return;const list=scores();if(list.some(r=>r.runId===sessionRunId))return;const maxWaves=campaignLimit(),wave=won?maxWaves:Math.max(0,S.wave-1);const r={runId:sessionRunId,name:runName,heroClass:heroClass(S).id,kills:S.kills,wave,maxWaves,biomeId:biomeId(S),won,score:wave*100+S.kills*10+(won?500:0),date:Date.now()};list.push(r);durableWrite(SCORES_KEY,[5,10,'forest','frozen','ashen'].flatMap(n=>list.filter(r=>scoreRegion(r)===n).sort((a,b)=>b.score-a.score).slice(0,50)));}
 function scoreRows(rows){return rows.length?rows.slice(0,20).map((r,i)=>`<tr><td>${i+1}</td><td>${escapeHTML(r.name)}</td><td>${Number(r.score)||0}</td><td>${Number(r.wave)||0}/${r.maxWaves===5?5:10}</td></tr>`).join(''):'<tr><td colspan="4">No scores yet.</td></tr>';}
 function scoreRegion(r){return biomeId(r)!=='valley'?biomeId(r):(r.maxWaves||10);}
-function scoreMode(){const v=$('#scoreLength').value;return v==='forest'||v==='frozen'?v:Number(v)===10?10:5;}
+function scoreMode(){const v=$('#scoreLength').value;return ['forest','frozen','ashen'].includes(v)?v:Number(v)===10?10:5;}
 function modeScores(){return scores().filter(r=>scoreRegion(r)===scoreMode()).sort((a,b)=>b.score-a.score);}
 function showScores(){front('scoresView');$('#scoreRows').innerHTML=scoreRows(modeScores());$('#scoreScope').textContent='Local scores · '+(typeof scoreMode()==='string'?BIOME_DATA[scoreMode()].name+' · 5 waves':scoreMode()+' waves');$('#publishScore').disabled=scoreMode()!==10||!modeScores().length;document.querySelector('[data-front=cloud]').disabled=scoreMode()!==10;$('#cloudStatus').textContent=scoreMode()!==10?'Regional campaigns have a separate local ranking. Online ranking is classic only.':'Local scores work offline. Online ranking requires the server.';}
 async function cloudScores(){if(scoreMode()!==10)return;try{const r=await fetch('/api/scores',{signal:AbortSignal.timeout(6000)});if(!r.ok)throw Error();const j=await r.json();if(!Array.isArray(j.scores))throw Error();if(scoreMode()!==10)return;$('#scoreRows').innerHTML=scoreRows(j.scores);$('#scoreScope').textContent='Online leaderboard';$('#cloudStatus').textContent='Public scores for this edition.';}catch(e){$('#cloudStatus').textContent='Online ranking is unavailable. Your scores are saved locally.';}}
