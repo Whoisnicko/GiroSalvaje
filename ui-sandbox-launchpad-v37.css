@@ -1,0 +1,40 @@
+/* Sandbox-only layout. The normal campaign HUD is not restyled. */
+#sandboxLaunchView{width:min(780px,94vw);max-width:780px;text-align:left}
+#sandboxLaunchView .sl-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:20px 0 12px}
+#sandboxLaunchView label{display:grid;gap:6px;color:#c9b79a;font:700 11px/1.3 system-ui,sans-serif;letter-spacing:.06em}
+#sandboxLaunchView select{width:100%;min-height:40px;min-width:0;border:1px solid #896e4b;background:#182330;color:#f0dfc1;border-radius:4px;padding:8px;font:14px system-ui,sans-serif;letter-spacing:0}
+#sandboxLaunchView .sl-subgrid{grid-column:1/-1;display:grid;grid-template-columns:1fr 1.5fr .55fr;gap:10px}
+#sandboxLaunchView [hidden],#sandboxPanel [hidden]{display:none!important}
+#sandboxLaunchView .sl-checks{display:flex;flex-wrap:wrap;gap:12px 20px;margin:16px 0}
+#sandboxLaunchView .sl-checks label{display:flex;align-items:center;font-size:13px;letter-spacing:0}
+#sandboxLaunchView .sl-checks input{width:18px;height:18px;accent-color:#b79561}
+#sandboxLaunchView #slHint{min-height:32px}
+#sandboxLaunchView button:focus-visible,#sandboxPanel button:focus-visible,#sandboxPanel select:focus-visible{outline:2px solid #9ce9ef;outline-offset:2px}
+.wrap>.lane>#sandboxPanel:not(.academy-active){max-height:none;overflow:visible;position:relative;z-index:6;padding:5px 8px;background:linear-gradient(#293441,#151e28);border-bottom:1px solid #96794f}
+#sandboxPanel:not(.academy-active)>summary{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-start;gap:4px 10px;cursor:pointer;list-style:none}
+#sandboxPanel:not(.academy-active)>summary::-webkit-details-marker{display:none}
+#sandboxPanel:not(.academy-active)>summary>b{color:#e7c38c;white-space:nowrap;font:700 11px Georgia,serif;letter-spacing:.07em}
+#sandboxPanel:not(.academy-active) #sbLoaded{flex:1 1 150px;min-width:0;text-align:left;color:#d3e7e6;white-space:normal;line-height:1.2}
+#sandboxPanel:not(.academy-active) #sbPerf{flex:0 0 auto;text-align:right;font-size:10px}
+#sandboxPanel .sb-quickbar{display:flex;align-items:center;gap:4px;flex-wrap:wrap;flex:1 1 100%}
+#sandboxPanel .sb-quickbar button,#sandboxPanel .sb-drawer button,#sandboxPanel .sb-drawer select{font:600 12px/1.25 system-ui,sans-serif;min-height:32px;padding:5px 9px;background:linear-gradient(#303c48,#1c2733);color:#e9dac1;border:1px solid #8a7353;border-radius:4px;cursor:pointer}
+#sandboxPanel .sb-quickbar button:hover:not(:disabled),#sandboxPanel .sb-drawer button:hover:not(:disabled){border-color:#e4bf7f;color:#fff}
+#sandboxPanel .sb-quickbar button:disabled,#sandboxPanel .sb-drawer button:disabled{opacity:.4;cursor:default}
+#sandboxPanel .sb-quickbar .sb-primary,#sandboxPanel .sb-drawer .sb-primary{background:linear-gradient(#6c5130,#423322);color:#ffedcb;border-color:#ccaa70}
+#sandboxPanel button[aria-pressed=true],#sandboxPanel button[aria-selected=true]{background:#28454c;color:#bbf2ef;border-color:#8ab8bb}
+#sandboxPanel .sb-drawer-toggle{margin-left:auto;color:#e9d1a5;font-size:12px;border:1px solid #9b8057;border-radius:4px;padding:7px 10px;white-space:nowrap}
+#sandboxPanel[open] .sb-drawer-toggle{color:#b9f2ee}
+#sandboxPanel:not(.academy-active) .sb-drawer{position:fixed;z-index:80;top:clamp(84px,17vh,160px);left:50%;transform:translateX(-50%);width:min(850px,94vw);max-height:calc(100dvh - 190px);overflow:auto;padding:14px;background:#1a222efb;border:1px solid #a68a5d;border-radius:6px;box-shadow:0 14px 40px #000a;gap:10px}
+#sandboxPanel:not([open]) .sb-drawer{display:none}
+#sandboxPanel .sb-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;padding-bottom:10px;border-bottom:1px solid #485363}
+#sandboxPanel .sb-drawer section{display:grid;gap:10px;padding:4px}
+#sandboxPanel .sb-drawer .sandbox-row{gap:8px;align-items:end}
+#sandboxPanel .sb-drawer label{display:grid;gap:5px;color:#b5c1c7;font-size:12px}
+#sandboxPanel .sb-drawer select{min-width:100px;max-width:100%;font-weight:400}
+#sandboxPanel #sbBossQuick{position:static;background:none;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+#sandboxPanel #sbBossQuick button{min-height:40px;text-align:left;white-space:normal}
+#sandboxPanel .sb-subhead{color:#e8cb92;font:700 12px Georgia,serif;letter-spacing:.07em}
+#sandboxPanel #sbStatus{padding:10px;background:#111a23;border-top:1px solid #485363;color:#a3d9dc;font-size:12px}
+#sandboxPanel .sb-drawer p{color:#b5c1c7;font-size:12px;margin:0}
+#sandboxPanel.academy-active .sb-quickbar,#sandboxPanel.academy-active .sb-drawer{display:none!important}
+@media(max-width:600px){#sandboxLaunchView .sl-grid{grid-template-columns:minmax(0,1fr);gap:9px}#sandboxLaunchView .sl-subgrid{grid-template-columns:1fr}#sandboxPanel .sb-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}#sandboxPanel:not(.academy-active) .sb-drawer{top:64px;max-height:calc(100dvh - 90px)}#sandboxPanel .sb-quickbar button{font-size:11px;padding:4px 7px;min-height:32px}#sandboxPanel .sb-drawer label{flex:1 1 130px}#sandboxPanel .sb-drawer select{width:100%}}
