@@ -38,3 +38,6 @@
 #sandboxPanel .sb-drawer p{color:#b5c1c7;font-size:12px;margin:0}
 #sandboxPanel.academy-active .sb-quickbar,#sandboxPanel.academy-active .sb-drawer{display:none!important}
 @media(max-width:600px){#sandboxLaunchView .sl-grid{grid-template-columns:minmax(0,1fr);gap:9px}#sandboxLaunchView .sl-subgrid{grid-template-columns:1fr}#sandboxPanel .sb-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}#sandboxPanel:not(.academy-active) .sb-drawer{top:64px;max-height:calc(100dvh - 90px)}#sandboxPanel .sb-quickbar button{font-size:11px;padding:4px 7px;min-height:32px}#sandboxPanel .sb-drawer label{flex:1 1 130px}#sandboxPanel .sb-drawer select{width:100%}}
+
+#sandboxPanel .sb-drawer-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;color:#e8cb92;font:700 12px Georgia,serif}
+#sandboxPanel .sb-drawer-heading button{min-height:32px}
