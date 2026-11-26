@@ -182,8 +182,8 @@ function bar(x, y, w, h, p, c){ ctx.fillStyle = colors.bg; ctx.fillRect(x, y, w,
 function sprite(name,x,y,h,o={}){
  const frames=(o.flash?SPRW[name]:o.gray?SPRGRAY[name]:(SPRLEVEL[name]?.[o.level]||SPR[name]));
  if(!frames?.length){ctx.fillStyle='#d6bc85';ctx.fillRect(x-8,y-8,16,16);return;}
- const fr=frames[Math.abs(Math.floor(o.frame||0))%frames.length],w=h*fr.width/fr.height;
- ctx.save();ctx.imageSmoothingEnabled=false;ctx.translate(Math.round(x),Math.round(y));if(o.rot&&!prefs.reduced)ctx.rotate(o.rot);if(o.sy)ctx.scale(1,o.sy);ctx.drawImage(fr,-w/2,-h/2,w,h);ctx.restore();
+ const fr=frames[Math.abs(Math.floor(o.frame||0))%frames.length];if(!fr){ctx.fillStyle=MONSTER_TINT[name]||'#b7bbd4';ctx.fillRect(x-h*.22,y-h*.35,h*.44,h*.7);ctx.fillStyle='#201b32';ctx.fillRect(x-h*.12,y-h*.16,h*.08,h*.08);ctx.fillRect(x+h*.04,y-h*.16,h*.08,h*.08);return;}const w=h*fr.width/fr.height;
+ ctx.save();ctx.imageSmoothingEnabled=false;ctx.translate(Math.round(x),Math.round(y));if(o.rot&&!prefs.reduced)ctx.rotate(o.rot);if(o.sy)ctx.scale(1,o.sy);if(fr.image)ctx.drawImage(fr.image,fr.sx,fr.sy,fr.width,fr.height,-w/2,-h/2,w,h);else ctx.drawImage(fr,-w/2,-h/2,w,h);ctx.restore();
 }
 let bgCache=null,bgWidth=0;
 function drawV18Field(W){

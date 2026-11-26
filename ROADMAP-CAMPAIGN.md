@@ -40,3 +40,6 @@ The v22-alpha.7.19 Command Center layout was rejected. Restore v22-alpha.7.18 ru
 
 ## v22-alpha.7.21 — Guardian's Academy
 Six guided exercises and original Free Sandbox integrated, with session-only completion. Pending user playtest. Campaign HUD layout remains locked. Next: Infernal Codex. No permanent rewards from training.
+
+## v22-alpha.7.22 — Asset Recovery
+Hotfix: static original sprites and illustrations with direct decoded image rendering and visible fallbacks; no layout or gameplay change. Academy retained. Infernal Codex deferred until graphics recovery is confirmed in production.
