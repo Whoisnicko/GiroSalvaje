@@ -25,7 +25,7 @@ function heroNormalize(state,width=420){
  if(old.status==='active'&&Number.isFinite(old.x)&&Number.isFinite(old.y)&&Number.isFinite(old.hp)){
   h.status=old.hp>0?'active':'fallen';h.down=h.status==='fallen';h.hp=Math.max(0,Math.min(d.maxHp,old.hp*(Number.isFinite(old.maxHp)&&old.maxHp>0?d.maxHp/old.maxHp:1)));
   h.x=Math.max(WALL_X+d.radius,Math.min(Math.max(420,width)-d.radius,old.x));h.y=Math.max(d.radius,Math.min(WORLD_H-d.radius,old.y));
-  h.cd=Number.isFinite(old.cd)?Math.max(0,Math.min(d.attackInterval,old.cd)):0;h.facing=old.facing===-1?-1:1;h.martial=martialNormalize(old.martial,h.facing,h);if(h.down){h.martial.storm=null;h.martial.charge=null;}
+  h.cd=Number.isFinite(old.cd)?Math.max(0,Math.min(d.attackInterval,old.cd)):0;h.facing=old.facing===-1?-1:1;h.martial=martialNormalize(old.martial,h.facing,h);if(biomeId(state)==='frozen')for(const k of ['frostUntil','frostChillUntil','frostChillStrength','iceVX','iceVY'])if(Number.isFinite(old[k]))h[k]=old[k];if(h.down){h.martial.storm=null;h.martial.charge=null;}
  }
  return h;
 }
@@ -97,10 +97,11 @@ function heroAdvance(dt){
  }
  if(!heroActive()){heroClearKeys();return;}
  const h=S.hero,d=talentHeroStats(h);h.flash=Math.max(0,h.flash-dt);h.lunge=Math.max(0,h.lunge-dt);h.cd=Math.max(0,h.cd-dt);h.moving=false;
+ if(frostFrozen(h)){frostClearMotion(h);return;}
  if(!heroCanControl())heroClearKeys();
- const busy=martialAdvance(h,dt);if(busy==='charge')return;
+ const busy=martialAdvance(h,dt);if(busy==='charge'){frostClearMotion(h);return;}
  const {dx,dy,len}=martialMovement();
- if(len){h.martial.direction=martialDirection(dx,dy,h.facing);martialMove(h,dx/len*d.moveSpeed*dt*biomeWalkFactor(h),dy/len*d.moveSpeed*dt*biomeWalkFactor(h));}
+ if(len){h.martial.direction=martialDirection(dx,dy,h.facing);const factor=biomeWalkFactor(h),v=frostWalkVector(h,dx/len*d.moveSpeed*dt*factor,dy/len*d.moveSpeed*dt*factor,dt);martialMove(h,v.dx,v.dy);}else if(biomeId(S)==='frozen'&&Number.isFinite(h.iceVX)){const v=frostWalkVector(h,0,0,dt);martialMove(h,v.dx,v.dy);}
  if(busy==='storm')return;
  let target=null,best=Infinity;
  for(const e of S.enemies){if(e.hp<=0)continue;const gap=Math.hypot(e.x-h.x,e.y-h.y)-e.r-d.radius;if(gap<=d.range&&gap<best){best=gap;target=e;}}
