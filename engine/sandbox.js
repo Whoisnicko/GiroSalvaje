@@ -32,7 +32,7 @@ function sandboxResetBattle(message='Battle reset.'){
  S.phase='prep';S.enemies=[];S.queue=[];S.curQueue=[];S.shots=[];S.zones=[];S.fx=[];S.parts=[];S.floats=[];S.shake=0;S.buff={haste:0,slow:0};S.aim=null;S.aimP=null;S.sel=null;S.charge=false;S.confirmFight=false;S.fightT=0;S.spawnT=0;
  sandboxHeal();sandboxCards();prepUndoClear();setResult('Sandbox',message);sandboxStatus(message);renderUI();
 }
-function sandboxEnemy(kind,w){const K=KIND[kind],W=waveInfo(w);return {kind,hp:W.hp*K.hp,dmg:W.dmg*K.dmg,sp:W.sp*K.sp,r:K.r,range:K.range||0,armor:K.armor||K.boss?W.armor:0,boss:!!K.boss};}
+function sandboxEnemy(kind,w){const K=KIND[kind],W=waveInfo(w);return bossStamp({kind,hp:W.hp*K.hp,dmg:W.dmg*K.dmg,sp:W.sp*K.sp,r:K.r,range:K.range||0,armor:K.armor||K.boss?W.armor:0,boss:!!K.boss},w);}
 function sandboxAddUnit(type,lvl){
  if(S.phase!=='prep'||!Object.hasOwn(BASE,type)||!MERGEABLE.includes(type)||S.units.length>=SANDBOX_MAX_UNITS)return false;
  const u=makeUnit(type,lvl),old=S.maxUnits;S.maxUnits=Math.min(SANDBOX_MAX_UNITS,Math.max(S.maxUnits,fieldCount()+1));
