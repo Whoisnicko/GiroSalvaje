@@ -31,6 +31,7 @@ function draw(){
   ctx.save();
   const camera=feelCamera();ctx.translate(camera.x,camera.y);
   drawInkBackdrop(W);
+  biomeDraw(W);
   if (S.phase === 'prep') {
     const zm = zoneMax();
     ctx.fillStyle = colors.soul; ctx.globalAlpha = 0.05; ctx.fillRect(WALL_X, 0, zm - WALL_X, WORLD_H); ctx.globalAlpha = 1;
@@ -70,7 +71,7 @@ function draw(){
     ctx.save();ctx.beginPath();ctx.rect(0,0,W,WORLD_H);ctx.clip();
     const ring=(x,y,rr,c,dash)=>{if(!(rr>0))return;ctx.fillStyle=c;ctx.globalAlpha=.065;ctx.beginPath();ctx.arc(x,y,rr,0,Math.PI*2);ctx.fill();ctx.globalAlpha=.82;ctx.strokeStyle=c;ctx.lineWidth=1.6;ctx.setLineDash(dash);ctx.beginPath();ctx.arc(x,y,rr,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);};
     if(S.enemies.includes(show)){
-      if(show.kind==='bal')ring(show.x,show.y,show.range,colors.red,[5,4]);
+      if(enemyRanged(show))ring(show.x,show.y,show.range,colors.red,[5,4]);
       else if(show.kind==='cle')ring(show.x,show.y,100,colors.red,[5,4]);
     }else{
       const st=stats(show.type,show.lvl,show),base=BASE[show.type];
@@ -132,7 +133,7 @@ function draw(){
       const walk = motionPreference.matches ? 0 : e.moving ? Math.abs(Math.sin(t * 10 + e.ph)) * -3 : Math.sin(t * 2 + e.ph) * 1;
       const rot = !motionPreference.matches && e.moving ? Math.sin(t * 10 + e.ph) * .07 : 0;
       if (hovE === e || tacticalEnemySelected(e)) { ctx.strokeStyle = colors.red; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(e.x, e.y, s / 2 + 6, 0, Math.PI * 2); ctx.stroke(); }
-      sprite(K.spr, e.x - (!motionPreference.matches && e.lunge > 0 ? e.lunge / .12 * 6 : 0), e.y + walk, e.kind === 'jin' ? s * 1.15 : s, { flash:e.flash > 0, rot, frame:pose.frame });
+      sprite(enemySprite(e), e.x - (!motionPreference.matches && e.lunge > 0 ? e.lunge / .12 * 6 : 0), e.y + walk, e.kind === 'jin' ? s * 1.15 : s, { flash:e.flash > 0, rot, frame:pose.frame });
       if (e.kind === 'ant') { ctx.fillStyle = colors.m; ctx.globalAlpha = .5 + .5 * Math.sin(t * 20 + e.ph); ctx.beginPath(); ctx.arc(e.x - s * .34, e.y - s * .45 + walk, 3, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1; }
       if (e.root > 0) { ctx.strokeStyle = colors.leaf; ctx.lineWidth = 3; ctx.strokeRect(e.x - s / 2 - 2, e.y - s / 2 - 2, s + 4, s + 4); }
       bar(e.x - e.r, e.y - s / 2 - 6, e.r * 2, 5, e.hp / e.maxHp, colors.red);
