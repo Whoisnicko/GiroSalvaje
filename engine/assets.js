@@ -14,6 +14,8 @@ const FULL_BATTLEFIELD_ART='assets/battlefield-full-v19.webp';
 const FOREST_BATTLEFIELD_ART='assets/battlefield-forest-v39.webp?v=22a7p39';
 const FOREST_ENEMY_ATLAS='assets/forest-enemies-v40.png?v=22a7p40';
 const FOREST_ENEMY_CELLS=Object.freeze(['pathfinder','ranger','purifier']);
+const FROZEN_ENEMY_ATLAS='assets/frozen-enemies-v41.png?v=22a7p41';
+const FROZEN_ENEMY_CELLS=Object.freeze(['frostSentinel','iceMarksman','frostHerald']);
 const FROZEN_BATTLEFIELD_ART='assets/battlefield-frozen-v38.webp?v=22a7p38';
 let battlefieldArt=null,forestBattlefieldArt=null,frozenBattlefieldArt=null;
 // A bounded image request prevents a missing resource from blocking the menu.
@@ -28,11 +30,11 @@ function bakeForestBackdrop(image){
 function assetFrame(image,sx,sy){return {image,sx,sy,width:96,height:96};}
 /* Prepare the approved poses once, matching the original 12-frame indexing.
    Each sprite remains independently optional; missing art falls back to KIND.spr. */
-function installForestEnemyArt(sheet){
- if(sheet?.width!==288||sheet?.height!==96)return 0;
+function installRegionalEnemyArt(sheet,cells){
+ if(sheet?.width!==96*cells.length||sheet?.height!==96)return 0;
  let installed=0;
  const order=[0,0,1,0,0,2,0,2,0,3,4,3],offsets=[[0,0],[0,-1],[0,-2],[-2,0],[-4,0]];
- FOREST_ENEMY_CELLS.forEach((kind,i)=>{
+ cells.forEach((kind,i)=>{
   const name=REGIONAL_ENEMIES[kind]?.art;if(!name)return;
   try{
    const poses=offsets.map(([dx,dy])=>{const c=inkCanvas(96,96),g=c.getContext('2d');g.imageSmoothingEnabled=false;g.drawImage(sheet,i*96,0,96,96,dx,dy,96,96);return c;});
@@ -44,8 +46,10 @@ function installForestEnemyArt(sheet){
  });
  return installed;
 }
+function installForestEnemyArt(sheet){return installRegionalEnemyArt(sheet,FOREST_ENEMY_CELLS);}
+function installFrozenEnemyArt(sheet){return installRegionalEnemyArt(sheet,FROZEN_ENEMY_CELLS);}
 async function buildHybridArt(){
- const [backdrop,forest,frozen,forestEnemies,...sheets]=await Promise.all([loadArtImage(FULL_BATTLEFIELD_ART).catch(()=>null),loadArtImage(FOREST_BATTLEFIELD_ART).catch(()=>null),loadArtImage(FROZEN_BATTLEFIELD_ART).catch(()=>null),loadArtImage(FOREST_ENEMY_ATLAS).catch(()=>null),...BAKED_ART.sheets.map((url,i)=>loadArtImage(url).then(im=>{if(im.width!==768||im.height%96||im.height!==(i===BAKED_ART.sheets.length-1?96:768))throw Error('Invalid sprite sheet dimensions');return im;}).catch(e=>{console.warn('Sprite sheet fallback',i,e);return null;}))]);
+ const [backdrop,forest,frozen,forestEnemies,frozenEnemies,...sheets]=await Promise.all([loadArtImage(FULL_BATTLEFIELD_ART).catch(()=>null),loadArtImage(FOREST_BATTLEFIELD_ART).catch(()=>null),loadArtImage(FROZEN_BATTLEFIELD_ART).catch(()=>null),loadArtImage(FOREST_ENEMY_ATLAS).catch(()=>null),loadArtImage(FROZEN_ENEMY_ATLAS).catch(()=>null),...BAKED_ART.sheets.map((url,i)=>loadArtImage(url).then(im=>{if(im.width!==768||im.height%96||im.height!==(i===BAKED_ART.sheets.length-1?96:768))throw Error('Invalid sprite sheet dimensions');return im;}).catch(e=>{console.warn('Sprite sheet fallback',i,e);return null;}))]);
  battlefieldArt=backdrop?.width===1100&&backdrop?.height===500?backdrop:null;
  forestBattlefieldArt=bakeForestBackdrop(forest);
  frozenBattlefieldArt=frozen?.width===1100&&frozen?.height===500?frozen:null;
@@ -61,6 +65,7 @@ async function buildHybridArt(){
   URL_[name]=BAKED_ART.portraits[name];
  });
  installForestEnemyArt(forestEnemies);
+ installFrozenEnemyArt(frozenEnemies);
  Object.assign(GOTHIC_DATA.cards,BAKED_ART.cards);
  GOTHIC_DATA.relics=['dragon','esqueleto','alma','nigromante','comodin','caballero'].map(n=>URL_[n]);
  const strip=$('#heroCast');strip.innerHTML=['zombi','espectro','dragon','caballero'].map(n=>`<img src="${URL_[n]}" alt="${n}">`).join('');

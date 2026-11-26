@@ -1,0 +1,3 @@
+# Frozen Wasteland Enemy Art — v22-alpha.7.41
+
+v7.40 validated 8/8; user approved Frost Sentinel, Ice Marksman and Frost Herald. Main character poses cropped from approved art, without labels or sample animation strip, resized proportionally into transparent 288×96 PNG (three 96×96 cells), 44,238 bytes; Git blob 7c7d97d3519e40167b7200652c1d2332a2eb915e. Shared regional sprite installer with same 12-frame indexing, translated poses and cached white/gray variants; original fallback per enemy. Codex, wave HUD and inspector use existing shared sprite resolver. No custom hand-drawn animation frames or gameplay changes. Forest, Valley, bosses, maps, saves and balance unchanged. Browser playtest and Cloudflare deployment pending. Next: regional boss art approval.

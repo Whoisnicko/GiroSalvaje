@@ -94,3 +94,6 @@ User validated all six Frozen art checks and approved the new forest illustratio
 
 ## v22-alpha.7.40 — Cursed Forest Enemy Art
 v7.39 playtest 6/6; user approved three original regional designs. Transparent 288×96 PNG atlas, 96×96 cells, cropped from approved image. Generate 12-index idle/walk/attack poses with original engine timing and white/gray variants once at load, no per-frame generation; portraits used by wave HUD, inspector and Codex. Optional art per regional definition with original sprite fallback; common humans, Frozen and bosses unchanged. No changes to stats, behavior, queues, progression, HUD or maps. Next: Frozen enemy art approval.
+
+## v22-alpha.7.41 — Frozen Wasteland Enemy Art
+v7.40 playtest 8/8; user approved all three ice designs. Extract main character poses from approved composition, exclude presentation labels and example animation strip, scale into transparent 288×96 PNG. Shared regional installer preserves Forest frames and provides optional Frozen sprites, 12-index movement/attack timing, cached white/gray variants and matching portraits. No changes to stats, attacks, terrain, progression, HUD or bosses. Next: regional boss art approval.
