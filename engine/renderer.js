@@ -47,7 +47,6 @@ function draw(){
   ctx.save();
   const camera=feelCamera();ctx.translate(camera.x,camera.y);
   drawInkBackdrop(W);
-  biomeDraw(W);
   if (S.phase === 'prep') {
     const zm = zoneMax();
     ctx.fillStyle = colors.soul; ctx.globalAlpha = 0.05; ctx.fillRect(WALL_X, 0, zm - WALL_X, WORLD_H); ctx.globalAlpha = 1;
@@ -259,7 +258,31 @@ function drawForestBackdrop(W){
  }
  ctx.save();ctx.imageSmoothingEnabled=false;ctx.drawImage(forestFieldCache,0,0,W,WORLD_H);ctx.restore();
 }
-function drawInkBackdrop(W){if(biomeDef(S).backdrop==='forest'){if(forestArtReady()){ctx.save();ctx.imageSmoothingEnabled=true;ctx.drawImage(forestBattlefieldArt,0,0,W,WORLD_H);ctx.restore();}else drawForestBackdrop(W);return;}if(!battlefieldArt){drawV18Field(W);return;}ctx.save();ctx.imageSmoothingEnabled=false;ctx.drawImage(battlefieldArt,0,0,W,WORLD_H);ctx.restore();}
+/* Static region art and tactical markings are composited once per logical size.
+   No per-frame forest text, ellipse/dash rasterization or filtered SVG work. */
+let forestComposite=null,forestCompositeSource=null,forestCompositeW=0,forestCompositeH=0;
+function forestStaticLayer(W){
+ const source=forestBattlefieldArt;
+ if(forestComposite&&source===forestCompositeSource&&W===forestCompositeW&&WORLD_H===forestCompositeH)return forestComposite;
+ try{
+  // Retain original art's detail, within a fixed allocation budget.
+  const density=Math.min(2,1600/W,1000/WORLD_H);
+  const layer=inkCanvas(Math.max(1,Math.ceil(W*density)),Math.max(1,Math.ceil(WORLD_H*density))),g=layer.getContext('2d');if(!g)return null;
+  g.scale(layer.width/W,layer.height/WORLD_H);g.imageSmoothingEnabled=true;g.drawImage(source,0,0,W,WORLD_H);biomeDraw(W,g);
+  forestComposite=layer;forestCompositeSource=source;forestCompositeW=W;forestCompositeH=WORLD_H;return layer;
+ }catch(e){return null;}
+}
+function drawInkBackdrop(W){
+ if(biomeDef(S).backdrop==='forest'){
+  if(forestArtReady()){
+   const layer=forestStaticLayer(W);
+   ctx.save();ctx.imageSmoothingEnabled=false;ctx.drawImage(layer||forestBattlefieldArt,0,0,W,WORLD_H);ctx.restore();
+   if(!layer)biomeDraw(W);
+  }else{drawForestBackdrop(W);biomeDraw(W);}
+  return;
+ }
+ if(!battlefieldArt){drawV18Field(W);return;}ctx.save();ctx.imageSmoothingEnabled=false;ctx.drawImage(battlefieldArt,0,0,W,WORLD_H);ctx.restore();
+}
 function drawInkShot(s,t){
  ctx.save();ctx.translate(Math.round(s.x),Math.round(s.y));ctx.rotate(s.ang||0);
  const pal=HYBRID.palette[s.k==='fire'?'fire':'orb'];
