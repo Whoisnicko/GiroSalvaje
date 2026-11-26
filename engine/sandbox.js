@@ -7,7 +7,7 @@ const sbEl=id=>document.getElementById(id);
 function sandboxStatus(message){sbEl('sbStatus').textContent=message;}
 function sandboxRefill(){if(!sandboxActive())return;S.gold=999999;S.spinsLeft=999;S.maxUnits=Math.min(S.maxUnits,SANDBOX_MAX_UNITS);}
 function sandboxCards(){S.deck=Object.keys(CARDS);S.hand=S.deck.map((id,di)=>({id,di,used:false}));S.aim=null;}
-function sandboxInitialize(){sandboxRefill();sandboxCards();S.sandboxGod=true;sbEl('sbWave').value=String(S.wave);sandboxStatus('All cards available. Select guardians or launch a wave.');}
+function sandboxInitialize(){sandboxRefill();sandboxCards();S.sandboxGod=true;sbEl('sbWave').value=String(S.wave);sbEl('sbRegion').value=biomeId(S);sandboxStatus('All cards available. Select guardians or launch a wave.');}
 function sandboxCanEdit(){return sandboxActive()&&!menuOpen&&!spinning&&!S.drag&&!S.pendingMerge&&$('#ov').hidden&&$('#ov2').hidden&&!$('#unitBestiary').open&&!$('#runePractice').open&&['prep','fight'].includes(S.phase);}
 function sandboxEnter(heroId='sorcerer',build=null){
  if(!menuOpen||spinning||sandboxActive()||sandboxParked)return;
@@ -32,7 +32,7 @@ function sandboxResetBattle(message='Battle reset.'){
  S.phase='prep';S.enemies=[];S.queue=[];S.curQueue=[];S.shots=[];S.zones=[];S.fx=[];S.parts=[];S.floats=[];S.shake=0;S.buff={haste:0,slow:0};S.aim=null;S.aimP=null;S.sel=null;S.charge=false;S.confirmFight=false;S.fightT=0;S.spawnT=0;
  sandboxHeal();sandboxCards();prepUndoClear();setResult('Sandbox',message);sandboxStatus(message);renderUI();
 }
-function sandboxEnemy(kind,w){const K=KIND[kind],W=waveInfo(w);return bossStamp({kind,hp:W.hp*K.hp,dmg:W.dmg*K.dmg,sp:W.sp*K.sp,r:K.r,range:K.range||0,armor:K.armor||K.boss?W.armor:0,boss:!!K.boss},w);}
+function sandboxEnemy(kind,w){const K=KIND[kind],W=waveInfo(w);return bossStamp({kind,hp:W.hp*K.hp,dmg:W.dmg*K.dmg,sp:W.sp*K.sp,r:K.r,range:K.range||0,armor:K.armor||K.boss?W.armor:0,boss:!!K.boss},w,biomeId(typeof S==='undefined'?null:S));}
 function sandboxAddUnit(type,lvl){
  if(S.phase!=='prep'||!Object.hasOwn(BASE,type)||!MERGEABLE.includes(type)||S.units.length>=SANDBOX_MAX_UNITS)return false;
  const u=makeUnit(type,lvl),old=S.maxUnits;S.maxUnits=Math.min(SANDBOX_MAX_UNITS,Math.max(S.maxUnits,fieldCount()+1));
@@ -45,7 +45,7 @@ function sandboxAction(a){
  if(a==='god'){S.sandboxGod=!S.sandboxGod;if(S.sandboxGod)sandboxHeal();msg='God mode '+(S.sandboxGod?'enabled.':'disabled.');}
  else if(a==='heal'){sandboxHeal();msg='Army, altar and deployed hero healed.';}
  else if(a==='stop'){sandboxResetBattle();return;}
- else if(a==='wave'&&prep){S.wave=Math.max(1,Math.min(MAX_WAVE,Number(sbEl('sbWave').value)||1));heroResetWave();S.nextQueue=rollWave(S.wave);sandboxHeal();prepUndoClear();msg='Wave '+S.wave+' loaded.';}
+ else if(a==='wave'&&prep){S.biomeId=sbEl('sbRegion').value==='forest'?'forest':'valley';S.wave=Math.max(1,Math.min(biomeId(S)==='forest'?5:MAX_WAVE,Number(sbEl('sbWave').value)||1));sbEl('sbWave').value=String(S.wave);heroResetWave();S.nextQueue=rollWave(S.wave,biomeId(S));sandboxHeal();prepUndoClear();msg='Wave '+S.wave+' loaded.';}
  else if(a==='fight'&&prep){if(!S.nextQueue.length){sandboxStatus('Add enemies or load a wave first.');return;}startFight();return;}
  else if(a==='unit'&&prep){prepUndoClear();msg=sandboxAddUnit(sbEl('sbUnit').value,Math.max(1,Math.min(3,Number(sbEl('sbLevel').value)||1)))?'Guardian added.':'No space available. Clear the army or reserve.';}
  else if(a==='clearUnits'&&prep){prepUndoClear();S.units=[];S.bench=[null,null,null];S.sel=null;msg='Army cleared.';}
@@ -58,7 +58,7 @@ function sandboxAction(a){
 }
 function renderSandbox(){
  const p=sbEl('sandboxPanel'),on=sandboxActive();p.hidden=!on;academyPaint();if(!on)return;
- const prep=S.phase==='prep',ready=prep||S.phase==='fight';
+ const prep=S.phase==='prep',ready=prep||S.phase==='fight';sbEl('sbRegion').disabled=!prep;
  if(heroUsesMagic(S))magicRenderSandbox();
  sbEl('sbGod').textContent='God mode: '+(S.sandboxGod?'ON':'OFF');sbEl('sbGod').setAttribute('aria-pressed',String(S.sandboxGod));
  for(const b of p.querySelectorAll('[data-sb]')){const a=b.dataset.sb;b.disabled=spinning||!ready||(['wave','fight','unit','clearUnits'].includes(a)&&!prep);}
