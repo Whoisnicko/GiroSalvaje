@@ -61,3 +61,6 @@ User requested immediate access to maps, waves and bosses. Free Sandbox exposes 
 
 ## v22-alpha.7.29 — Sandbox boss routing hotfix
 User reports Huntsman selection leads to Crusader. Boss dropdown now loads on change; top direct boss buttons route by immutable boss ID and immediately fight. Active map/wave/boss is shown from the real queued/spawned enemies. Validate exact runtime routing and preserve Academy/campaign isolation. Browser production reproduction pending.
+
+## v22-alpha.7.30 — Region and boss identity
+User confirmed Quick Boss access for Crusader and Huntsman; forest looked like Valley, classic Commander looked like Crusader, title version stale. New cached procedural forest backdrop replaces Valley art in forest only. Crusader uses existing Knight art; Commander retains original art; named boss labels distinguish all three. Version rendered from a single HTML meta value. No boss stat, campaign layout, routing or save changes. Browser playtest pending.
