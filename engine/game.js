@@ -1352,12 +1352,12 @@ resize=function(){
 };
 if(typeof ResizeObserver!=='undefined'){const stageObserver=new ResizeObserver(()=>{if(compactLayout())resize();});stageObserver.observe($('#battleViewport'));}
 document.addEventListener('click',ev=>{const b=ev.target.closest('[data-front]');if(!b||b.disabled)return;ev.preventDefault();const a=b.dataset.front;
- if(a==='home')showHome();if(a==='new'){$('#campaignLength').value='5';$('#campaignRegion').value='valley';biomeMenu();$('#nameError').textContent='';$('#playerName').value=profile.name;front('newGameView');$('#playerName').focus();}if(a==='new-confirm')beginNew();if(a==='credits')front('creditsView');if(a==='confirm'&&!$('#confirmView').hidden)launchNew(heroPending);if(a==='back')showHome();if(a==='resume')closeFront();
+ if(a==='home')showHome();if(a==='new')campaignMapOpen(true);if(a==='campaign')campaignMapOpen();if(a==='campaign-start')campaignMapStart();if(a==='campaign-scores')campaignMapScores();if(a==='campaign-sandbox')sandboxLaunchOpen();if(a==='new-confirm')beginNew();if(a==='credits')front('creditsView');if(a==='confirm'&&!$('#confirmView').hidden)launchNew(heroPending);if(a==='back')showHome();if(a==='resume')closeFront();
  if(a==='continue'){try{if(S){closeFront();if(S.phase==='journey')journeyShow();}else if(loadedSave)restore(loadedSave);}catch(e){$('#homeError').textContent='Could not restore this run. Start a new one or import a backup.';}}
  if(a==='sanctum')sanctumOpen();if(a==='codex')codexOpen();if(a==='treasury')relicTreasuryOpen();if(a==='sanctum-talents')talentOpen('library');if(a==='settings')showSettings();if(a==='scores')showScores();if(a==='cloud')cloudScores();if(a==='publish')publishScore();if(a==='export')exportSave();if(a==='import')$('#importFile').click();
 });
 $('#heroSelectView').addEventListener('click',ev=>{const b=ev.target.closest('[data-hero-class]');if(b&&!b.disabled)heroSelect(b.dataset.heroClass);});
-document.addEventListener('keydown',ev=>{if(ev.target.matches('input,select,textarea'))ev.stopImmediatePropagation();if(menuOpen){if(ev.key==='Escape'&&(!$('#heroSelectView').hidden||!$('#confirmView').hidden||!$('#newGameView').hidden||!$('#creditsView').hidden||!$('#sanctumView').hidden||!$('#codexView').hidden||!$('#treasuryView').hidden)){showHome();}else if(ev.key==='Escape'&&S){closeFront();}else if(ev.key==='Enter'&&ev.target.id==='playerName')beginNew();ev.stopImmediatePropagation();}},true);
+document.addEventListener('keydown',ev=>{if(ev.target.matches('input,select,textarea'))ev.stopImmediatePropagation();if(menuOpen){if(ev.key==='Escape'&&(!$('#heroSelectView').hidden||!$('#confirmView').hidden||!$('#newGameView').hidden||!$('#creditsView').hidden||!$('#sanctumView').hidden||!$('#codexView').hidden||!$('#treasuryView').hidden||!$('#campaignMapView').hidden)){showHome();}else if(ev.key==='Escape'&&S){closeFront();}else if(ev.key==='Enter'&&ev.target.id==='playerName')beginNew();ev.stopImmediatePropagation();}},true);
 $('#scoreLength').addEventListener('change',showScores);$('#campaignRegion').addEventListener('change',biomeMenu);
 $('#mergeConfirmOpt').addEventListener('change',e=>setMergeConfirmation(e.target.checked));
 $('#settingsView').addEventListener('change',e=>{if(e.target.id==='mergeConfirmOpt')return;prefs.volume=+$('#volume').value/100;prefs.reduced=$('#motionOpt').checked;prefs.effects=$('#effectsOpt').value;setMusic($('#musicOpt').checked);setSfx($('#soundOpt').checked);savePrefs();});
@@ -1365,7 +1365,7 @@ $('#importFile').addEventListener('change',async ev=>{const f=ev.target.files[0]
 window.addEventListener('pagehide',persist);document.addEventListener('visibilitychange',()=>{if(document.hidden)persist();});
 setInterval(()=>{if(!menuOpen&&!document.hidden)persist();},5000);
 savePrefs();
-initSandboxControls();academyInit();
+initSandboxControls();academyInit();campaignMapInit();
 initMagicControls();
 initHeroControls();talentInitUI();
 knowledgeInit();talentInit();campaignProfileInit();

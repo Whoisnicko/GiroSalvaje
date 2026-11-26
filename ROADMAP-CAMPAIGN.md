@@ -109,3 +109,6 @@ Ashen validated 15/15. Fifth region, five waves unlocked after Ashen; approved a
 
 ## v22-alpha.7.45 — Regional Rewards
 Cathedral v7.44 validated 17/17. Five approved legendary starting relics, one existing relic slot, retroactive unlocks from regional profile and recorded victories, no Sandbox grants. Infernal Treasury, Codex and approved art atlas. Initial balance; actual playtest pending.
+
+## v22-alpha.7.46 — Campaign Progression
+Regional Rewards validated 15/15. New Game opens interactive map based on approved composition, live region states, real battlefield previews, sprites, relics, local short scores and progress. Original champion/name/classic/confirmation flow retained, no gameplay or schema change. Responsive sidebar and detail panel. Browser validation pending.
