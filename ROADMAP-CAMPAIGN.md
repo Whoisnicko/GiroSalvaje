@@ -46,3 +46,6 @@ Hotfix: static original sprites and illustrations with direct decoded image rend
 
 ## v22-alpha.7.23 — Infernal Codex
 User confirmed v7.22 artwork recovery. Read-only Codex: 75 entries across guardians, invaders, cards, relics/artifacts/infusions/blessings, heroes/spells/skills/talents. Wave reference selector (1–10), search, rank comparison and original artwork. Base stats reuse runtime formulas with explicit neutral modifiers; no profile or run mutation. Existing HUD layout locked. Next: Monster Synergies after Codex playtest. Full spell mastery details remain in Grimoire; permanent unlock management remains in Eternal Sanctum.
+
+## v22-alpha.7.24 — Monster Synergies
+User confirmed v7.23. Three derived spatial synergies (Boneguard, Spectral Choir, Ash Ritual); live bestiary markers and Codex references. No save migration or HUD relocation. All runs receive the changes; balance and score comparability require review. Next Biomes & Bosses after playtest.

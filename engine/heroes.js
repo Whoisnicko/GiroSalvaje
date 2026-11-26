@@ -107,7 +107,7 @@ function heroAdvance(dt){
  if(target&&h.cd<=0){h.cd=d.attackInterval;h.lunge=.20;h.facing=target.x<h.x?-1:1;h.martial.direction=martialDirection(target.x-h.x,target.y-h.y,h.facing);hitEnemy(target,d.damage,'steel',{kb:0});martialGain(MARTIAL_RULES.basicRage+(talentHas(h,'berserker',2)?2:0));S.fx.push({k:'sword',x:(h.x+target.x)/2,y:(h.y+target.y)/2,angle:Math.atan2(target.y-h.y,target.x-h.x),t:.24,T:.24});sfx('clash');}
 }
 function heroDamageTarget(u,amount){
- if(!heroIsTarget(u))return spellDamageAlly(u,amount);
+ if(!heroIsTarget(u))return spellDamageAlly(u,amount*synergyFactor(u,'damageTaken'));
  if(!heroActive()||!Number.isFinite(amount)||amount<=0||sandboxGod()||martialInvulnerable())return 0;
  const dealt=Math.min(u.hp,amount*(martialSkinActive(u)?1-JUGGERNAUT_RULES.skin.reduction:1));martialGain(dealt*MARTIAL_RULES.damageRage);u.hp-=dealt;
  if(u.hp<=0){u.hp=0;u.status='fallen';u.down=true;u.martial.storm=null;u.martial.charge=null;u.martial.skinLeft=0;heroClearKeys();burst(u.x,u.y,'gold',18,110);S.fx.push({k:'ring',x:u.x,y:u.y,r:35,c:'red',t:.6,T:.6});floatText(u.x,u.y-22,'Warlord fallen','red',12);sfx('death');heroRender();persist();}

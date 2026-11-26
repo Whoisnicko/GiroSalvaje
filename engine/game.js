@@ -727,7 +727,7 @@ function update(dt){
     let tgt = null, best = 1e9;
     for (const e of alive) { const d = dist(e, u) - e.r - radius(u); if (d < best) { best = d; tgt = e; } }
     if (!tgt || best > st.range) continue;
-    u.cd -= dt * (S.buff.haste > 0 ? 2 : 1) * (1 + buff) * (warCry?1+cryStats.speedBonus:1);
+    u.cd -= dt * (S.buff.haste > 0 ? 2 : 1) * (1 + buff) * (warCry?1+cryStats.speedBonus:1) * synergyFactor(u,'attackRate');
     if (u.cd > 0) continue;
     u.cd = st.cd;
     const dmg = st.dmg * (1 + buff) * (warCry?1+cryStats.damageBonus:1);
@@ -827,11 +827,11 @@ function update(dt){
       const bonus=spellHarvestDeath(e);
       burst(e.x, e.y, 'red', 10, 110); burst(e.x, e.y, 'soul', 4, 50); floatText(e.x, e.y - 16, bonus?'+2 souls':' +1 soul', 'soul', 11);feelImpact(e.x,e.y,'death');feelSoul(e.x,e.y);
       // Necromancer: levanta un esqueleto aliado de cada humano que cae en su área
-      const n = S.units.find(u => u.type === 'N' && !u.down && u.cd <= 0 && (u.skels || 0) < skelCap(u.lvl) && dist(u, e) <= stats('N', u.lvl, u).range);
+      const n = S.units.find(u => u.type === 'N' && !u.down && u.hp > 0 && u.cd <= 0 && (u.skels || 0) < skelCap(u.lvl) && dist(u, e) <= stats('N', u.lvl, u).range);
       if (n) {
         const k = makeUnit('K', 1); k.temp = true; k.nl = n.lvl; refreshHp(k);
         k.x = clamp(e.x, WALL_X + 20, worldW() - 20); k.y = clamp(e.y, 20, WORLD_H - 20); k.hx = k.x; k.hy = k.y;
-        S.units.push(k); n.cd = stats('N', n.lvl, n).cd; n.skels = (n.skels || 0) + 1;
+        S.units.push(k); n.cd = stats('N', n.lvl, n).cd * synergyFactor(n,'raiseCooldown'); n.skels = (n.skels || 0) + 1;
         S.fx.push({ k:'ring', x:k.x, y:k.y, r:30, c:'leaf', t:.6, T:.6 }); burst(k.x, k.y, 'leaf', 12, 90);
         S.fx.push({ k:'line', x1:n.x, y1:n.y, x2:k.x, y2:k.y, c:'leaf', t:.35, T:.35 });
         floatText(k.x, k.y - 24, 'Skeleton!', 'leaf', 11); sfx('raise'); tip('raise');

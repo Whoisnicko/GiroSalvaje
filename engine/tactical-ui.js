@@ -49,11 +49,13 @@ function tacticalModel(e){
  }else{
   const base=BASE[e.type],st=stats(e.type,e.lvl,e),bf=bansheeOn(e),bench=S.bench.includes(e),support=!!base.support;
   name=NAMES[e.type];portrait=USPR[e.type];[role,note]=TAC_ROLES[e.type];stars=e.temp?'':'★'.repeat(e.lvl);
-  const haste=S.phase==='fight'&&S.buff.haste>0?2:1,atk=st.dmg*(1+bf),interval=st.cd/((1+bf)*haste);
+  const haste=S.phase==='fight'&&S.buff.haste>0?2:1,cry=martialGuardBuff(e)?talentSkill('cry',S.hero):null,atk=st.dmg*(1+bf)*(cry?1+cry.damageBonus:1),interval=st.cd/((1+bf)*haste*(cry?1+cry.speedBonus:1)*synergyFactor(e,'attackRate'));
   combat={damage:support?null:atk,attackRate:support?null:1/interval,dps:support?null:atk/interval,range:st.range,armor:null};
   add('sword','Attack',support?'—':tacNum(atk));add('clock',support?'Ability interval':'Attack interval',tacNum(support?st.cd:interval,2)+' s');add('target',support?'Ability radius':'Attack reach',tacNum(st.range,0)+' px');
   add('boot','Move speed',base.move?tacNum(base.move,0)+' px/s':'Stationary');add('shield','Armor','0');
   if(base.guard)add('flag','Patrol radius',tacNum(guardOf(e),0)+' px');if(st.splash)add('flame','Blast radius',tacNum(st.splash,0)+' px');
+  if(e.type==='N')add('clock','Raise cooldown',tacNum(st.cd*synergyFactor(e,'raiseCooldown'),2)+' s');
+  for(const rule of synergyActive(e))tags.unshift('Synergy · '+rule.name);
   if(e.type==='N')add('skull','Skeletons raised',(e.skels||0)+' / '+skelCap(e.lvl));if(e.type==='B')add('spark','Aura bonus','+'+Math.round(bansheeBuff(e.lvl)*100)+'%');
   if(e.arcaneShield>0&&e.arcaneShieldTime>0&&!e.down)tags.push('Soul Barrier '+tacNum(e.arcaneShield,0)+' HP · '+tacNum(e.arcaneShieldTime)+'s');
   if(infusionOf(e))tags.push(infusionOf(e).name);
@@ -78,7 +80,7 @@ function sanctuaryStats(m){
  ];
 }
 function tacticalCompactHTML(m){
- const tags=m.tags.filter(t=>/^(Fallen|Temporary|Reserve|Rooted|Banshee|Training|Dragon Roar|Commander|Mist|Final charge)/.test(t)).slice(0,2);
+ const tags=m.tags.filter(t=>/^(Synergy|Fallen|Temporary|Reserve|Rooted|Banshee|Training|Dragon Roar|Commander|Mist|Final charge)/.test(t)).slice(0,2);
  const hp=Math.max(0,Math.min(100,m.hp/m.max*100));
  return '<div class="sanctuary-shell"><img class="sanctuary-art" src="'+SANCTUARY_ART+'" alt="" draggable="false" onload="this.parentElement.classList.add(\'sanctuary-art-loaded\')" onerror="this.hidden=true;this.parentElement.classList.remove(\'sanctuary-art-loaded\')"><div class="sanctuary-title"><strong>'+m.name+'</strong><span>'+m.stars+'</span></div><div class="sanctuary-health"><span class="sanctuary-fallback-heart" aria-hidden="true">♥</span><b>'+Math.ceil(m.hp)+' / '+Math.ceil(m.max)+'</b></div><div class="sanctuary-hp-track" role="meter" aria-label="Health" aria-valuemin="0" aria-valuemax="'+Math.ceil(m.max)+'" aria-valuenow="'+Math.ceil(Math.min(m.hp,m.max))+'"><i style="width:'+hp+'%"></i></div>'+sanctuaryStats(m).map((s,i)=>'<div class="sanctuary-stat sanctuary-stat-'+i+'" title="'+s.title+'"><span class="sanctuary-fallback-icon" aria-hidden="true">'+s.icon+'</span><span>'+s.label+'</span><b>'+s.value+'</b></div>').join('')+'</div>'+(tags.length?'<div class="sanctuary-buffs">'+tags.map(t=>'<span>'+t+'</span>').join('')+'</div>':'');
 }
@@ -88,7 +90,7 @@ let bestiaryEntity=null,bestiaryState=null,bestiaryPhase=null,bestiaryMarkup='';
 function bestiaryHTML(e,m){
  const l=m.enemy?{title:'Invader of the living kingdom',lore:'Driven by the living kingdom’s fear of the dead, this invader marches toward the altar in the Valley of Souls.',tactic:m.note}:BESTIARY_LORE[e.type];
  const cards=sanctuaryStats(m).map(s=>'<div class="bestiary-stat"><span aria-hidden="true">'+s.icon+'</span><small>'+s.label+'</small><b>'+s.value+'</b></div>').join('');
- return '<div class="bestiary-hero"><div class="bestiary-portrait">'+tacPic(m.portrait)+'</div><div><span class="bestiary-role">'+m.role+'</span><h2 id="bestiaryTitle">'+m.name+' <em>'+m.stars+'</em></h2><p>'+l.title+'</p><div class="bestiary-vitality"><span>VITALITY</span><b>'+Math.ceil(m.hp)+' / '+Math.ceil(m.max)+'</b></div><div class="bestiary-hp"><i style="width:'+Math.max(0,Math.min(100,m.hp/m.max*100))+'%"></i></div></div></div><div class="bestiary-stats">'+cards+'</div><div class="bestiary-columns"><section><h3>Chronicle</h3><p>'+l.lore+'</p></section><section><h3>Battlecraft</h3><p>'+l.tactic+'</p><dl>'+m.rows.filter(s=>!['Attack','Attack interval','Attack reach','Reach','Armor'].includes(s.label)).map(s=>'<div><dt>'+s.label+'</dt><dd>'+s.value+'</dd></div>').join('')+'</dl></section></div><div class="bestiary-tags">'+m.tags.map(t=>'<span>'+t+'</span>').join('')+'</div>'+(!m.enemy?infusionHTML(e):'');
+ return '<div class="bestiary-hero"><div class="bestiary-portrait">'+tacPic(m.portrait)+'</div><div><span class="bestiary-role">'+m.role+'</span><h2 id="bestiaryTitle">'+m.name+' <em>'+m.stars+'</em></h2><p>'+l.title+'</p><div class="bestiary-vitality"><span>VITALITY</span><b>'+Math.ceil(m.hp)+' / '+Math.ceil(m.max)+'</b></div><div class="bestiary-hp"><i style="width:'+Math.max(0,Math.min(100,m.hp/m.max*100))+'%"></i></div></div></div><div class="bestiary-stats">'+cards+'</div><div class="bestiary-columns"><section><h3>Chronicle</h3><p>'+l.lore+'</p></section><section><h3>Battlecraft</h3><p>'+l.tactic+'</p><dl>'+m.rows.filter(s=>!['Attack','Attack interval','Attack reach','Reach','Armor'].includes(s.label)).map(s=>'<div><dt>'+s.label+'</dt><dd>'+s.value+'</dd></div>').join('')+'</dl></section></div><div class="bestiary-tags">'+m.tags.map(t=>'<span>'+t+'</span>').join('')+'</div>'+(!m.enemy?(synergyRulesFor(e.type).length?'<section class="infusion-section"><h3>Monster synergies</h3>'+synergyRulesFor(e.type).map(r=>'<p>'+r.name+' · '+r.description+(r.targets.includes(e.type)?(synergyActive(e).includes(r)?' · ACTIVE':' · Inactive'):' · Provides synergy')+'</p>').join('')+'</section>':'')+infusionHTML(e):'');
 }
 function bestiaryPosition(){
  const d=bestiaryDialog(),r=cv.getBoundingClientRect(),left=Math.max(0,r.left),right=Math.min(innerWidth,r.right),top=Math.max(0,r.top),bottom=Math.min(innerHeight,r.top+WORLD_H*scale);
