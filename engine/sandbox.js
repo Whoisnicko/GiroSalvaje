@@ -12,7 +12,7 @@ function sandboxCanEdit(){return sandboxActive()&&!menuOpen&&!spinning&&!S.drag&
 function sandboxEnter(heroId='sorcerer',build=null){
  if(!menuOpen||spinning||sandboxActive()||sandboxParked)return;
  if(S?.drag)cancelDrag();if(S)persist();
- sandboxParked={state:S,runId:sessionRunId,name:runName,width:savedWorldWidth,save:loadedSave,status:$('#saveStatus').textContent,ov:$('#ov').innerHTML,ovHidden:$('#ov').hidden,ov2:$('#ov2').innerHTML,ov2Hidden:$('#ov2').hidden};
+ sandboxParked={state:S,runId:sessionRunId,name:runName,width:savedWorldWidth,save:loadedSave,undo:{state:prepUndoState,wave:prepUndoWave,stack:prepUndoStack},status:$('#saveStatus').textContent,ov:$('#ov').innerHTML,ovHidden:$('#ov').hidden,ov2:$('#ov2').innerHTML,ov2Hidden:$('#ov2').hidden};
  S=null;sessionRunId='sandbox';runName='Sandbox';savedWorldWidth=null;$('#ov').hidden=true;$('#ov2').hidden=true;closeFront();newGame(true,heroId,build);
  $('#saveStatus').textContent='SANDBOX · Campaign save untouched';
 }
@@ -20,7 +20,7 @@ function sandboxExit(){
  if(!sandboxActive()||spinning||!sandboxParked)return;
  heroCancelAim(false);heroClearKeys();magicCancel();
  if(S.drag)cancelDrag();
- const p=sandboxParked;sandboxParked=null;closeBestiary();tacticalHide();S=p.state;sessionRunId=p.runId;runName=p.name;savedWorldWidth=p.width;loadedSave=p.save;
+ const p=sandboxParked;sandboxParked=null;academySession=null;closeBestiary();tacticalHide();S=p.state;sessionRunId=p.runId;runName=p.name;savedWorldWidth=p.width;loadedSave=p.save;prepUndoState=p.undo.state;prepUndoWave=p.undo.wave;prepUndoStack=p.undo.stack;
  $('#ov').innerHTML=p.ov;$('#ov').hidden=p.ovHidden;$('#ov2').innerHTML=p.ov2;$('#ov2').hidden=p.ov2Hidden;
  $('#saveStatus').textContent=p.status;renderSandbox();heroRender();if(S){resize();renderUI();}else magicRender();showHome();
 }
@@ -57,7 +57,7 @@ function sandboxAction(a){
  setResult('Sandbox',msg);sandboxStatus(msg);renderUI();
 }
 function renderSandbox(){
- const p=sbEl('sandboxPanel'),on=sandboxActive();p.hidden=!on;if(!on)return;
+ const p=sbEl('sandboxPanel'),on=sandboxActive();p.hidden=!on;academyPaint();if(!on)return;
  const prep=S.phase==='prep',ready=prep||S.phase==='fight';
  if(heroUsesMagic(S))magicRenderSandbox();
  sbEl('sbGod').textContent='God mode: '+(S.sandboxGod?'ON':'OFF');sbEl('sbGod').setAttribute('aria-pressed',String(S.sandboxGod));
@@ -67,6 +67,6 @@ function initSandboxControls(){
  sbEl('sbWave').innerHTML=Array.from({length:MAX_WAVE},(_,i)=>'<option value="'+(i+1)+'">'+(i+1)+'</option>').join('');
  sbEl('sbUnit').innerHTML=MERGEABLE.map(t=>'<option value="'+t+'">'+NAMES[t]+'</option>').join('');
  sbEl('sbEnemy').innerHTML=Object.keys(KIND).map(k=>'<option value="'+k+'">'+KIND[k].n+'</option>').join('');
- sbEl('sandboxEnter').addEventListener('click',()=>heroChoose('sandbox'));
+ sbEl('sandboxEnter').addEventListener('click',academyOpen);
  sbEl('sandboxPanel').addEventListener('click',e=>{const b=e.target.closest('[data-sb]');if(b&&!b.disabled)sandboxAction(b.dataset.sb);});
 }

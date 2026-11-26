@@ -579,7 +579,7 @@ async function spin(){
   if (S.phase !== 'prep' || spinning || S.spinsLeft <= 0) return;
   if(S.drag||S.pendingMerge)return;
   prepUndoClear();
-  spinning = true; S.spinsLeft--; S.spunOnce = true; S.confirmFight = false; S.wins.clear(); S.aim = null; renderUI();
+  academySpinStarted(); spinning = true; S.spinsLeft--; S.spunOnce = true; S.confirmFight = false; S.wins.clear(); S.aim = null; renderUI();
   const cells = [...document.querySelectorAll('.cell')];
   const stops = [0, 1, 2].map(c => 380 + c * 170);
   const start = performance.now();
@@ -1085,7 +1085,7 @@ function loop(now){
     tacticalTick(now);
     if (S.phase === 'fight' && now-lastAutosave>150) { renderChips(); renderBuyCard(); heroRender();lastAutosave=now; }
   } else tacticalHide();
-  tutorialTick(now);
+  tutorialTick(now);academyTick();
   requestAnimationFrame(loop);
 }
 
@@ -1339,7 +1339,7 @@ $('#importFile').addEventListener('change',async ev=>{const f=ev.target.files[0]
 window.addEventListener('pagehide',persist);document.addEventListener('visibilitychange',()=>{if(document.hidden)persist();});
 setInterval(()=>{if(!menuOpen&&!document.hidden)persist();},5000);
 savePrefs();
-initSandboxControls();
+initSandboxControls();academyInit();
 initMagicControls();
 initHeroControls();talentInitUI();
 knowledgeInit();talentInit();campaignProfileInit();

@@ -60,7 +60,7 @@ function magicRecognize(now){
 }
 // Sandbox-only direct targeting, leaving normal Q and recognition unchanged.
 function magicQuickSelect(id,now=performance.now()){
- magicSync();if(!S?.sandbox||!magicCanInteract()||!magicAvailable(id))return false;
+ magicSync();if(!S?.sandbox||academyActive()||!magicCanInteract()||!magicAvailable(id))return false;
  if(!magicActive()&&!magicBegin(now))return false;
  magicRelease();magicStroke=[];magicRune=id;magicMode='aim';magicDeadline=now+MAGIC_AIM_MS;magicAim=null;
  magicSetMessage(magicDef(id).name+' · sandbox quick aim · choose a target.');return true;
@@ -100,9 +100,9 @@ function magicRender(now=performance.now()){
  magicEl('magicTimer').textContent=active?'TIME ×0.3 · '+Math.max(0,(magicDeadline-now)/1000).toFixed(1)+'s':now<magicReadyAt?'Recovery '+((magicReadyAt-now)/1000).toFixed(1)+'s':'';
  const msg=S.phase==='prep'?'Magic ready for battle.':magicMessage;if(magicEl('magicMessage').textContent!==msg)magicEl('magicMessage').textContent=msg;
  const lab=magicEl('magicSandbox');lab.hidden=!S.sandbox;
- const list=magicEl('magicSpells'),defs=RUNE_DEFS.filter(d=>magicAllowed(d.id)),key=(S.sandbox?'sandbox:':'campaign:')+defs.map(d=>d.id).join(',');
+ const list=magicEl('magicSpells'),defs=RUNE_DEFS.filter(d=>magicAllowed(d.id)),key=(academyActive()?'academy:':S.sandbox?'sandbox:':'campaign:')+defs.map(d=>d.id).join(',');
  if(key!==magicHudKey||list.children.length!==defs.length){
-  list.innerHTML=defs.map(d=>{const tag=S.sandbox?'button':'span',data=S.sandbox?' type="button" data-magic-quick="'+d.id+'" title="Sandbox: aim '+d.name+' without drawing"':'';return '<'+tag+data+' class="magic-spell" data-magic-id="'+d.id+'" style="--rune-color:'+d.color+'">'+runeGlyph(d)+'<span><b>'+d.name+'</b><small></small></span></'+tag+'>';}).join('');
+  list.innerHTML=defs.map(d=>{const tag=S.sandbox&&!academyActive()?'button':'span',data=S.sandbox&&!academyActive()?' type="button" data-magic-quick="'+d.id+'" title="Sandbox: aim '+d.name+' without drawing"':'';return '<'+tag+data+' class="magic-spell" data-magic-id="'+d.id+'" style="--rune-color:'+d.color+'">'+runeGlyph(d)+'<span><b>'+d.name+'</b><small></small></span></'+tag+'>';}).join('');
   magicHudKey=key;
  }
  for(const el of list.children){const id=el.dataset.magicId,d=SPELL_DATA[id],cd=m.noCooldown?0:m.cooldowns[id],ready=magicAvailable(id);el.classList.toggle('ready',ready);el.querySelector('small').textContent='T'+masteryTier(id)+' · '+d.mana+' MP · '+(cd>0?cd.toFixed(1)+'s':'Ready')+(d.implemented?'':' · Preview');if(S.sandbox){el.disabled=!ready||!magicCanInteract()||(!active&&now<magicReadyAt);el.setAttribute('aria-pressed',String(active&&magicRune===id));}}

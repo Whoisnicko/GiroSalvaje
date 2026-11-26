@@ -37,3 +37,6 @@ Vehículo/hero marker, biomas, frecuencia de Hades, tipos de nodos, cuándo camb
 
 ## 2026-11-25 — Layout lock (user decision)
 The v22-alpha.7.19 Command Center layout was rejected. Restore v22-alpha.7.18 runtime, including the exact hand, reserve and control positions at each responsive breakpoint. Do not move or resize/reflow existing HUD zones, card fan, reserve or controls without explicit approval. Non-layout readability fixes may be proposed; validate against the approved baseline. Defer the HUD redesign until final polish. Next: Guardian’s Academy, then Infernal Codex, synergies, biomes/bosses, polish and balance. Short 5-wave campaign remains default, Classic 10 optional; Eternal Sanctum and route economy remain intact.
+
+## v22-alpha.7.21 — Guardian's Academy
+Six guided exercises and original Free Sandbox integrated, with session-only completion. Pending user playtest. Campaign HUD layout remains locked. Next: Infernal Codex. No permanent rewards from training.
