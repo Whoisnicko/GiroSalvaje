@@ -1,0 +1,11 @@
+/* Existing shipped pixel-edged bronze frame; native labels remain live. */
+#front .front-view:not(#homeView):not(#campaignMapView),#campaignMapView .cm-panel{border-image:url('assets/ui/frame-bronze-v19.svg') 12 stretch;border-image-width:7px}
+#front .front-view:not(#homeView) .button-row .btn,#front .front-view:not(#homeView) .btn[data-front="back"],#campaignMapView .cm-nav .btn,#heroSelectView .hero-option{border-image:url('assets/ui/frame-bronze-v19.svg') 12 stretch;border-image-width:4px}
+#heroSelectView .hero-option{border-image-width:8px}
+#front .front-view:not(#homeView) .btn:focus-visible,#heroSelectView .hero-option:focus-visible{outline:2px solid #ffe1a8;outline-offset:2px}
+#front .front-view:not(#homeView) .btn:not(:disabled):hover{filter:brightness(1.12)}
+#front .front-view:not(#homeView):not([hidden]){animation:infernal-screen-in .18s ease-out both}
+#front .front-view:not(#homeView) .btn,#heroSelectView .hero-option{transition:filter .12s ease,box-shadow .12s ease}
+@keyframes infernal-screen-in{from{opacity:.72}to{opacity:1}}
+body.reduce-motion #front .front-view:not(#homeView),body.reduce-motion #front .btn,body.reduce-motion #heroSelectView .hero-option,body.reduce-motion .cm-progress-track i{animation:none!important;transition:none!important}
+@media(prefers-reduced-motion:reduce){#front .front-view:not(#homeView),#front .btn,#heroSelectView .hero-option,.cm-progress-track i{animation:none!important;transition:none!important}}

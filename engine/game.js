@@ -216,15 +216,18 @@ function rewardArt(o){const id=Object.keys(CARDS).find(k=>CARDS[k].n===o.n);cons
 
 function visualPose(u,t){
   let v=VISUAL.get(u);
-  if(!v){v={down:!!u.down,cd:u.cd,skels:u.skels||0,attackUntil:0,attackStart:0,riseStart:-100};VISUAL.set(u,v);}
+  if(!v){v={down:!!u.down,cd:u.cd,skels:u.skels||0,attackUntil:0,attackStart:0,riseStart:-100,lastX:u.x,face:1};VISUAL.set(u,v);}
   if(v.down&&!u.down)v.riseStart=t;
   const cast=(u.type==='N'&&(u.skels||0)>v.skels)||((u.type==='B'||(u.kind==='cle'&&S.fx.some(f=>f.k==='ring'&&f.c==='gold'&&f.x===u.x&&f.y===u.y))||(u.kind&&enemyRanged(u))||(u.kind&&u.x<=WALL_X+(u.r||0)+3))&&u.cd>v.cd+.1);
   if((u.lunge>0&&!(v.lunge>0))||cast){v.attackStart=t;v.attackUntil=t+.36;}
-  v.down=!!u.down;v.cd=u.cd;v.skels=u.skels||0;v.lunge=u.lunge||0;
-  if(prefs.reduced||motionPreference.matches)return {frame:u.down?0:t<v.attackUntil?10:0,rise:1};
+  const dx=Number.isFinite(u.x)&&Number.isFinite(v.lastX)?u.x-v.lastX:0;
+  if(u.type&&!BASE[u.type]?.support){if(t<v.attackUntil&&Number.isFinite(u.lx)&&Math.abs(u.lx)>.15)v.face=Math.sign(u.lx);else if(u.moving&&Math.abs(dx)>.15)v.face=Math.sign(dx);}
+  v.lastX=u.x;v.down=!!u.down;v.cd=u.cd;v.skels=u.skels||0;v.lunge=u.lunge||0;
+  if(u.down||frostFrozen(u))return {frame:0,rise:1,flipX:v.face<0,still:true};
+  if(prefs.reduced||motionPreference.matches)return {frame:t<v.attackUntil?10:0,rise:1,flipX:v.face<0,still:true};
   const phase=u.ph||0, moving=u.moving&&!u.down, attacking=t<v.attackUntil&&!u.down;
   const frame=attacking?8+Math.min(3,Math.floor((t-v.attackStart)/.09)):moving?4+Math.floor(t*(u.type==='W'?5:10)+phase)%4:Math.floor(t*4+phase)%4;
-  return {frame,rise:Math.min(1,Math.max(0,(t-v.riseStart)/.42))};
+  return {frame,rise:Math.min(1,Math.max(0,(t-v.riseStart)/.42)),flipX:v.face<0,still:false};
 }
 
 /* ================= Monsters ================= */
@@ -286,7 +289,7 @@ function waveInfo(w){
   if (w >= 3) table.push(['bal', 2], ['cle', 1]);
   if (w >= 4) table.push(['jin', 2]);
   if (w >= 6) table.push(['ant', 1.5]);
-  return { boss, n, table, hp:HUM.hp * Math.pow(HUM.grow, w - 1), dmg:HUM.dmg + w * HUM.dmgW, sp:30 + w * 2, armor:2 + Math.floor(w / 3) };
+  return { boss, n, table, hp:HUM.hp * Math.pow(HUM.grow, Math.min(4,w-1)) * Math.pow(HUM.lateGrow,Math.max(0,w-5)), dmg:HUM.dmg + w * HUM.dmgW, sp:30 + w * 2, armor:2 + Math.floor(w / 3) };
 }
 /* La oleada se sortea al empezar la preparación, así el panel muestra exactamente lo que viene. */
 function rollWave(w,region='valley',difficulty='normal'){
@@ -302,7 +305,7 @@ function rollWave(w,region='valley',difficulty='normal'){
   if(difficulty!=='normal'){const d=DIFFICULTIES[difficultyId(difficulty)];for(const e of q){e.hp*=d.hp;e.dmg*=d.damage;}}
   return q;
 }
-const HUM = { hp:20, grow:1.46, dmg:6.5, dmgW:1.95 }; // fuerza de los humans (ajustada con partidas simuladas)
+const HUM = Object.freeze({ hp:20, grow:1.46, lateGrow:1.32, dmg:6.5, dmgW:1.95 }); // fuerza de los humans (ajustada con partidas simuladas)
 function pickKind(table){ const tot = table.reduce((s, t) => s + t[1], 0); let r = Math.random() * tot; for (const [k, wt] of table) { r -= wt; if (r <= 0) return k; } return table[0][0]; }
 
 /* ================= Artefactos ================= */
