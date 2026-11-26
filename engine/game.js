@@ -1070,7 +1070,8 @@ function readColors(){ const cs = getComputedStyle(document.documentElement); ['
 function floatText(x, y, text, c, sz){ if (S.floats.length >= 48) {if(sz)return;S.floats.shift();} S.floats.push({ x, y, text, c, sz, t:sz ? .8 : 1.2, T:sz ? .8 : 1.2 }); }
 let last = performance.now();
 function loop(now){
-  let dt = Math.min(0.05, (now - last) / 1000); last = now;
+  const frameDelta=Math.max(0,now-last);let dt = Math.min(0.05, frameDelta / 1000); last = now;
+  sandboxPerf(now,frameDelta);
   heroAimTick();magicFrame(now);
   if (S && !menuOpen && !document.hidden) {
     feelStep(dt);
