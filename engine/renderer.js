@@ -37,7 +37,7 @@ function draw(){
     ctx.fillStyle = colors.soul; ctx.globalAlpha = 0.05; ctx.fillRect(WALL_X, 0, zm - WALL_X, WORLD_H); ctx.globalAlpha = 1;
     ctx.setLineDash([6, 6]); ctx.strokeStyle = colors.gold; ctx.beginPath(); ctx.moveTo(zm, 0); ctx.lineTo(zm, WORLD_H); ctx.stroke(); ctx.setLineDash([]);
     ctx.font = '600 11px Rubik, sans-serif'; ctx.textBaseline = 'alphabetic';
-    ctx.textAlign = 'left'; ctx.fillStyle = colors.gold; ctx.fillText('YOUR VALLEY · drag your monsters', WALL_X + 8, WORLD_H - 8);
+    ctx.textAlign = 'left'; ctx.fillStyle = colors.gold; ctx.fillText((biomeId(S)==='forest'?'CURSED FOREST':'YOUR VALLEY')+' · drag your monsters', WALL_X + 8, WORLD_H - 8);
     const entry=invasionX(W);ctx.strokeStyle='#e7a36c';ctx.globalAlpha=.5;ctx.setLineDash([3,5]);ctx.beginPath();ctx.moveTo(entry,10);ctx.lineTo(entry,WORLD_H-22);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;ctx.textAlign='right';ctx.fillStyle=colors.steel;ctx.fillText('← INVASION ENTRY',W-8,WORLD_H-8);
   }
   for (const z of S.zones) { ctx.fillStyle = colors.muted; ctx.globalAlpha = .14 + .06 * Math.sin(t * 12); ctx.beginPath(); ctx.arc(z.x, z.y, z.r, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1; }
