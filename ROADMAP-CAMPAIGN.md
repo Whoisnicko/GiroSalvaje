@@ -79,3 +79,6 @@ Three forest-only units (Pathfinder, Forest Ranger, Forest Purifier) replace gua
 
 ## v22-alpha.7.35 — Sandbox damage clarity
 User approved all regional enemy checks but reported Huntsman not damaging targets. Real damage-path test confirmed both basic bolt and Hunter’s Mark deal damage when God mode is off and deal zero HP damage when on. Free Sandbox now starts with damage enabled; guided Academy remains protected, selected mode persists across encounters. God toggle moved to quick boss row, DAMAGE ON / IMMUNE indicator in summary. No boss balance changes. Pending browser confirmation; then Frozen Wasteland.
+
+## v22-alpha.7.36 — Frozen Wasteland
+Third five-wave campaign; Forest completion unlocks permanently, independent local ranking. Ice inertia, periodic blizzards, three regional enemies and Frost Inquisitor (Glacial Prison). Cached procedural ice art and blue crystal. Sandbox and Codex integrated. Stats and art provisional; browser playtest pending.
