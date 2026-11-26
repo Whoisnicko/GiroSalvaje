@@ -12,7 +12,7 @@ function artifactArt(id){
  const a=SHOP_ARTIFACTS[id],i=ARTIFACT_ART_ORDER.indexOf(id);
  return '<span class="artifact-thumb" style="--atlas-x:'+((i%3)*50)+'%;--atlas-y:'+Math.floor(i/3)*100+'%" aria-hidden="true"><span>'+a.icon+'</span></span>';
 }
-function artifactOwned(id){return Array.isArray(S?.artifacts)&&S.artifacts.includes(id);}
+function artifactOwned(id,state=S){return Array.isArray(state?.artifacts)&&state.artifacts.includes(id);}
 function artifactPrice(id){return Math.max(1,SHOP_ARTIFACTS[id].price-routeDiscount("artifact"));}
 function shopAvailable(){return !!S&&S.phase==='prep'&&!spinning&&!S.drag&&!S.pendingMerge&&!menuOpen;}
 function renderArtifactShelf(){

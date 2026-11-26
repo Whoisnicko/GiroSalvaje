@@ -43,3 +43,6 @@ Six guided exercises and original Free Sandbox integrated, with session-only com
 
 ## v22-alpha.7.22 — Asset Recovery
 Hotfix: static original sprites and illustrations with direct decoded image rendering and visible fallbacks; no layout or gameplay change. Academy retained. Infernal Codex deferred until graphics recovery is confirmed in production.
+
+## v22-alpha.7.23 — Infernal Codex
+User confirmed v7.22 artwork recovery. Read-only Codex: 75 entries across guardians, invaders, cards, relics/artifacts/infusions/blessings, heroes/spells/skills/talents. Wave reference selector (1–10), search, rank comparison and original artwork. Base stats reuse runtime formulas with explicit neutral modifiers; no profile or run mutation. Existing HUD layout locked. Next: Monster Synergies after Codex playtest. Full spell mastery details remain in Grimoire; permanent unlock management remains in Eternal Sanctum.

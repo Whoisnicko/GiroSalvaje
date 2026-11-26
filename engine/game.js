@@ -428,21 +428,21 @@ function startRun(i){
 function genTerrain(){ S.ter = new Map(); }
 
 /* ================= Unidades ================= */
-function stats(type, lvl, u){
+function stats(type, lvl, u, state=S){
   const b = BASE[type], m = LV_MULT[lvl - 1];
   let hp = b.hp * m, dmg = b.dmg * m, cd = b.cd * LV_CD[lvl - 1], splash = (b.splash || 0), range = b.range * LV_RANGE[lvl - 1];
-  if (type === 'K') { const f = [1, 2, 3.5][((u && u.nl) || 1) - 1]; hp = (b.hp + 18 * S.wave) * f; dmg = (b.dmg + .8 * S.wave) * f; }
+  if (type === 'K') { const f = [1, 2, 3.5][((u && u.nl) || 1) - 1]; hp = (b.hp + 18 * state.wave) * f; dmg = (b.dmg + .8 * state.wave) * f; }
   if (type === 'B') range = BANSHEE_RANGE[lvl - 1];
-  if (type === 'W') hp *= S.mods.warHp;
-  if (type === 'A') cd /= S.mods.archSpd;
-  if (type === 'M') { dmg *= S.mods.mageDmg; splash *= S.mods.splash; }
-  if (type === 'L') { hp = b.hp + 10 * S.wave; dmg = b.dmg + 2 * S.wave; }
+  if (type === 'W') hp *= state.mods.warHp;
+  if (type === 'A') cd /= state.mods.archSpd;
+  if (type === 'M') { dmg *= state.mods.mageDmg; splash *= state.mods.splash; }
+  if (type === 'L') { hp = b.hp + 10 * state.wave; dmg = b.dmg + 2 * state.wave; }
   if (u && u.train) { hp *= 1 + .5 * u.train; dmg *= 1 + .5 * u.train; } // entrenamiento en la reserva: +50% por oleada
   if (u && u.pile > 1) { hp *= u.pile; dmg *= u.pile; } // una pila de 2 pelea como 2 monsters juntos
-  if(artifactOwned("bloodfang")) dmg*=1.2;
-  if(artifactOwned("boneplate")) hp*=1.25;
-  if(artifactOwned("hourglass") && !b.support) cd/=1.2;
-  if(artifactOwned("lens") && b.ranged) range*=1.15;
+  if(artifactOwned("bloodfang",state)) dmg*=1.2;
+  if(artifactOwned("boneplate",state)) hp*=1.25;
+  if(artifactOwned("hourglass",state) && !b.support) cd/=1.2;
+  if(artifactOwned("lens",state) && b.ranged) range*=1.15;
   return infusionStats({ hp:Math.round(hp), dmg:Math.round(dmg), cd, range, splash },u);
 }
 const size = u => u.type === 'L' ? 36 : u.type === 'K' ? Math.round(32 * [1, 1.3, 1.6][(u.nl || 1) - 1]) : u.type === 'M' ? 40 + (u.lvl - 1) * 9 : 34 + (u.lvl - 1) * 9;
@@ -1328,10 +1328,10 @@ if(typeof ResizeObserver!=='undefined'){const stageObserver=new ResizeObserver((
 document.addEventListener('click',ev=>{const b=ev.target.closest('[data-front]');if(!b||b.disabled)return;ev.preventDefault();const a=b.dataset.front;
  if(a==='home')showHome();if(a==='new'){$('#campaignLength').value='5';$('#nameError').textContent='';$('#playerName').value=profile.name;front('newGameView');$('#playerName').focus();}if(a==='new-confirm')beginNew();if(a==='credits')front('creditsView');if(a==='confirm'&&!$('#confirmView').hidden)launchNew(heroPending);if(a==='back')showHome();if(a==='resume')closeFront();
  if(a==='continue'){try{if(S){closeFront();if(S.phase==='journey')journeyShow();}else if(loadedSave)restore(loadedSave);}catch(e){$('#homeError').textContent='Could not restore this run. Start a new one or import a backup.';}}
- if(a==='sanctum')sanctumOpen();if(a==='sanctum-talents')talentOpen('library');if(a==='settings')showSettings();if(a==='scores')showScores();if(a==='cloud')cloudScores();if(a==='publish')publishScore();if(a==='export')exportSave();if(a==='import')$('#importFile').click();
+ if(a==='sanctum')sanctumOpen();if(a==='codex')codexOpen();if(a==='sanctum-talents')talentOpen('library');if(a==='settings')showSettings();if(a==='scores')showScores();if(a==='cloud')cloudScores();if(a==='publish')publishScore();if(a==='export')exportSave();if(a==='import')$('#importFile').click();
 });
 $('#heroSelectView').addEventListener('click',ev=>{const b=ev.target.closest('[data-hero-class]');if(b&&!b.disabled)heroSelect(b.dataset.heroClass);});
-document.addEventListener('keydown',ev=>{if(ev.target.matches('input,select,textarea'))ev.stopImmediatePropagation();if(menuOpen){if(ev.key==='Escape'&&(!$('#heroSelectView').hidden||!$('#confirmView').hidden||!$('#newGameView').hidden||!$('#creditsView').hidden||!$('#sanctumView').hidden)){showHome();}else if(ev.key==='Escape'&&S){closeFront();}else if(ev.key==='Enter'&&ev.target.id==='playerName')beginNew();ev.stopImmediatePropagation();}},true);
+document.addEventListener('keydown',ev=>{if(ev.target.matches('input,select,textarea'))ev.stopImmediatePropagation();if(menuOpen){if(ev.key==='Escape'&&(!$('#heroSelectView').hidden||!$('#confirmView').hidden||!$('#newGameView').hidden||!$('#creditsView').hidden||!$('#sanctumView').hidden||!$('#codexView').hidden)){showHome();}else if(ev.key==='Escape'&&S){closeFront();}else if(ev.key==='Enter'&&ev.target.id==='playerName')beginNew();ev.stopImmediatePropagation();}},true);
 $('#scoreLength').addEventListener('change',showScores);
 $('#mergeConfirmOpt').addEventListener('change',e=>setMergeConfirmation(e.target.checked));
 $('#settingsView').addEventListener('change',e=>{if(e.target.id==='mergeConfirmOpt')return;prefs.volume=+$('#volume').value/100;prefs.reduced=$('#motionOpt').checked;prefs.effects=$('#effectsOpt').value;setMusic($('#musicOpt').checked);setSfx($('#soundOpt').checked);savePrefs();});
