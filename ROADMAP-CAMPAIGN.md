@@ -49,3 +49,6 @@ User confirmed v7.22 artwork recovery. Read-only Codex: 75 entries across guardi
 
 ## v22-alpha.7.24 — Monster Synergies
 User confirmed v7.23. Three derived spatial synergies (Boneguard, Spectral Choir, Ash Ritual); live bestiary markers and Codex references. No save migration or HUD relocation. All runs receive the changes; balance and score comparability require review. Next Biomes & Bosses after playtest.
+
+## v22-alpha.7.26 — Valley of Souls / The Crusader
+User accepted v7.25; PREPARATION/AIM overlap is non-blocking, deferred to final polish. First biome registry and wave-5 boss variant, using existing art and battlefield. No HUD reflow, new terrain rules, reward, or save version. Legacy pre-generated queues unchanged. Further biomes, balance and unique art pending.
