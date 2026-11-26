@@ -67,10 +67,21 @@ const FOREST_ZONES=Object.freeze([
  Object.freeze({kind:'bramble',x:.43,y:.63,rx:.09,ry:39}),
  Object.freeze({kind:'bramble',x:.76,y:.28,rx:.085,ry:39})
 ]);
-function biomeZones(state=S,W=worldW()){return biomeId(state)==='forest'?FOREST_ZONES.map(z=>({...z,x:z.x*W,y:z.y*WORLD_H,rx:Math.max(25,z.rx*W)})):[];}
-function biomeContains(u,kind,state=S,W=worldW()){return !!u&&Number.isFinite(u.x)&&Number.isFinite(u.y)&&biomeZones(state,W).some(z=>z.kind===kind&&((u.x-z.x)/z.rx)**2+((u.y-z.y)/z.ry)**2<=1);}
-function biomeProjectileFactor(u,state=S,W=worldW()){return biomeContains(u,'cover',state,W)?.75:1;}
-function biomeWalkFactor(u,state=S,W=worldW()){return biomeContains(u,'bramble',state,W)?.7:1;}
+const EMPTY_BIOME_ZONES=Object.freeze([]);
+let biomeZoneWidth=-1,biomeZoneHeight=-1,biomeZoneCache=EMPTY_BIOME_ZONES;
+function biomeZones(state=S,W){
+ if(biomeId(state)!=='forest')return EMPTY_BIOME_ZONES;
+ if(W===undefined)W=worldW();
+ if(W!==biomeZoneWidth||WORLD_H!==biomeZoneHeight){biomeZoneWidth=W;biomeZoneHeight=WORLD_H;biomeZoneCache=Object.freeze(FOREST_ZONES.map(z=>Object.freeze({...z,x:z.x*W,y:z.y*WORLD_H,rx:Math.max(25,z.rx*W)})));}
+ return biomeZoneCache;
+}
+function biomeContains(u,kind,state=S,W){
+ if(biomeId(state)!=='forest'||!u||!Number.isFinite(u.x)||!Number.isFinite(u.y))return false;
+ for(const z of biomeZones(state,W)){if(z.kind!==kind)continue;const dx=(u.x-z.x)/z.rx,dy=(u.y-z.y)/z.ry;if(dx*dx+dy*dy<=1)return true;}
+ return false;
+}
+function biomeProjectileFactor(u,state=S,W){return biomeContains(u,'cover',state,W)?.75:1;}
+function biomeWalkFactor(u,state=S,W){return biomeContains(u,'bramble',state,W)?.7:1;}
 function biomeDraw(W){
  if(biomeId(S)!=='forest')return;
  ctx.save();ctx.beginPath();ctx.rect(0,0,W,WORLD_H);ctx.clip();
