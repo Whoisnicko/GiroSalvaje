@@ -1,0 +1,16 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
+const read=p=>fs.readFileSync(path.join(__dirname,'../',p),'utf8'),noop=()=>{};
+const gradient={addColorStop:noop},g=new Proxy({createLinearGradient:()=>gradient,createRadialGradient:()=>gradient},{get:(o,k)=>k in o?o[k]:noop,set:(o,k,v)=>(o[k]=v,true)});
+const drawn=[],shapes=[];let built=0;
+const context=vm.createContext({WORLD_H:260,WALL_X:40,worldW:()=>1000,battlefieldArt:{id:'valley'},forestBattlefieldArt:{id:'forest'},S:{biomeId:'valley',fx:[],wallHp:50,wallMax:80},colors:{bg:'#111',red:'#f00',soul:'#0f0'},clamp:(n,a,b)=>Math.max(a,Math.min(b,n)),inkCanvas:(w,h)=>({id:'fallback-'+(++built),width:w,height:h,getContext:()=>g}),ctx:new Proxy({drawImage:im=>drawn.push(im.id),ellipse:()=>shapes.push('ellipse'),fillRect:()=>shapes.push('rect'),createRadialGradient:()=>gradient},{get:(o,k)=>k in o?o[k]:noop,set:(o,k,v)=>(o[k]=v,true)})});
+for(const p of ['engine/biomes-bosses.js','engine/renderer.js'])vm.runInContext(read(p),context);
+const run=s=>vm.runInContext(s,context);
+run("drawInkBackdrop(1000);S.biomeId='forest';drawInkBackdrop(1000);drawInkAltar(0)");
+assert.deepEqual(drawn,['valley','forest']);assert.equal(built,0);assert.equal(shapes.includes('ellipse'),false);
+run("forestBattlefieldArt=null;drawInkBackdrop(1000);drawInkBackdrop(1000);drawInkAltar(0)");
+assert.deepEqual(drawn.slice(-2),['fallback-1','fallback-1']);assert.equal(built,1);assert.ok(shapes.includes('ellipse'));
+run("S.biomeId='valley';drawInkBackdrop(1000)");assert.equal(drawn.at(-1),'valley');
+assert.equal(run("biomeProjectileFactor({x:240,y:75.4},{biomeId:'forest'},1000)"),.75);
+assert.equal(run("biomeWalkFactor({x:430,y:163.8},{biomeId:'forest'},1000)"),.7);
+const svg=read('assets/battlefield-cursed-forest.svg');assert.ok(svg.includes('width="1100" height="500"'));assert.ok(svg.includes('url(#altarClip)'));assert.ok(svg.includes('data:image/webp;base64,UklGR'));assert.ok(!svg.includes('xlink:href="http'));
+console.log('Forest art selection, fallback crystal, unchanged terrain and asset structure OK');
