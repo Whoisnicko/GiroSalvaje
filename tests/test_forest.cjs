@@ -1,0 +1,23 @@
+/* Isolated rules and permanent-profile compatibility. */
+const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
+const read=p=>fs.readFileSync(path.join(__dirname,'../',p),'utf8');
+const units=[{x:240,y:75.4,hp:100},{x:350,y:90,hp:100}];
+const env={S:{biomeId:'forest',fx:[]},WORLD_H:260,worldW:()=>1000,KIND:{com:{n:'Commander',spr:'comandante'}},FOE_NOTE:{com:'Boss'},heroTargets:()=>units,infusionHidden:()=>false,spellEnemyRooted:e=>!!e.root,heroDamageTarget:(u,d)=>{u.hp-=d;return d;},floatText(){},feelNumber(){},feelImpact(){},radius:()=>10,sfx(){},CARDS:{x:{}},META:{deck:['x']},Journey:{}};
+const c=vm.createContext(env);vm.runInContext(read('engine/biomes-bosses.js'),c);vm.runInContext(read('engine/campaign-save.js'),c);
+const run=s=>vm.runInContext(s,c);
+assert.equal(run("bossDef(bossStamp({kind:'com'},5,'forest')).id"),'huntsman');
+assert.equal(run("bossDef(bossStamp({kind:'com'},5)).id"),'crusader');
+assert.equal(run("bossDef(bossStamp({kind:'com'},10))"),null);
+assert.equal(run("biomeProjectileFactor(heroTargets()[0])"),.75);
+assert.equal(run("biomeProjectileFactor(heroTargets()[0],{biomeId:'valley'})"),1);
+assert.equal(run("biomeWalkFactor({x:430,y:163.8})"),.7);
+run("var e=bossStamp({kind:'com',hp:100,dmg:20,x:220,y:80,cd:0},5,'forest')");
+assert.equal(run("bossAdvance(e,.1)&&e.bossCast.x===heroTargets()[0].x"),true);
+assert.equal(units[0].hp,100);
+run("bossAdvance(e,2.1)");assert.ok(Math.abs(units[0].hp-83.2)<1e-8);assert.equal(units[1].hp,100);
+assert.equal(run("bossAdvance(e,.1)"),false);
+run("e.bossCooldown=0;bossAdvance(e,.1);e.root=1;bossAdvance(e,.1)");
+assert.equal(run("!!e.bossCast"),false);
+run("var a=campaignProfileNormalize({version:1,baseDeck:['x'],claims:[]}),b=campaignProfileNormalize({version:1,baseDeck:['x'],claims:[],forestUnlocked:true})");
+assert.equal(run("a.forestUnlocked"),false);assert.equal(run("campaignProfileMerge(a,b).forestUnlocked&&campaignProfileMerge(b,a).forestUnlocked"),true);
+console.log('Forest rules, Huntsman, and profile migration/merge OK');
