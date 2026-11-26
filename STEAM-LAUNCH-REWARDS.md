@@ -1,0 +1,7 @@
+# Steam launch prize campaign — future research, not approved for launch
+
+Recorded 2026-11-26. User proposes cash rewards for the first 10 players to finish, illustrative USD 1,000 for completing Nightmare and USD 2,000 for 100%/platinum completion. Amounts and eligibility are examples, not commitments. User alternative: 5% or 10% of sales instead of fixed amounts to reduce financial exposure.
+
+Before any announcement: verify then-current Steam/Steamworks rules, applicable contest/promotion law, jurisdictions, age eligibility, taxes, payment, publicity and privacy obligations with qualified legal advice. Define eligible completion, time window, ties, refunds/chargebacks, identity, verification, appeals, payout and disqualification. Compare capped fixed pool vs capped share of eligible net receipts after fees, taxes and refunds; define accounting period and cap. Avoid a perpetual revenue-share promise. Browser local saves/scores are not suitable for real-money verification; require authenticated and independently verifiable or server-authoritative runs, auditable timestamps and anti-tamper/anti-cheat. Steam achievements alone are insufficient. No contest launched or prizes promised.
+
+Separate in-game reward request: meaningful Veteran/Nightmare unlocks beyond achievements, e.g. altar cosmetics, victory VFX, horizontal sidegrades and collection unlocks; details pending approval. Revisit after balance, testing, distribution/security review and before Steam marketing launch.
