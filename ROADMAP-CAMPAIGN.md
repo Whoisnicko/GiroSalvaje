@@ -115,3 +115,6 @@ Regional Rewards validated 15/15. New Game opens interactive map based on approv
 
 ## v22-alpha.7.47 — Replayability I
 v7.46 13/13 validated. Normal/Veteran/Nightmare regional difficulty (100/120/140% HP, 100/115/130% damage), persistent rank, per-tier local scores, old saves Normal, Classic/Sandbox unchanged. Contextual Back and Escape. Approved art, challenges, mastery medals/VFX, unified gothic buttons and meaningful higher-tier rewards reserved for Replayability II/III. Steam launch prize proposal recorded separately; no money/revenue share implementation.
+
+## v22-alpha.7.48 — Replayability II-A / Global Balance handoff
+User confirmed live 7.48 and 8/16 checks, no errors reported. Remaining 8 browser checks, II-B and III deferred by user (BACKLOG-REPLAYABILITY.md). Global Balance active. Source baseline captured; no gameplay changes. Next: Advanced Animations, Professional Polish, Steam Release & Marketing. Historical approvals preserved.
