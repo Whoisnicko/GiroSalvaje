@@ -1,7 +1,7 @@
 /* Campaign schema and permanent deck receipts. Route economy is versioned; legacy runs retain their original rewards. */
 const CAMPAIGN_SAVE_VERSION=18;
 const DEFAULT_CAMPAIGN_WAVES=5, CLASSIC_CAMPAIGN_WAVES=10;
-function campaignLimit(state=S){return state?.sandbox?CLASSIC_CAMPAIGN_WAVES:state?.campaign?.maxWaves===10?10:DEFAULT_CAMPAIGN_WAVES;}
+function campaignLimit(state=S){return state?.sandbox?(state.biomeId==='forest'?5:CLASSIC_CAMPAIGN_WAVES):state?.campaign?.maxWaves===10?10:DEFAULT_CAMPAIGN_WAVES;}
 const CAMPAIGN_PROFILE_KEY='gs22.campaignProfile.v1';
 const CAMPAIGN_LEGACY_BACKUP='gs22.legacySave.v14';
 const CampaignSave=(()=>{
