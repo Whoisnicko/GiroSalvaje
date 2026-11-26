@@ -109,7 +109,7 @@ function frostBlizzard(state=S){if(biomeId(state)!=='frozen'||state.phase!=='fig
 function frostRange(u,range,state=S){return frostBlizzard(state)&&!regionalDef(u)?.blizzardImmune&&(enemyRanged(u)||u.type==='A'||u.type==='M')?range*BLIZZARD.rangeFactor:range;}
 function frostFrozen(u,state=S){return biomeId(state)==='frozen'&&state.phase==='fight'&&Number.isFinite(u?.frostUntil)&&u.frostUntil>(state.fightT||0);}
 function frostChill(u,state=S){return biomeId(state)==='frozen'&&state.phase==='fight'&&Number.isFinite(u?.frostChillUntil)&&u.frostChillUntil>(state.fightT||0)?1-(u.frostChillStrength||.3):1;}
-function frostSlowResistance(e,factor){return 1-(1-factor)*(1-(regionalDef(e)?.slowResistance||0));}
+function frostSlowResistance(e,factor){const resistance=regionalDef(e)?.slowResistance||0;return resistance?factor+(1-factor)*resistance:factor;}
 function frostClearMotion(u){delete u.iceVX;delete u.iceVY;}
 function frostResetUnit(u){frostClearMotion(u);delete u.frostUntil;delete u.frostChillUntil;delete u.frostChillStrength;delete u.frostPulseAt;}
 function frostWalkVector(u,dx,dy,dt,state=S,W){
