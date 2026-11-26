@@ -211,7 +211,7 @@ function loadInkImage(src){return new Promise((resolve,reject)=>{const im=new Im
 Object.assign(URL_,GOTHIC_DATA.sprites);
 const artReady=Promise.resolve();
 const img=k=>`<img src="${URL_[k]}" alt="" decoding="async">`;
-const relicArt=r=>{const i=Number.isInteger(r.art)&&r.art>=0&&r.art<6?r.art:5;return `<span class="starter-relic-art" style="--relic-x:${(i%3)*50}%;--relic-y:${Math.floor(i/3)*100}%" aria-hidden="true"><span>${r.ic||"◆"}</span></span>`;};
+const relicArt=r=>{if(r.id){const src=regionalRelicArt(r);return src?'<img class="regional-relic-art" src="'+src+'" alt="">':'<span class="regional-relic-fallback" aria-hidden="true">'+r.ic+'</span>';}const i=Number.isInteger(r.art)&&r.art>=0&&r.art<6?r.art:5;return `<span class="starter-relic-art" style="--relic-x:${(i%3)*50}%;--relic-y:${Math.floor(i/3)*100}%" aria-hidden="true"><span>${r.ic||"◆"}</span></span>`;};
 function rewardArt(o){const id=Object.keys(CARDS).find(k=>CARDS[k].n===o.n);const theme={'Ectoplasm':'niebla','Tough Flesh':'festin','Ancient Fire':'rugido','Soul Harvest':'cosecha','Full Moon':'aullido','Steady Claws':'manos','Fortified Altar':'ofrenda','Necromancy':'huesos'};return `<img src="${GOTHIC_DATA.cards[id||theme[o.n]||'cripta']}" alt="">`;}
 
 function visualPose(u,t){
@@ -312,6 +312,7 @@ const RELICS = [
   { n:'Forbidden Grimoire', art:3,ic:'▤', d:'Draw 4 cards per wave instead of 3.', a:()=>{ S.handSize = 4; } },
   { n:'Ancestral Altar', art:4,   ic:'⌂', d:'The Altar gains +25 HP and heals 8 after each wave.', a:()=>{ S.wallMax += 25; S.wallHp = S.wallMax; S.mods.wallRegen = 8; } },
   { n:'Earth Stone (inactive)', art:5,ic:'▲', d:'Temporarily disabled while terrain is paused.', disabled:true, a:()=>{} }, // keep legacy save index
+  ...REGIONAL_RELICS.map(r=>({...r,a:()=>{}})),
 ];
 const BLESS = [
   { n:'Ectoplasm',      ic:'☁', d:'Wraiths fire 40% faster.',            a:()=>S.mods.archSpd *= 1.4 },
@@ -414,10 +415,10 @@ function newGame(sandbox=false,heroId='sorcerer',build=null,maxWaves=DEFAULT_CAM
   <p>Hero: <b>${heroClass(S).name}</b>. Humans march toward the Altar. Summon guardians, match symbols and prepare your defense.</p>
   <div class="deckbar"><span>Your starting deck: <b>${META.deck.length} cards</b></span><button class="link" data-act="deck">View deck</button></div>
   <p><b>Choose 1 relic</b> for this run:</p>
-  <div class="relics">${RELICS.map((r, i) => r.disabled ? '' : `<button class="relic-opt" data-act="relic" data-i="${i}"><span class="medal">${relicArt(r)}</span><span class="rn">${r.n}</span><span class="rd">${r.d}</span></button>`).join('')}</div>`);
+  <div class="relics">${RELICS.map((r, i) => !regionalRelicAvailable(r) ? '' : `<button class="relic-opt" data-act="relic" data-i="${i}"><span class="medal">${relicArt(r)}</span><span class="rn">${r.n}</span><span class="rd">${r.d}</span></button>`).join('')}</div>`);
 }
 function startRun(i){
-  const r = RELICS[i]; if(!r || r.disabled) return; S.relic = r; r.a();
+  const r = RELICS[i]; if(S.phase!=='relic'||!regionalRelicAvailable(r)) return; S.relic = r; r.a();
   placeNew(makeUnit('W', S.startZombiee)); placeNew(makeUnit('A', 1));
   S.phase = 'prep';
   genTerrain();
@@ -673,7 +674,7 @@ function startFight(){
   if (S.drag) { cancelDrag(); }
   prepUndoClear();
   S.phase = 'fight'; heroResetWave(); magicResetWave(); S.held.clear(); S.wins.clear(); S.confirmFight = false; S.drag = null; S.aim = null; S.sel = null;
-  S.buff = { haste:0, slow:0 }; S.zones = []; S.fightT = 0; S.charge = false;ashResetBattle();catResetBattle();
+  S.buff = { haste:0, slow:0 }; S.zones = []; S.fightT = 0; S.charge = false;ashResetBattle();catResetBattle();relicResetBattle();
   const W = waveInfo(S.wave);
   S.units.forEach(u => { frostResetUnit(u);u.hx = u.x; u.hy = u.y; u.skels = 0; infusionReset(u); u.cd = Math.min(u.cd, .3); });
   S.altarCd = 0;
@@ -709,7 +710,7 @@ function update(dt){
   for (const z of S.zones) { z.t -= dt; S.enemies.forEach(e => { if (dist(e, z) <= z.r + e.r) damage(e, z.dps * dt, { quiet:true, pierce:true }); }); }
   S.zones = S.zones.filter(z => z.t > 0);
 
-  heroAdvance(dt);ashAdvance(Wd);catAdvance();
+  heroAdvance(dt);ashAdvance(Wd);catAdvance();relicAdvance();
   const alive = S.enemies.filter(e => e.hp > 0);
   const banshees = S.units.filter(u => u.type === 'B' && !u.down);
   for (const u of S.units) {
@@ -732,10 +733,10 @@ function update(dt){
     let tgt = null, best = 1e9;
     for (const e of alive) { const d = dist(e, u) - e.r - radius(u); if (d < best) { best = d; tgt = e; } }
     if (!tgt || best > frostRange(u,st.range)) continue;
-    u.cd -= dt * (S.buff.haste > 0 ? 2 : 1) * (1 + buff) * (warCry?1+cryStats.speedBonus:1) * synergyFactor(u,'attackRate') * catAttackRate(u);
+    u.cd -= dt * (S.buff.haste > 0 ? 2 : 1) * (1 + buff) * (warCry?1+cryStats.speedBonus:1) * synergyFactor(u,'attackRate') * catAttackRate(u) * relicGuardianFactor(u);
     if (u.cd > 0) continue;
     u.cd = st.cd;
-    const dmg = st.dmg * (1 + buff) * (warCry?1+cryStats.damageBonus:1)*catGroundFactor(u);
+    const dmg = st.dmg * (1 + buff) * (warCry?1+cryStats.damageBonus:1)*catGroundFactor(u)*relicGuardianFactor(u);
     const dd = dist(tgt, u) || 1; u.lx = (tgt.x - u.x) / dd; u.ly = (tgt.y - u.y) / dd; u.lunge = .14;
     if (u.type === 'M') { S.shots.push({ k:'fire', x:u.x + 14, y:u.y - 12, tgt, tx:tgt.x, ty:tgt.y, sp:300, dmg, source:u, splash:st.splash }); sfx('fireLaunch'); }
     else if (u.type === 'A') { S.shots.push({ k:'orb', x:u.x + 8, y:u.y - 4, tgt, tx:tgt.x, ty:tgt.y, sp:380, dmg, source:u }); sfx('orb'); }
@@ -857,6 +858,7 @@ function update(dt){
   const dead = S.units.filter(u => u.hp <= 0 && !u.down);
   if (dead.length) {
     dead.forEach(u => {
+      if(relicOnFall(u))return;
       floatText(u.x, u.y - 10, u.temp ? `✝ ${NAMES[u.type]}` : `${NAMES[u.type]} fell`, 'red');
       S.fx.push({ k:'ring', x:u.x, y:u.y, r:24, c:'red', t:.5, T:.5 }); burst(u.x, u.y, UCOL[u.type], 14, 120);
       if (u.temp) u.gone = true; else { u.down = true; u.hp = 0; }   // los monsters propios quedan en el piso y vuelven la próxima oleada
@@ -879,7 +881,7 @@ function damage(e, d, o = {}){
   }
   return d;
 }
-function hitAltar(d){ if(sandboxGod())return;S.wallHp -= Math.round(d);feelNumber(WALL_X+14,30,d,'altar');feelImpact(WALL_X-8,WORLD_H*.42,'altar'); S.fx.push({ k:'altar', t:0.2, T:0.2 }); S.shake = Math.max(S.shake, 4); burst(WALL_X - 8, rnd(30, WORLD_H - 30), 'soul', 8, 90); sfx('altar'); tip('wall'); }
+function hitAltar(d){ if(sandboxGod())return;S.wallHp -= Math.round(d);relicCheckHalo();feelNumber(WALL_X+14,30,d,'altar');feelImpact(WALL_X-8,WORLD_H*.42,'altar'); S.fx.push({ k:'altar', t:0.2, T:0.2 }); S.shake = Math.max(S.shake, 4); burst(WALL_X - 8, rnd(30, WORLD_H - 30), 'soul', 8, 90); sfx('altar'); tip('wall'); }
 function zap(e, d, from){
   hitEnemy(e, d, 'soul', { pierce:true, kb:40 });
   const x1 = from ? from.x : WALL_X - 8, y1 = from ? from.y : clamp(e.y, 12, WORLD_H - 12);
@@ -896,7 +898,7 @@ function burst(x, y, c, n, sp = 90){ for (let i = 0; i < n; i++) { const a = Mat
 function hitEnemy(e, d, c, o = {}){
   const armored = e.armor && !o.pierce;
   const hpBefore=Math.max(0,e.hp);
-  const real=damage(e, d, {...o,hitFeedback:true});
+  const real=damage(e, d*relicFangFactor(e,o), {...o,hitFeedback:true});
   infusionHeal(o.source,Math.min(hpBefore,Math.max(0,hpBefore-e.hp)));
   burst(e.x, e.y, armored ? 'steel' : c, armored ? 5 : 7);
   const kb = o.kb ?? 60;
@@ -933,6 +935,7 @@ function endWave(){
   S.zones = []; S.shots = []; S.aim = null;
   if (S.mods.wallRegen) S.wallHp = Math.min(S.wallMax, S.wallHp + S.mods.wallRegen);
   const done = S.wave;
+  if(done===5&&!regionalRelicGrant(biomeId(S)))bigMsg('Regional relic could not be saved');
   if(done===5&&biomeId(S)==='valley'&&!biomeUnlockForest())bigMsg('Region unlock could not be saved');
   if(done===5&&biomeId(S)==='forest'&&!biomeUnlockFrozen())bigMsg('Region unlock could not be saved');
   if(done===5&&biomeId(S)==='frozen'&&!biomeUnlockAshen())bigMsg('Region unlock could not be saved');
@@ -1289,10 +1292,10 @@ function restore(v){
  persist();
 }
 function showRewardRestored(){showOv(`<h2>Choose your reward</h2><div class="offers">${S.offer.map((o,i)=>`<button class="offer" data-act="reward" data-i="${i}"><span class="ic">${rewardArt(o)}</span><span class="nm">${o.n}</span><span class="ds">${o.d}</span></button>`).join('')}</div>`);}
-function showEndRestored(){const claimed=campaignEndClaimed(),legacy=S.campaign?.legacyTerminal;showOv(`<h2>${S.phase==='win'?'The Altar stands!':'The Altar has fallen'}</h2><p>${S.phase==='win'?'You survived all '+campaignLimit()+' waves.':'You reached wave '+S.wave+' of '+campaignLimit()+'.'} ${S.kills} humans defeated.</p>${S.phase==='win'&&biomeId(S)==='valley'&&biomeUnlocked('forest')?'<p>Cursed Forest unlocked · select it in New Game.</p>':S.phase==='win'&&biomeId(S)==='forest'&&biomeUnlocked('frozen')?'<p>Frozen Wasteland unlocked · select it in New Game.</p>':S.phase==='win'&&biomeId(S)==='frozen'&&biomeUnlocked('ashen')?'<p>Ashen Kingdom unlocked · select it in New Game.</p>':S.phase==='win'&&biomeId(S)==='ashen'&&biomeUnlocked('cathedral')?'<p>The Fallen Cathedral unlocked · select it in New Game.</p>':S.phase==='win'&&biomeId(S)==='cathedral'?'<p>All five regional battles conquered!</p>':''}${claimed?`<p>${legacy?'This completed legacy run is archived. Its reward status cannot be recovered safely.':'Your permanent card reward has been saved.'}</p><button class="go" data-front="home">Return to menu</button>`:`<p>Choose one card for your next run.</p><div class="cards-row">${S.endOffer.map((id,i)=>cardHTML(id,`data-act="endcard" data-i="${i}"`)).join('')}</div><p id="endRewardNotice" role="status"></p>`}<button class="btn" data-front="scores">View scores</button>`);}
+function showEndRestored(){const claimed=campaignEndClaimed(),legacy=S.campaign?.legacyTerminal;showOv(`<h2>${S.phase==='win'?'The Altar stands!':'The Altar has fallen'}</h2><p>${S.phase==='win'?'You survived all '+campaignLimit()+' waves.':'You reached wave '+S.wave+' of '+campaignLimit()+'.'} ${S.kills} humans defeated.</p>${S.phase==='win'&&biomeId(S)==='valley'&&biomeUnlocked('forest')?'<p>Cursed Forest unlocked · select it in New Game.</p>':S.phase==='win'&&biomeId(S)==='forest'&&biomeUnlocked('frozen')?'<p>Frozen Wasteland unlocked · select it in New Game.</p>':S.phase==='win'&&biomeId(S)==='frozen'&&biomeUnlocked('ashen')?'<p>Ashen Kingdom unlocked · select it in New Game.</p>':S.phase==='win'&&biomeId(S)==='ashen'&&biomeUnlocked('cathedral')?'<p>The Fallen Cathedral unlocked · select it in New Game.</p>':S.phase==='win'&&biomeId(S)==='cathedral'?'<p>All five regional battles conquered!</p>':''}${S.phase==='win'&&campaignProfileInit().regionalRewards?.includes(biomeId(S))?'<p class="regional-unlock-note">Legendary regional relic available in Infernal Treasury.</p>':''}${claimed?`<p>${legacy?'This completed legacy run is archived. Its reward status cannot be recovered safely.':'Your permanent card reward has been saved.'}</p><button class="go" data-front="home">Return to menu</button>`:`<p>Choose one card for your next run.</p><div class="cards-row">${S.endOffer.map((id,i)=>cardHTML(id,`data-act="endcard" data-i="${i}"`)).join('')}</div><p id="endRewardNotice" role="status"></p>`}<button class="btn" data-front="scores">View scores</button>`);}
 function front(panel){heroCancelAim(false);heroClearKeys();magicCancel();closeBestiary();tacticalHide();$('#front').hidden=false;menuOpen=true;document.querySelector('.wrap').inert=true;$('#ov').inert=true;$('#ov2').inert=true;for(const el of document.querySelectorAll('.front-view'))el.hidden=el.id!==panel;$('#'+panel+' button:not([disabled]),#'+panel+' input')?.focus();}
 function closeFront(){menuOpen=false;$('#front').hidden=true;document.querySelector('.wrap').inert=false;$('#ov').inert=false;$('#ov2').inert=false;last=performance.now();resize();if(S)renderPrepUndo();}
-function showHome(){if(spinning)return;if(sandboxActive()){sandboxExit();return;}if(S){cancelDrag();persist();}if(!S||storageOK)loadedSave=store.get(SAVE_KEY,null);if(!validSave(loadedSave))loadedSave=null;knowledgeFromSave(loadedSave);knowledgeFromScores();talentFromSave(loadedSave);talentFromScores();if(talentDirty)talentFlush();if(knowledgeDirty)knowledgeFlush();knowledgeSummaryRender();$('#knowledgeSummary').textContent+=' · Starting deck: '+META.deck.length+' cards'+(campaignProfileIssue?' · Profile storage unavailable':'');$('#playerName').value=profile.name;const canContinue=!!(S||loadedSave);$('#continueBtn').disabled=!canContinue;$('#homeView').classList.toggle('has-save',canContinue);$('#homeError').textContent='';$('#continueInfo').textContent=loadedSave?`${loadedSave.name} · ${heroClass(loadedSave.state).name} · Wave ${Math.min(loadedSave.state.wave,loadedSave.version<18?10:campaignLimit(loadedSave.state))}/${loadedSave.version<18?10:campaignLimit(loadedSave.state)} · ${new Date(loadedSave.savedAt).toLocaleString('en')}`:'The invasion awaits.';if(S&&!loadedSave)$('#continueInfo').textContent='Current run · ready to resume';$('#continueBtn').title=$('#continueInfo').textContent;front('homeView');}
+function showHome(){if(spinning)return;if(sandboxActive()){sandboxExit();return;}if(S){cancelDrag();persist();}if(!S||storageOK)loadedSave=store.get(SAVE_KEY,null);if(!validSave(loadedSave))loadedSave=null;regionalRelicSync(loadedSave?.state);knowledgeFromSave(loadedSave);knowledgeFromScores();talentFromSave(loadedSave);talentFromScores();if(talentDirty)talentFlush();if(knowledgeDirty)knowledgeFlush();knowledgeSummaryRender();$('#knowledgeSummary').textContent+=' · Starting deck: '+META.deck.length+' cards'+(campaignProfileIssue?' · Profile storage unavailable':'');$('#playerName').value=profile.name;const canContinue=!!(S||loadedSave);$('#continueBtn').disabled=!canContinue;$('#homeView').classList.toggle('has-save',canContinue);$('#homeError').textContent='';$('#continueInfo').textContent=loadedSave?`${loadedSave.name} · ${heroClass(loadedSave.state).name} · Wave ${Math.min(loadedSave.state.wave,loadedSave.version<18?10:campaignLimit(loadedSave.state))}/${loadedSave.version<18?10:campaignLimit(loadedSave.state)} · ${new Date(loadedSave.savedAt).toLocaleString('en')}`:'The invasion awaits.';if(S&&!loadedSave)$('#continueInfo').textContent='Current run · ready to resume';$('#continueBtn').title=$('#continueInfo').textContent;front('homeView');}
 function beginNew(){let name=$('#playerName').value.trim().slice(0,20);if(!name){$('#nameError').textContent='Enter your name (1–20 characters).';$('#playerName').focus();return;}profile.name=name;durableWrite(PROFILE_KEY,profile);heroChoose('campaign');}
 function launchNew(heroId=heroPending,build=talentPending,maxWaves=Number($('#campaignLength').value)===10?10:5){const region=biomeRegionChoice();if(region!=='valley')maxWaves=5;if(talentDirty&&!talentFlush()){alert('Your Valor progress could not be saved. Enable browser storage before replacing this run.');return;}if(knowledgeDirty&&!knowledgeFlush()){alert('Your permanent spell knowledge could not be saved. Enable browser storage before replacing this run.');return;}campaignProfileInit();runName=profile.name;sessionRunId=uid();loadedSave=null;try{localStorage.removeItem(SAVE_KEY);}catch(e){}savedWorldWidth=null;closeFront();newGame(false,heroId,build,maxWaves===10?10:5,region);$('#saveStatus').textContent='Choose a relic to create your first save.';}
 function scores(){const v=store.get(SCORES_KEY,[]);return Array.isArray(v)?v:[];}
@@ -1306,7 +1309,7 @@ async function cloudScores(){if(scoreMode()!==10)return;try{const r=await fetch(
 async function publishScore(){if(scoreMode()!==10)return;const r=modeScores()[0];if(!r)return;$('#publishScore').disabled=true;try{const res=await fetch('/api/scores',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(r),signal:AbortSignal.timeout(6000)});if(!res.ok)throw Error();await cloudScores();$('#cloudStatus').textContent='Your best score was published as '+r.name+'.';}catch(e){$('#cloudStatus').textContent='Publishing failed. Your local score is safe; retry when the server is online.';}finally{$('#publishScore').disabled=false;}}
 function exportSave(){if(sandboxActive())return;persist();const p=campaignProfileBackup(),v=validSave(loadedSave)?CampaignSave.decode(loadedSave):null;const backup=v?{...v,profileState:p,spellKnowledge:p.spellKnowledge,warlordTalents:p.warlordTalents}:{format:'stophumans-profile',version:1,profileState:p};const url=URL.createObjectURL(new Blob([JSON.stringify(backup)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download=v?'StopHumans-save.json':'StopHumans-profile.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),2000);}
 function showSettings(){front('settingsView');$('#mergeConfirmOpt').checked=askMerge;$('#volume').value=Math.round(prefs.volume*100);$('#musicOpt').checked=AU.music;$('#soundOpt').checked=AU.sfx;$('#motionOpt').checked=prefs.reduced;$('#effectsOpt').value=prefs.effects;}
-const oldEndRun=endRun;endRun=function(won){if(sandboxActive()){sandboxResetBattle('Test complete. Ready to retry.');return;}recordScore(won);oldEndRun(won);showEndRestored();persist();};
+const oldEndRun=endRun;endRun=function(won){if(sandboxActive()){sandboxResetBattle('Test complete. Ready to retry.');return;}if(won)regionalRelicGrant(biomeId(S));recordScore(won);oldEndRun(won);showEndRestored();persist();};
 const oldStartRun=startRun;startRun=function(i){oldStartRun(i);persist();if(S?.phase==='prep'&&!S.sandbox)tutorialStart();};
 const oldRenderUI=renderUI;renderUI=function(){oldRenderUI();if(S&&S.phase!=='relic')persist();};
 let savedWorldWidth=null;
@@ -1351,10 +1354,10 @@ if(typeof ResizeObserver!=='undefined'){const stageObserver=new ResizeObserver((
 document.addEventListener('click',ev=>{const b=ev.target.closest('[data-front]');if(!b||b.disabled)return;ev.preventDefault();const a=b.dataset.front;
  if(a==='home')showHome();if(a==='new'){$('#campaignLength').value='5';$('#campaignRegion').value='valley';biomeMenu();$('#nameError').textContent='';$('#playerName').value=profile.name;front('newGameView');$('#playerName').focus();}if(a==='new-confirm')beginNew();if(a==='credits')front('creditsView');if(a==='confirm'&&!$('#confirmView').hidden)launchNew(heroPending);if(a==='back')showHome();if(a==='resume')closeFront();
  if(a==='continue'){try{if(S){closeFront();if(S.phase==='journey')journeyShow();}else if(loadedSave)restore(loadedSave);}catch(e){$('#homeError').textContent='Could not restore this run. Start a new one or import a backup.';}}
- if(a==='sanctum')sanctumOpen();if(a==='codex')codexOpen();if(a==='sanctum-talents')talentOpen('library');if(a==='settings')showSettings();if(a==='scores')showScores();if(a==='cloud')cloudScores();if(a==='publish')publishScore();if(a==='export')exportSave();if(a==='import')$('#importFile').click();
+ if(a==='sanctum')sanctumOpen();if(a==='codex')codexOpen();if(a==='treasury')relicTreasuryOpen();if(a==='sanctum-talents')talentOpen('library');if(a==='settings')showSettings();if(a==='scores')showScores();if(a==='cloud')cloudScores();if(a==='publish')publishScore();if(a==='export')exportSave();if(a==='import')$('#importFile').click();
 });
 $('#heroSelectView').addEventListener('click',ev=>{const b=ev.target.closest('[data-hero-class]');if(b&&!b.disabled)heroSelect(b.dataset.heroClass);});
-document.addEventListener('keydown',ev=>{if(ev.target.matches('input,select,textarea'))ev.stopImmediatePropagation();if(menuOpen){if(ev.key==='Escape'&&(!$('#heroSelectView').hidden||!$('#confirmView').hidden||!$('#newGameView').hidden||!$('#creditsView').hidden||!$('#sanctumView').hidden||!$('#codexView').hidden)){showHome();}else if(ev.key==='Escape'&&S){closeFront();}else if(ev.key==='Enter'&&ev.target.id==='playerName')beginNew();ev.stopImmediatePropagation();}},true);
+document.addEventListener('keydown',ev=>{if(ev.target.matches('input,select,textarea'))ev.stopImmediatePropagation();if(menuOpen){if(ev.key==='Escape'&&(!$('#heroSelectView').hidden||!$('#confirmView').hidden||!$('#newGameView').hidden||!$('#creditsView').hidden||!$('#sanctumView').hidden||!$('#codexView').hidden||!$('#treasuryView').hidden)){showHome();}else if(ev.key==='Escape'&&S){closeFront();}else if(ev.key==='Enter'&&ev.target.id==='playerName')beginNew();ev.stopImmediatePropagation();}},true);
 $('#scoreLength').addEventListener('change',showScores);$('#campaignRegion').addEventListener('change',biomeMenu);
 $('#mergeConfirmOpt').addEventListener('change',e=>setMergeConfirmation(e.target.checked));
 $('#settingsView').addEventListener('change',e=>{if(e.target.id==='mergeConfirmOpt')return;prefs.volume=+$('#volume').value/100;prefs.reduced=$('#motionOpt').checked;prefs.effects=$('#effectsOpt').value;setMusic($('#musicOpt').checked);setSfx($('#soundOpt').checked);savePrefs();});

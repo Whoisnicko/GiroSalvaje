@@ -52,7 +52,7 @@ function tacticalModel(e){
  }else{
   const base=BASE[e.type],st=stats(e.type,e.lvl,e),bf=bansheeOn(e),bench=S.bench.includes(e),support=!!base.support;
   name=NAMES[e.type];portrait=USPR[e.type];[role,note]=TAC_ROLES[e.type];stars=e.temp?'':'★'.repeat(e.lvl);
-  const haste=S.phase==='fight'&&S.buff.haste>0?2:1,cry=martialGuardBuff(e)?talentSkill('cry',S.hero):null,atk=st.dmg*(1+bf)*(cry?1+cry.damageBonus:1)*catGroundFactor(e),interval=st.cd/((1+bf)*haste*(cry?1+cry.speedBonus:1)*synergyFactor(e,'attackRate')*catAttackRate(e));
+  const haste=S.phase==='fight'&&S.buff.haste>0?2:1,cry=martialGuardBuff(e)?talentSkill('cry',S.hero):null,atk=st.dmg*(1+bf)*(cry?1+cry.damageBonus:1)*catGroundFactor(e)*relicGuardianFactor(e),interval=st.cd/((1+bf)*haste*(cry?1+cry.speedBonus:1)*synergyFactor(e,'attackRate')*catAttackRate(e)*relicGuardianFactor(e));
   combat={damage:support?null:atk,attackRate:support?null:1/interval,dps:support?null:atk/interval,range:frostRange(e,st.range),armor:null};
   add('sword','Attack',support?'—':tacNum(atk));add('clock',support?'Ability interval':'Attack interval',tacNum(support?st.cd:interval,2)+' s');add('target',support?'Ability radius':'Attack reach',tacNum(frostRange(e,st.range),0)+' px');
   add('boot','Move speed',base.move?tacNum(base.move,0)+' px/s':'Stationary');add('shield','Armor','0');

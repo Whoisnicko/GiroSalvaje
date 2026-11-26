@@ -106,3 +106,6 @@ Fourth five-wave region unlocked by defeating Frozen Wasteland. Approved illustr
 
 ## v22-alpha.7.44 — The Fallen Cathedral
 Ashen validated 15/15. Fifth region, five waves unlocked after Ashen; approved art and five sprites, three holy zones, bell shields, three exclusive enemies, two-stage High Exorcist. Desecrated Ground excluded (pending). Regional local scores, Codex and Sandbox. Provisional balance, browser validation required.
+
+## v22-alpha.7.45 — Regional Rewards
+Cathedral v7.44 validated 17/17. Five approved legendary starting relics, one existing relic slot, retroactive unlocks from regional profile and recorded victories, no Sandbox grants. Infernal Treasury, Codex and approved art atlas. Initial balance; actual playtest pending.

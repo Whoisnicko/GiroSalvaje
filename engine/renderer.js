@@ -155,7 +155,7 @@ function draw(){
       if (u.lvl > 1 && !u.temp) { ctx.fillStyle = colors.gold; ctx.font = '11px Rubik, sans-serif'; ctx.fillText('★'.repeat(u.lvl), u.x, u.y - s / 2 - 8); }
       if (u.train) { ctx.fillStyle = colors.bg; ctx.fillRect(u.x - s / 2 - 12, u.y + s / 2 - 12, 30, 13); ctx.fillStyle = colors.leaf; ctx.font = '600 10px Rubik, sans-serif'; ctx.fillText(`+${u.train * 50}%`, u.x - s / 2 + 3, u.y + s / 2 - 5); }
       if (u.pile > 1) { ctx.fillStyle = colors.bg; ctx.fillRect(u.x + s / 2 - 16, u.y - s / 2 - 2, 26, 14); ctx.fillStyle = colors.gold; ctx.font = '600 10px Rubik, sans-serif'; ctx.fillText(`${u.pile}/${S.mods.mergeN}`, u.x + s / 2 - 3, u.y - s / 2 + 5); }
-      bar(u.x - 14, u.y - s / 2 - 6, 34, 5, u.hp / u.maxHp, colors.leaf); infusionDraw(u,s); synergyDraw(u,s);frostDrawStatus(u,s);ashDrawStatus(u,s);catDrawStatus(u,s);
+      bar(u.x - 14, u.y - s / 2 - 6, 34, 5, u.hp / u.maxHp, colors.leaf); infusionDraw(u,s); synergyDraw(u,s);frostDrawStatus(u,s);ashDrawStatus(u,s);catDrawStatus(u,s);if(relicGuardianFactor(u)>1){ctx.save();ctx.strokeStyle='#d0a0ff';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(u.x,u.y,s*.6,s*.4,0,0,Math.PI*2);ctx.stroke();ctx.restore();}
     } else {
       const e = it.e, K = KIND[e.kind], s = (e.r * 2 + 14) * 1.28, pose = feelPose(e,visualPose(e, performance.now() / 1000));
       const walk = motionPreference.matches ? 0 : e.moving ? Math.abs(Math.sin(t * 10 + e.ph)) * -3 : Math.sin(t * 2 + e.ph) * 1;

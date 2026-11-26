@@ -56,7 +56,7 @@ function spellChain(first,d=SPELL_DATA.lightning){
 }
 function spellTimeLeft(until){return Number.isFinite(until)?Math.max(0,until-(S.fightT||0)):0;}
 function spellEnemyRooted(e){return e.root>0||spellTimeLeft(e.arcaneGraspUntil)>0||spellTimeLeft(e.arcaneFreezeUntil)>0;}
-function spellEnemySpeedFactor(e){const factor=Math.min(S.buff.slow>0?.4:1,spellTimeLeft(e.arcaneFrostUntil)>0?1-SPELL_DATA.frost.slow:1,spellTimeLeft(e.arcaneGraspUntil)<=0&&spellTimeLeft(e.arcaneAfterSlowUntil)>0?.65:1);return e.kind==='frostSentinel'?frostSlowResistance(e,factor):factor;}
+function spellEnemySpeedFactor(e){const factor=Math.min(relicSlowFactor(),S.buff.slow>0?.4:1,spellTimeLeft(e.arcaneFrostUntil)>0?1-SPELL_DATA.frost.slow:1,spellTimeLeft(e.arcaneGraspUntil)<=0&&spellTimeLeft(e.arcaneAfterSlowUntil)>0?.65:1);return e.kind==='frostSentinel'?frostSlowResistance(e,factor):factor;}
 function spellArea(target,r){return S.enemies.filter(e=>e.hp>0&&Math.hypot(e.x-target.x,e.y-target.y)<=r);}
 function spellHarvestActive(e){
  const cast=S.arcaneHarvestCasts?.[e.arcaneHarvestId];
