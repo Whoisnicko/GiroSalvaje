@@ -1,0 +1,24 @@
+/* Node test: actual boss module with isolated combat dependencies. */
+const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
+const src=fs.readFileSync(path.join(__dirname,'../engine/biomes-bosses.js'),'utf8');
+const env={KIND:{com:{n:'Commander'},sol:{n:'Soldier'}},FOE_NOTE:{com:'Armored boss'},S:{fx:[]},units:[],heroTargets(){return this.units;},infusionHidden:u=>!!u.hidden,spellEnemyRooted:e=>!!e.root,heroDamageTarget:(u,a)=>{u.hp-=a;return a;},floatText(){},feelNumber(){},feelImpact(){},radius:()=>10,sfx(){}};
+env.heroTargets=()=>env.units;
+const c=vm.createContext(env);vm.runInContext(src,c);
+const run=s=>vm.runInContext(s,c);
+run("var e=bossStamp({kind:'com',hp:100,dmg:20,x:100,y:100,cd:0},5);var a={x:110,y:100,hp:100},b={x:170,y:100,hp:100},h={x:100,y:100,hp:100,hidden:true};units.push(a,b,h)");
+assert.equal(run("enemyDisplayName(e)"),'The Crusader');
+assert.equal(run("bossDef(bossStamp({kind:'com'},10))"),null);
+assert.equal(run("bossDef({kind:'com'})"),null);
+assert.equal(run("bossAdvance(e,.1)"),true);
+assert.equal(run("a.hp"),100);
+assert.equal(run("bossAdvance(e,1.4)"),true);
+assert.equal(run("a.hp"),100);
+run("bossAdvance(e,.11)");
+assert.equal(run("a.hp"),84);assert.equal(run("b.hp"),100);assert.equal(run("h.hp"),100);
+assert.equal(run("bossAdvance(e,.1)"),false);
+run("e.bossCooldown=0;bossAdvance(e,.1);e.root=1;bossAdvance(e,.1)");
+assert.equal(run("a.hp"),84);assert.equal(run("!!e.bossCast"),false);
+run("e.root=0;e.bossCooldown=0;bossAdvance(e,.1);e=JSON.parse(JSON.stringify(e));bossNormalize(e)");
+assert.equal(run("e.bossCast.left"),1.5);
+run("bossAdvance(e,1.6)");assert.equal(run("a.hp"),68);
+console.log('Crusader: wave assignment, legacy compatibility, telegraph, area damage, hidden targets, cooldown, root interruption and JSON restore OK');
