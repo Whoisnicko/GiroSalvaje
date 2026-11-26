@@ -5,7 +5,7 @@ const c=vm.createContext({WORLD_H:260,WALL_X:40,MAX_WAVE:10,worldW:()=>1000,rnd:
 vm.runInContext(read('engine/biomes-bosses.js')+'\n'+game.slice(start,end),c);
 const run=s=>vm.runInContext(s,c);
 assert.ok(run("Array.from({length:10},(_,i)=>i+1).every(w=>{const q=rollWave(w,'valley');return !q.some(e=>regionalDef(e))&&q.length===waveInfo(w).n+(w%5===0?1:0)})"));
-assert.ok(run("Array.from({length:5},(_,i)=>i+1).every(w=>{const q=rollWave(w,'forest');return Object.entries(REGIONAL_ENEMIES).every(([id,d])=>q.filter(e=>e.kind===id).length===d.counts[w-1])&&q.length===waveInfo(w).n+(w===5?1:0)})"));
+assert.ok(run("Array.from({length:5},(_,i)=>i+1).every(w=>{const q=rollWave(w,'forest');return Object.entries(REGIONAL_ENEMIES).every(([id,d])=>q.filter(e=>e.kind===id).length===(d.region==='forest'?d.counts[w-1]:0))&&q.length===waveInfo(w).n+(w===5?1:0)})"));
 assert.equal(run("rollWave(5,'forest').find(e=>e.boss).bossId"),'huntsman');
 assert.equal(run("biomeWalkFactor({kind:'pathfinder',x:430,y:163.8})"),1);
 assert.equal(run("biomeWalkFactor({x:430,y:163.8})"),.7);
