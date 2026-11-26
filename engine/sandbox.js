@@ -5,6 +5,15 @@ const sandboxActive=()=>!!S?.sandbox;
 const sandboxGod=()=>sandboxActive()&&S.sandboxGod;
 const sbEl=id=>document.getElementById(id);
 function sandboxStatus(message){sbEl('sbStatus').textContent=message;}
+/* Real frame-interval sampling only while Free Sandbox is active. */
+let sbPerfStart=0,sbPerfFrames=0,sbPerfWorst=0;
+function sandboxPerf(now,delta){
+ if(!sandboxActive()||academyActive()||menuOpen||document.hidden||S.phase!=='fight'){sbPerfStart=0;sbPerfFrames=0;sbPerfWorst=0;return;}
+ if(!sbPerfStart||delta>1000){sbPerfStart=now;sbPerfFrames=0;sbPerfWorst=0;return;}
+ sbPerfFrames++;sbPerfWorst=Math.max(sbPerfWorst,delta);
+ const elapsed=now-sbPerfStart;if(elapsed<1000)return;
+ const fps=Math.round(sbPerfFrames*1000/elapsed);sbEl('sbPerf').textContent=fps+' FPS · worst '+Math.round(sbPerfWorst)+' ms';sbPerfStart=now;sbPerfFrames=0;sbPerfWorst=0;
+}
 function sandboxRefill(){if(!sandboxActive())return;S.gold=999999;S.spinsLeft=999;S.maxUnits=Math.min(S.maxUnits,SANDBOX_MAX_UNITS);}
 function sandboxCards(){S.deck=Object.keys(CARDS);S.hand=S.deck.map((id,di)=>({id,di,used:false}));S.aim=null;}
 function sandboxInitialize(){sandboxRefill();sandboxCards();S.sandboxGod=true;sbEl('sbWave').value=String(S.wave);sbEl('sbRegion').value=biomeId(S);sandboxStatus('Select any map, wave or boss. No campaign unlock required.');sbEl('sandboxPanel').open=true;sandboxRefreshWaveOptions();}
@@ -66,13 +75,18 @@ function sandboxEncounter(region,w,bossId=null){
 function sandboxLoadEncounter(encounter,autoFight=false){
  if(!sandboxActive()||academyActive()||!encounter)return false;
  if(S.phase==='fight')sandboxResetBattle('Switching test encounter.');
- S.biomeId=encounter.region;S.wave=encounter.w;
+ S.biomeId=encounter.region;S.wave=encounter.w;sbPerfStart=0;sbPerfFrames=0;sbPerfWorst=0;sbEl('sbPerf').textContent='FPS —';
  heroResetWave();magicResetWave();sandboxHeal();sandboxCards();S.nextQueue=encounter.queue.map(q=>({...q}));
  S.sandboxEncounter={region:encounter.region,w:encounter.w,name:encounter.name,bossId:encounter.bossId||null,queue:encounter.queue.map(q=>({...q}))};
- if(encounter.bossId)sbEl('sbBoss').value=encounter.bossId;
+ sbEl('sbBoss').value=encounter.bossId||encounter.queue.find(q=>q.boss)?.bossId||(encounter.queue.some(q=>q.boss)?'classic':'');
  sbEl('sbRegion').value=encounter.region;sandboxRefreshWaveOptions();sbEl('sbWave').value=String(encounter.w);
  prepUndoClear();setResult('Sandbox',encounter.name+' ready');sandboxStatus(encounter.name+' ready · army retained');renderUI();
  if(autoFight)startFight();return true;
+}
+function sandboxPickRegion(region){
+ if(!sandboxCanEdit()||academyActive()){if(S&&sandboxActive()){sbEl('sbRegion').value=biomeId(S);sandboxRefreshWaveOptions();sbEl('sbWave').value=String(S.wave);}return false;}
+ const encounter=sandboxEncounter(region,S.wave);if(!encounter)return false;
+ return sandboxLoadEncounter(encounter,false);
 }
 function sandboxPickBoss(id,autoFight=false){
  if(!sandboxCanEdit()||academyActive())return false;
@@ -88,7 +102,7 @@ function sandboxAction(a){
  else if(a==='heal'){sandboxHeal();msg='Army, altar and deployed hero healed.';}
  else if(a==='stop'){sandboxResetBattle();return;}
  else if(a==='wave'||a==='waveStart'){sandboxLoadEncounter(sandboxEncounter(sbEl('sbRegion').value,sbEl('sbWave').value),a==='waveStart');return;}
- else if(a==='boss'||a==='bossStart'){sandboxPickBoss(sbEl('sbBoss').value,a==='bossStart');return;}
+ else if(a==='boss'||a==='bossStart'){if(!sbEl('sbBoss').value){sandboxStatus('Select a boss first.');return;}sandboxPickBoss(sbEl('sbBoss').value,a==='bossStart');return;}
  else if(a==='retry'){if(S.sandboxEncounter)sandboxLoadEncounter(S.sandboxEncounter,true);else sandboxStatus('Load an encounter first.');return;}
  else if(a==='fight'&&prep){if(!S.nextQueue.length){sandboxStatus('Add enemies or load a wave first.');return;}startFight();return;}
  else if(a==='unit'&&prep){prepUndoClear();msg=sandboxAddUnit(sbEl('sbUnit').value,Math.max(1,Math.min(3,Number(sbEl('sbLevel').value)||1)))?'Guardian added.':'No space available. Clear the army or reserve.';}
@@ -113,10 +127,10 @@ function renderSandbox(){
 }
 function initSandboxControls(){
  sbEl('sbRegion').innerHTML=Object.values(BIOME_DATA).map(b=>'<option value="'+b.id+'">'+b.name+'</option>').join('');
- sbEl('sbBoss').innerHTML=sandboxBossOptions().map(b=>'<option value="'+b.id+'">'+b.name+'</option>').join('');
+ sbEl('sbBoss').innerHTML='<option value="" disabled>Select boss</option>'+sandboxBossOptions().map(b=>'<option value="'+b.id+'">'+b.name+'</option>').join('');
  sbEl('sbBossQuick').innerHTML=sandboxBossOptions().map(b=>'<button type="button" data-sb-boss="'+b.id+'" aria-pressed="false">Fight '+b.name+'</button>').join('');
  sbEl('sbBoss').addEventListener('change',e=>sandboxPickBoss(e.target.value,false));
- sandboxRefreshWaveOptions();sbEl('sbRegion').addEventListener('change',sandboxRefreshWaveOptions);
+ sandboxRefreshWaveOptions();sbEl('sbRegion').addEventListener('change',e=>sandboxPickRegion(e.target.value));
  sbEl('sbUnit').innerHTML=MERGEABLE.map(t=>'<option value="'+t+'">'+NAMES[t]+'</option>').join('');
  sbEl('sbEnemy').innerHTML=Object.keys(KIND).map(k=>'<option value="'+k+'">'+KIND[k].n+'</option>').join('');
  sbEl('sandboxEnter').addEventListener('click',academyOpen);
