@@ -151,7 +151,7 @@ function draw(){
       if (u.pile > 1) { ctx.fillStyle = colors.bg; ctx.fillRect(u.x + s / 2 - 16, u.y - s / 2 - 2, 26, 14); ctx.fillStyle = colors.gold; ctx.font = '600 10px Rubik, sans-serif'; ctx.fillText(`${u.pile}/${S.mods.mergeN}`, u.x + s / 2 - 3, u.y - s / 2 + 5); }
       bar(u.x - 14, u.y - s / 2 - 6, 34, 5, u.hp / u.maxHp, colors.leaf); infusionDraw(u,s); synergyDraw(u,s);frostDrawStatus(u,s);ashDrawStatus(u,s);catDrawStatus(u,s);if(relicGuardianFactor(u)>1){ctx.save();ctx.strokeStyle='#d0a0ff';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(u.x,u.y,s*.6,s*.4,0,0,Math.PI*2);ctx.stroke();ctx.restore();}
     } else {
-      const e = it.e, K = KIND[e.kind], s = (e.r * 2 + 14) * 1.28, pose = feelPose(e,visualPose(e, now)), motion=animMotion(e,pose,feelClock);
+      const e = it.e, K = KIND[e.kind], s = (e.r * 2 + 14) * 1.28, basePose = feelPose(e,visualPose(e, now)), baseMotion=animMotion(e,basePose,feelClock), {pose,motion}=championBossPose(e,basePose,baseMotion);
       const walk=motion.oy,rot=motion.rot;
       if (hovE === e || tacticalEnemySelected(e)) { ctx.strokeStyle = colors.red; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(e.x, e.y, s / 2 + 6, 0, Math.PI * 2); ctx.stroke(); }
       sprite(enemySprite(e), e.x+motion.ox, e.y + walk, e.kind === 'jin' ? s * 1.15 : s, { flash:e.flash > 0, rot, sx:motion.sx, sy:motion.sy, frame:pose.frame });
@@ -341,4 +341,4 @@ function hybridFX(){
  ctx.restore();}
 
 }
-function renderFrame(){draw();ctx.save();const camera=feelCamera();ctx.translate(camera.x,camera.y);hybridFX();spellDraw();heroDrawLanding();martialDraw();heroDrawAim();heroDrawDescent(performance.now()/1000);ctx.restore();}
+function renderFrame(){draw();ctx.save();const camera=feelCamera();ctx.translate(camera.x,camera.y);hybridFX();spellDraw();championDrawFX();heroDrawLanding();martialDraw();heroDrawAim();heroDrawDescent(performance.now()/1000);ctx.restore();}

@@ -84,6 +84,7 @@ function bossAdvance(e,dt){
    if(dealt>0){u.flash=.15;feelNumber(u.x,u.y-radius(u)-10,dealt,'ally');feelImpact(u.x,u.y,'steel',u,0,false);}
   }
   if(d.burnGround&&biomeId(S)==='ashen'){S.ashPatches=(S.ashPatches||[]).filter(p=>p.until>S.fightT);S.ashPatches.push({x:c.x,y:c.y,r:d.radius,until:S.fightT+d.burnGround});}
+  if(typeof championRelease==='function')championRelease('boss',d.id,c.x,c.y,d.radius);
   S.fx.push({k:'ring',x:c.x,y:c.y,r:d.radius,c:'gold',t:.5,T:.5});sfx('clash');
   return true;
  }

@@ -173,13 +173,13 @@ function heroRender(){
 
 /* Original procedural armor, cape and blade. All shapes render without remote assets. */
 function heroDraw(h,t,air=0,descending=false){
- const d=talentHeroStats(h),still=feelReduced(),walk=h.moving&&!still?Math.sin(t*13):0,sw=h.martial?.counterFlash>0&&!still?Math.sin(t*24)*1.4:h.martial?.storm&&!still?Math.sin(t*16)*.9:h.lunge>0&&!still?h.lunge/.20:0,z=still?0:air;
+ const d=talentHeroStats(h),p=championHeroPose(h,t,descending),still=p.still,walk=p.walk,sw=p.swing,z=still?0:air;
  ctx.save();ctx.translate(Math.round(h.x),Math.round(h.y));ctx.fillStyle='#0a1017';ctx.globalAlpha=descending?.25:.55;ctx.beginPath();ctx.ellipse(0,17,Math.max(9,19-z*.11),5,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
- ctx.strokeStyle='#e4b675';ctx.lineWidth=1.3;ctx.beginPath();ctx.ellipse(0,14,20,7,0,0,Math.PI*2);ctx.stroke();
- ctx.translate(0,-z);ctx.save();ctx.scale(h.facing||1,1);ctx.translate(0,-Math.abs(walk)*2);
+ ctx.strokeStyle=p.branch||'#e4b675';ctx.lineWidth=1.3;ctx.beginPath();ctx.ellipse(0,14,20,7,0,0,Math.PI*2);ctx.stroke();
+ ctx.translate(0,-z);ctx.save();ctx.scale(h.facing||1,1);ctx.translate(p.forward,-Math.abs(walk)*2);ctx.rotate(p.lean);
  const poly=(points,fill,stroke='#181922',width=1)=>{ctx.beginPath();points.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.closePath();ctx.fillStyle=fill;ctx.fill();if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=width;ctx.stroke();}};
  const rect=(x,y,w,z,col)=>{ctx.fillStyle=col;ctx.fillRect(Math.round(x),Math.round(y),w,z);};
- const tail=descending?-19:walk*4;
+ const tail=p.cape;
  // Tattered burgundy cape, layered steel pauldrons, gilded edges and glowing visor.
  poly([[-13,-13],[10,-13],[18,20+tail],[8,17+tail],[2,23+tail],[-8,19+tail],[-22,23+tail]],'#54232f');
  poly([[-9,-12],[-15,19+tail],[-6,16+tail],[-2,-9]],'#8c3a43',null);

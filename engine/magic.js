@@ -81,6 +81,7 @@ function magicConfirm(p,now=performance.now()){
  const m=magicData();if(!m.infinite)m.mana=Math.max(0,m.mana-d.mana);m.cooldowns[id]=m.noCooldown?0:d.cd;
 
  const outcome=spellExecute(id,target);
+ if(d.implemented&&typeof championRelease==='function')championRelease('spell',id,target.x,target.y,d.r);
  if(!d.implemented){magicPulse={id,x:target.x,y:target.y,start:now,end:now+650};sfx('card');}
  const name=magicDef(id).name;magicCancel(name+' · '+outcome);persist();return true;
 }

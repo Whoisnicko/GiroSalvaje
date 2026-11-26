@@ -127,3 +127,6 @@ User delegates balance and defers 7.49 browser playtest to combined validation. 
 
 ## v22-alpha.7.51 — Advanced Animation II
 Role-specific procedural motion using shipped artwork; visual-only summon/fusion and bounded death snapshots, shared frame for overlays. No balance or save schema changes. Targeted source checks passed, browser validation pending; next Advanced Animation III. Replayability backlog and historical validations preserved.
+
+## v22-alpha.7.52 — Advanced Animation III / Necromancy hotfix
+7.51 user visual validation 7/7, one separate Necromancy issue recorded. Exact two-copy stack auto-evolution on blessing and safe legacy restore. Warlord pose, Sorcerer rune release, five boss windups/release. No other balance change. Browser confirmation pending. Backlog intact. Next UI Art Integration.

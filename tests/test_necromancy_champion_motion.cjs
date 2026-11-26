@@ -1,0 +1,25 @@
+const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
+const read=p=>fs.readFileSync(path.join(__dirname,'..',p),'utf8');
+const g=read('engine/game.js'),a=g.indexOf('function reconcileNecromancyStacks()'),b=g.indexOf('function doMerge',a);
+const source=[g.slice(a,b),read('engine/champion-motion.js')].join('\n');
+const harness=`
+let S,feelClock=0,reduce=false,enabled=true,undo=0,marks=0,result='',relocate=false;
+const MERGEABLE=['W','A','M','N','B'],refreshHp=u=>{u.hp=u.maxHp=100*u.lvl},infusionReset=u=>delete u.infusionSpent,canStand=()=>({ok:!relocate}),findFree=()=>({x:90,y:90}),animMark=()=>marks++,prepUndoClear=()=>undo++,setResult=x=>result=x;
+const feelEnabled=()=>enabled,feelReduced=()=>reduce,feelStrength=()=>1,frostFrozen=h=>!!h.frozen,bossDef=e=>({id:e.bossId,windup:2}),RUNE_DEFS=[{id:'fire',color:'#f90',points:[[0,0],[1,1]]}];
+const unit=(type='W',lvl=1,pile=2)=>({type,lvl,pile,hp:50,maxHp:50,x:60,y:70,train:1.5,infusion:'death',infusionSpent:true});
+const u=unit(),v=unit('M',2),single=unit('W',1,1),max=unit('A',3),temp={...unit('W'),temp:true},fallen={...unit('W'),down:true,hp:0};S={phase:'reward',mods:{mergeN:2},units:[u,single,max,temp,fallen],bench:[null,v,null],gold:19};let res={};
+res.count=reconcileNecromancyStacks()===2;res.field=u.lvl===2&&u.pile===1&&S.units[0]===u;res.reserve=v.lvl===3&&v.pile===1&&S.bench[1]===v;
+res.training=u.train===1.5&&v.train===1.5;res.infusion=u.infusion==='death'&&!u.infusionSpent;res.hp=u.hp===200&&u.maxHp===200;res.position=u.x===60&&u.y===70;res.untouched=single.lvl===1&&max.lvl===3&&temp.lvl===1&&fallen.lvl===1;res.noGold=S.gold===19;res.idempotent=reconcileNecromancyStacks()===0&&undo===1&&marks===2;
+const old=unit();S={phase:'fight',mods:{mergeN:2},units:[old],bench:[]};res.defer=reconcileNecromancyStacks()===0&&old.lvl===1;S.phase='prep';relocate=true;res.migrate=reconcileNecromancyStacks()===1&&old.lvl===2&&old.x===90;S.units=[unit()];S.mods.mergeN=3;res.normal=reconcileNecromancyStacks()===0;S.mods.mergeN=2;S.phase='win';res.terminal=reconcileNecromancyStacks()===0;
+const p={frame:0,still:false},m={ox:0,oy:0,rot:0,sx:1,sy:1},boss={bossId:'inquisitor',bossCast:{left:.2}};
+res.bossCast=championBossPose(boss,p,m).pose.frame===9&&championBossPose(boss,p,m).motion.oy<0;res.bossIdle=championBossPose({},p,m).pose===p;res.frozenBoss=championBossPose(boss,{...p,still:true},m).motion===m;
+const h={moving:true,lunge:.1,build:{branch:'berserker',rank:1}};res.hero=championHeroPose(h,.3).forward>0&&!!championHeroPose(h,.3).branch;h.frozen=true;res.heroFrozen=championHeroPose(h,.3).swing===0;h.frozen=false;reduce=true;res.reduced=championHeroPose(h,.3).lean===0&&championBossPose(boss,p,m).motion===m;reduce=false;
+for(let i=0;i<30;i++)championRelease('spell','fire',10,20,72);res.cap=championFX.length===24;championRelease('boss','huntsman',10,20,38);res.color=championFX.at(-1).color===CHAMPION_BOSS_COLORS.huntsman;enabled=false;championRelease('spell','fire',1,1);res.off=championFX.length===24;S={};championFXSync();res.reset=championFX.length===0;
+return res;`;
+const res=new Function(source+'\n'+harness)();for(const [k,v] of Object.entries(res))assert.equal(v,true,k);
+assert.ok(g.includes('S.mods.mergeN=2;reconcileNecromancyStacks()'),'blessing hook');
+assert.ok(g.includes('if(reconcileNecromancyStacks())renderUI()'),'restore hook');
+assert.ok(read('engine/magic.js').includes("championRelease('spell'"),'spell hook');
+assert.ok(read('engine/biomes-bosses.js').includes("championRelease('boss'"),'boss hook');
+assert.ok(read('engine/renderer.js').includes('championDrawFX()'),'render hook');
+console.log(res);

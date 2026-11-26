@@ -326,7 +326,7 @@ const BLESS = [
   { n:'Full Moon',      ic:'☾', d:'+1 free spin each preparation phase.',          a:()=>S.spinsPer++ },
   { n:'Steady Claws',   ic:'✋', d:'Hold one extra symbol.',                 a:()=>S.holdsMax++ },
   { n:'Fortified Altar', ic:'⌂', d:'Altar gains +15 max HP and fully heals.', a:()=>{ S.wallMax += 15; S.wallHp = S.wallMax; } },
-  { n:'Necromancy',     ic:'★', d:'Merges require 2 matching monsters instead of 3.', ok:()=>S.mods.mergeN > 2, a:()=>S.mods.mergeN = 2 },
+  { n:'Necromancy',     ic:'★', d:'Merges require 2 matching monsters instead of 3.', ok:()=>S.mods.mergeN > 2, a:()=>{S.mods.mergeN=2;reconcileNecromancyStacks();} },
 ];
 
 /* ================= Cards ================= */
@@ -516,6 +516,21 @@ const mergeable = (a, b) => a && b && a !== b && a.type === b.type && a.lvl === 
 function guardianTraining(u){return Number.isFinite(u?.train)?Math.max(0,Math.min(3,u.train)):0;}
 function mergeTraining(target,src){const a=target.pile,b=src.pile;return (guardianTraining(target)*a+guardianTraining(src)*b)/(a+b);}
 function trainingPercent(u){return Math.round(guardianTraining(u)*500)/10;}
+/* A stack already contains its matching copies. Reconcile only outside combat.
+   Keep identity, training, infusion and location where possible. */
+function reconcileNecromancyStacks(){
+ if(!S||S.mods?.mergeN!==2||!['prep','reward','journey'].includes(S.phase))return 0;
+ let promoted=0;
+ for(const u of [...S.units,...S.bench.filter(Boolean)]){
+  if(!MERGEABLE.includes(u.type)||u.temp||u.down||u.hp<=0||!Number.isInteger(u.lvl)||u.lvl<1||u.lvl>=3||u.pile!==2)continue;
+  u.lvl++;u.pile=1;infusionReset(u);refreshHp(u);
+  if(S.units.includes(u)&&!canStand(u,u.x,u.y,u).ok){const p=findFree(u,u.x,u.y,u);if(p){u.x=p.x;u.y=p.y;}}
+  if(typeof animMark==='function')animMark(u,'fusion');
+  promoted++;
+ }
+ if(promoted){prepUndoClear();setResult('Necromancy · automatic evolution',promoted+' matching stack'+(promoted===1?' evolved.':'s evolved.'));}
+ return promoted;
+}
 function doMerge(target, src, chosenInfusion){
   const keptInfusion=infusionMergeChoice(target,src,chosenInfusion);
   prepUndoRecord('Merge / stack '+NAMES[target.type]);
@@ -955,6 +970,7 @@ function endWave(){
   if(heroClass(S).id==='warlord')S.hero=heroNew('warlord',S.hero.build,S.wave);
   if (done >= campaignLimit()) { S.phase = 'win'; renderUI(); return endRun(true); }
   if(!routeEconomyActive())S.gold += 3; S.spinsLeft = S.spinsPer; S.bought = 0; S.phase = 'prep';
+  reconcileNecromancyStacks();
   genTerrain();
   drawHand();
   S.nextQueue = rollWave(S.wave,biomeId(S),campaignDifficulty(S));
@@ -1299,6 +1315,7 @@ function restore(v){
  S=s;knowledgeFromSave(v,true);talentFromSave(v,true);sessionRunId=v.runId;runName=String(v.name||'Anonymous').slice(0,20);hideOv();$('#ov2').hidden=true;closeFront();renderUI();
  // Keep the original logical battlefield width across displays; pointer mapping uses the same scale.
  resize();
+ if(reconcileNecromancyStacks())renderUI();
  if(S.phase==='reward')showRewardRestored();if(S.phase==='journey')journeyShow();if(['win','over'].includes(S.phase))showEndRestored();
  persist();
 }
