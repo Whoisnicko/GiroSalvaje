@@ -107,7 +107,8 @@ function sandboxAction(a){
  else if(a==='fight'&&prep){if(!S.nextQueue.length){sandboxStatus('Add enemies or load a wave first.');return;}startFight();return;}
  else if(a==='unit'&&prep){prepUndoClear();msg=sandboxAddUnit(sbEl('sbUnit').value,Math.max(1,Math.min(3,Number(sbEl('sbLevel').value)||1)))?'Guardian added.':'No space available. Clear the army or reserve.';}
  else if(a==='clearUnits'&&prep){prepUndoClear();S.units=[];S.bench=[null,null,null];S.sel=null;msg='Army cleared.';}
- else if(a==='enemy'){const kind=sbEl('sbEnemy').value;if(!Object.hasOwn(KIND,kind))return;const q=prep?S.nextQueue:S.queue;const n=Math.min(Number(sbEl('sbCount').value)||1,Math.max(0,SANDBOX_MAX_ENEMIES-q.length-(prep?0:S.enemies.length)));for(let i=0;i<n;i++)q.push(sandboxEnemy(kind,S.wave));if(!prep)S.spawnT=0;msg=n+' enemies added to '+(prep?'next wave.':'spawn queue.');}
+ else if(a==='enemyOnly'){const kind=sbEl('sbEnemy').value,d=REGIONAL_ENEMIES[kind];if(!Object.hasOwn(KIND,kind))return;const region=d?.region||biomeId(S),w=Math.max(d?.firstWave||1,Math.min(region==='valley'?MAX_WAVE:BIOME_DATA[region].lastWave,S.wave));const W=waveInfo(w),K=KIND[kind],q=bossStamp({kind,hp:W.hp*K.hp,dmg:W.dmg*K.dmg,sp:W.sp*K.sp,r:K.r,range:K.range||0,armor:K.armor||K.boss?W.armor:0,boss:!!K.boss},w,region);sandboxLoadEncounter({region,w,name:K.n+' · solo test',queue:[q]},false);return;}
+ else if(a==='enemy'){const kind=sbEl('sbEnemy').value;if(!Object.hasOwn(KIND,kind))return;if(!regionalEnemyAllowed(kind,biomeId(S))){sandboxStatus('Select Cursed Forest or use Test enemy only.');return;}const q=prep?S.nextQueue:S.queue;const n=Math.min(Number(sbEl('sbCount').value)||1,Math.max(0,SANDBOX_MAX_ENEMIES-q.length-(prep?0:S.enemies.length)));for(let i=0;i<n;i++)q.push(sandboxEnemy(kind,S.wave));if(!prep)S.spawnT=0;msg=n+' enemies added to '+(prep?'next wave.':'spawn queue.');}
  else if(a==='clearEnemies'){if(prep){S.nextQueue=[];msg='Wave queue cleared.';}else{sandboxResetBattle('Enemies cleared. Ready for another test.');return;}}
  else if(a==='cards'){prepUndoClear();sandboxCards();msg='All cards refilled.';}
  else if(a==='magicMana'||a==='magicCooldown'||a==='magicRefill'){magicSandboxAction(a);msg='Magic lab settings updated.';}
@@ -132,7 +133,7 @@ function initSandboxControls(){
  sbEl('sbBoss').addEventListener('change',e=>sandboxPickBoss(e.target.value,false));
  sandboxRefreshWaveOptions();sbEl('sbRegion').addEventListener('change',e=>sandboxPickRegion(e.target.value));
  sbEl('sbUnit').innerHTML=MERGEABLE.map(t=>'<option value="'+t+'">'+NAMES[t]+'</option>').join('');
- sbEl('sbEnemy').innerHTML=Object.keys(KIND).map(k=>'<option value="'+k+'">'+KIND[k].n+'</option>').join('');
+ sbEl('sbEnemy').innerHTML=Object.keys(KIND).map(k=>'<option value="'+k+'">'+KIND[k].n+(REGIONAL_ENEMIES[k]?' · Forest':'')+'</option>').join('');
  sbEl('sandboxEnter').addEventListener('click',academyOpen);
  sbEl('sandboxPanel').addEventListener('click',e=>{const direct=e.target.closest('[data-sb-boss]');if(direct&&!direct.disabled){e.preventDefault();sandboxPickBoss(direct.dataset.sbBoss,true);return;}const b=e.target.closest('[data-sb]');if(b&&!b.disabled)sandboxAction(b.dataset.sb);});
 }
