@@ -149,6 +149,7 @@ function draw(){
       const rot = !motionPreference.matches && e.moving ? Math.sin(t * 10 + e.ph) * .07 : 0;
       if (hovE === e || tacticalEnemySelected(e)) { ctx.strokeStyle = colors.red; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(e.x, e.y, s / 2 + 6, 0, Math.PI * 2); ctx.stroke(); }
       sprite(enemySprite(e), e.x - (!motionPreference.matches && e.lunge > 0 ? e.lunge / .12 * 6 : 0), e.y + walk, e.kind === 'jin' ? s * 1.15 : s, { flash:e.flash > 0, rot, frame:pose.frame });
+      const regional=regionalDef(e);if(regional){ctx.save();ctx.fillStyle='#162019';ctx.strokeStyle=regional.marker;ctx.lineWidth=1.3;ctx.beginPath();ctx.arc(e.x+s*.36,e.y-s*.3+walk,7,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.fillStyle=regional.marker;ctx.font='bold 9px monospace';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(regional.badge,e.x+s*.36,e.y-s*.3+walk);ctx.restore();}
       if(e.boss){ctx.save();ctx.font='700 10px Rubik, sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';const label=enemyDisplayName(e),tw=ctx.measureText(label).width+10;ctx.fillStyle='#111821e8';ctx.fillRect(e.x-tw/2,e.y-s/2-22,tw,13);ctx.fillStyle=e.bossId==='huntsman'?'#a7d7aa':e.bossId==='crusader'?'#ffd18a':'#c9d3e8';ctx.fillText(label,e.x,e.y-s/2-15);ctx.restore();}
       if (e.kind === 'ant') { ctx.fillStyle = colors.m; ctx.globalAlpha = .5 + .5 * Math.sin(t * 20 + e.ph); ctx.beginPath(); ctx.arc(e.x - s * .34, e.y - s * .45 + walk, 3, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1; }
       if (e.root > 0) { ctx.strokeStyle = colors.leaf; ctx.lineWidth = 3; ctx.strokeRect(e.x - s / 2 - 2, e.y - s / 2 - 2, s + 4, s + 4); }
@@ -289,7 +290,7 @@ function drawInkShot(s,t){
  if(prefs.effects==='off'){ctx.fillStyle=pal[2];ctx.fillRect(-3,-2,6,4);ctx.restore();return;}
  if(prefs.effects==='soft')ctx.globalAlpha=.65;
  if(prefs.reduced)t=0;
- if(s.k==='bolt'){ctx.fillStyle='#edbc65';ctx.fillRect(-16,-1,20,2);ctx.fillStyle='#fff6d7';ctx.fillRect(3,-2,5,4);ctx.fillStyle='#836bed';ctx.fillRect(-17,-4,4,3);ctx.fillRect(-17,1,4,3);}
+ if(s.k==='bolt'){ctx.fillStyle=s.ignoreCover?'#ff7840':'#edbc65';ctx.fillRect(-16,-1,20,2);ctx.fillStyle=s.ignoreCover?'#ffdb88':'#fff6d7';ctx.fillRect(3,-2,5,4);ctx.fillStyle=s.ignoreCover?'#ff9a4f':'#836bed';ctx.fillRect(-17,-4,4,3);ctx.fillRect(-17,1,4,3);}
  else{for(let j=0;j<3;j++){ctx.strokeStyle=pal[j];ctx.lineWidth=[8,4,1.5][j];ctx.beginPath();for(let k=0;k<18;k++){let x=-30+k*2,y=Math.sin(k*.35+t*13+j*.4)*(18-k)*.18;k?ctx.lineTo(x,y):ctx.moveTo(x,y);}ctx.stroke();}ctx.fillStyle=pal[2];ctx.fillRect(0,-3,6,6);}
  ctx.restore();
 }
