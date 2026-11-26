@@ -82,16 +82,16 @@ function biomeContains(u,kind,state=S,W){
 }
 function biomeProjectileFactor(u,state=S,W){return biomeContains(u,'cover',state,W)?.75:1;}
 function biomeWalkFactor(u,state=S,W){return biomeContains(u,'bramble',state,W)?.7:1;}
-function biomeDraw(W){
+function biomeDraw(W,g=ctx){
  if(biomeId(S)!=='forest')return;
- ctx.save();ctx.beginPath();ctx.rect(0,0,W,WORLD_H);ctx.clip();
+ g.save();g.beginPath();g.rect(0,0,W,WORLD_H);g.clip();
  for(const z of biomeZones(S,W)){
   const cover=z.kind==='cover',color=cover?'#8dc7a0':'#d5ad68';
-  ctx.fillStyle=cover?'#1d6544':'#664725';ctx.globalAlpha=.13;ctx.beginPath();ctx.ellipse(z.x,z.y,z.rx,z.ry,0,0,Math.PI*2);ctx.fill();
-  ctx.globalAlpha=.72;ctx.strokeStyle=color;ctx.lineWidth=1.2;ctx.setLineDash(cover?[5,4]:[2,4]);ctx.stroke();ctx.setLineDash([]);
-  ctx.fillStyle='#101c18';ctx.globalAlpha=.8;ctx.fillRect(z.x-31,z.y-z.ry+4,62,12);ctx.globalAlpha=1;ctx.fillStyle=color;ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='bold 9px monospace';ctx.fillText(cover?'COVER':'BRAMBLES',z.x,z.y-z.ry+10);
+  g.fillStyle=cover?'#1d6544':'#664725';g.globalAlpha=.13;g.beginPath();g.ellipse(z.x,z.y,z.rx,z.ry,0,0,Math.PI*2);g.fill();
+  g.globalAlpha=.72;g.strokeStyle=color;g.lineWidth=1.2;g.setLineDash(cover?[5,4]:[2,4]);g.stroke();g.setLineDash([]);
+  g.fillStyle='#101c18';g.globalAlpha=.8;g.fillRect(z.x-31,z.y-z.ry+4,62,12);g.globalAlpha=1;g.fillStyle=color;g.textAlign='center';g.textBaseline='middle';g.font='bold 9px monospace';g.fillText(cover?'COVER':'BRAMBLES',z.x,z.y-z.ry+10);
  }
- ctx.restore();
+ g.restore();
 }
 function biomeRegionChoice(){const el=document.getElementById('campaignRegion');return el?.value==='forest'&&biomeUnlocked('forest')?'forest':'valley';}
 function biomeUnlocked(id){return id==='valley'||(id==='forest'&&campaignProfileInit().forestUnlocked===true);}
