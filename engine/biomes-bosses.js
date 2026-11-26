@@ -1,17 +1,22 @@
 /* First biome and boss data. Existing kind IDs, art and save schema stay compatible. */
 const BIOME_DATA=Object.freeze({
  valley:Object.freeze({id:'valley',name:'Valley of Souls',firstWave:1,lastWave:5,terrain:'Existing open battlefield',modifier:'None',bossId:'crusader',backdrop:'valley'}),
- forest:Object.freeze({id:'forest',name:'Cursed Forest',firstWave:1,lastWave:5,terrain:'Cover and tangled ground',modifier:'Cover -25% projectile damage; brambles -30% walking speed',bossId:'huntsman',backdrop:'forest'})
+ forest:Object.freeze({id:'forest',name:'Cursed Forest',firstWave:1,lastWave:5,terrain:'Cover and tangled ground',modifier:'Cover -25% projectile damage; brambles -30% walking speed',bossId:'huntsman',backdrop:'forest'}),
+ frozen:Object.freeze({id:'frozen',name:'Frozen Wasteland',firstWave:1,lastWave:5,terrain:'Ice patches and periodic blizzards',modifier:'Ice changes walking inertia; blizzard −30% ranged reach',bossId:'inquisitor',backdrop:'frozen'})
 });
 const BOSS_DATA=Object.freeze({
  crusader:Object.freeze({id:'crusader',name:'The Crusader',sprite:'caballero',kind:'com',wave:5,ability:'Consecrated Sweep',radius:68,triggerRadius:56,windup:1.5,cooldown:8,damageFactor:.8,description:'Armored boss. Consecrated Sweep marks a fixed 68 px circle for 1.5 s, then deals 80% of its basic attack to guardians and the deployed hero inside. Spread out, use ranged guardians or root the boss to interrupt. Never damages the Altar.'}),
- huntsman:Object.freeze({id:'huntsman',name:'The Grand Huntsman',sprite:'ballestero',kind:'com',wave:5,ability:'Hunter’s Mark',radius:38,triggerRadius:180,windup:2,cooldown:8,damageFactor:1.4,range:150,hpFactor:.75,damageScale:.8,description:'Ranged boss. Marks the position of the nearest visible guardian or deployed hero within 180 px. After 2 s, a volley hits targets inside the fixed 38 px circle for 140% basic attack. Cover reduces damage; roots interrupt. No special Altar damage.'})
+ huntsman:Object.freeze({id:'huntsman',name:'The Grand Huntsman',sprite:'ballestero',kind:'com',wave:5,ability:'Hunter’s Mark',radius:38,triggerRadius:180,windup:2,cooldown:8,damageFactor:1.4,range:150,hpFactor:.75,damageScale:.8,description:'Ranged boss. Marks the position of the nearest visible guardian or deployed hero within 180 px. After 2 s, a volley hits targets inside the fixed 38 px circle for 140% basic attack. Cover reduces damage; roots interrupt. No special Altar damage.'}),
+ inquisitor:Object.freeze({id:'inquisitor',name:'The Frost Inquisitor',sprite:'clerigo',kind:'com',wave:5,ability:'Glacial Prison',radius:55,triggerRadius:180,windup:2,cooldown:12,damageFactor:.6,freezeDuration:3,description:'Armored melee boss. Marks the densest nearby cluster of guardians or deployed Warlord. After 2 s, deals 60% basic attack within 55 px and freezes victims for 3 s. Roots interrupt the cast. Never freezes or damages the Altar with this ability.'})
 });
 /* Regional enemy definitions share existing sprite assets. Counts replace ordinary slots, never add to them. */
 const REGIONAL_ENEMIES=Object.freeze({
  pathfinder:Object.freeze({n:'Pathfinder',spr:'soldado',hp:.65,dmg:.75,sp:1.65,r:10,region:'forest',firstWave:1,counts:Object.freeze([1,1,1,2,2]),brambleImmune:true,marker:'#e4c78b',badge:'P',description:'Fast scout. Ignores the 30% Brambles walking penalty, but roots and spell slows still apply.'}),
  ranger:Object.freeze({n:'Forest Ranger',spr:'ballestero',hp:.8,dmg:.85,sp:1.05,r:11,range:150,region:'forest',firstWave:2,counts:Object.freeze([0,1,1,2,2]),seekCover:true,coverSearch:115,marker:'#91dba8',badge:'R',description:'Seeks nearby Cover when it can fire from there. Receives the ordinary 25% projectile protection while inside. Does not retreat endlessly or ignore taunts.'}),
- purifier:Object.freeze({n:'Forest Purifier',spr:'incendiario',hp:1,dmg:.95,sp:.8,r:12,range:120,region:'forest',firstWave:3,counts:Object.freeze([0,0,1,1,2]),ignoreCover:true,marker:'#ffb477',badge:'F',description:'Incendiary ranged attacker. Its flaming bolts ignore Cover protection but not other defenses. Attacks guardians and the Altar normally, without the Arsonist triple damage.'})
+ purifier:Object.freeze({n:'Forest Purifier',spr:'incendiario',hp:1,dmg:.95,sp:.8,r:12,range:120,region:'forest',firstWave:3,counts:Object.freeze([0,0,1,1,2]),ignoreCover:true,marker:'#ffb477',badge:'F',description:'Incendiary ranged attacker. Its flaming bolts ignore Cover protection but not other defenses. Attacks guardians and the Altar normally, without the Arsonist triple damage.'}),
+ frostSentinel:Object.freeze({n:'Frost Sentinel',spr:'caballero',hp:2.1,dmg:1.05,sp:.65,r:12,armor:true,region:'frozen',firstWave:1,counts:Object.freeze([1,1,1,2,2]),slowResistance:.5,marker:'#a9d8f4',badge:'S',description:'Armored tank. Halves the strength of spell slowing effects; roots and freezes still stop it.'}),
+ iceMarksman:Object.freeze({n:'Ice Marksman',spr:'ballestero',hp:.8,dmg:.9,sp:.9,r:11,range:150,region:'frozen',firstWave:2,counts:Object.freeze([0,1,1,2,2]),blizzardImmune:true,marker:'#b5f4ff',badge:'I',description:'Ranged specialist. Retains full 150 px reach during a blizzard.'}),
+ frostHerald:Object.freeze({n:'Frost Herald',spr:'clerigo',hp:.9,dmg:.7,sp:.8,r:11,region:'frozen',firstWave:3,counts:Object.freeze([0,0,1,1,2]),pulseRadius:85,pulseCooldown:6,pulseDuration:2,pulseSlow:.3,marker:'#aeb8ff',badge:'H',description:'Melee support. Every 6 s, chills nearby guardians and deployed Warlord within 85 px, reducing walking speed by 30% for 2 s. Does not stack or freeze.'})
 });
 function regionalDef(e){return REGIONAL_ENEMIES[e?.kind]||null;}
 function regionalSlots(w,region){return Object.entries(REGIONAL_ENEMIES).flatMap(([id,d])=>d.region===region?Array(d.counts[w-1]||0).fill(id):[]);}
@@ -31,7 +36,7 @@ function regionalRangerCover(e,targets,forcedHero,W){
  }
  return best;
 }
-function biomeId(state){return state?.biomeId==='forest'?'forest':'valley';}
+function biomeId(state){return Object.hasOwn(BIOME_DATA,state?.biomeId)?state.biomeId:'valley';}
 function biomeDef(state){return BIOME_DATA[biomeId(state)];}
 function bossForWave(w,region='valley'){const d=BOSS_DATA[BIOME_DATA[region]?.bossId];return d?.wave===w?d:null;}
 function bossDef(e){const d=BOSS_DATA[e?.bossId];return d&&e.kind===d.kind?d:null;}
@@ -62,14 +67,17 @@ function bossAdvance(e,dt){
   for(const u of bossTargets()){
    if(Math.hypot(u.x-c.x,u.y-c.y)>d.radius)continue;
    const dealt=heroDamageTarget(u,e.dmg*d.damageFactor*(d.id==='huntsman'?biomeProjectileFactor(u):1));
+   if(d.freezeDuration&&u.hp>0&&!u.down&&!(heroIsTarget(u)&&martialInvulnerable())){u.frostUntil=Math.max(u.frostUntil||0,S.fightT+d.freezeDuration);frostClearMotion(u);floatText(u.x,u.y-32,'Frozen','soul',11);}
    if(dealt>0){u.flash=.15;feelNumber(u.x,u.y-radius(u)-10,dealt,'ally');feelImpact(u.x,u.y,'steel',u,0,false);}
   }
   S.fx.push({k:'ring',x:c.x,y:c.y,r:d.radius,c:'gold',t:.5,T:.5});sfx('clash');
   return true;
  }
  if(e.bossCooldown>0)return false;
- const target=bossTargets().filter(u=>Math.hypot(u.x-e.x,u.y-e.y)<=d.triggerRadius).sort((a,b)=>Math.hypot(a.x-e.x,a.y-e.y)-Math.hypot(b.x-e.x,b.y-e.y))[0];if(!target)return false;
- e.bossCast={x:d.id==='huntsman'?target.x:e.x,y:d.id==='huntsman'?target.y:e.y,left:d.windup};
+ const targets=bossTargets(),near=targets.filter(u=>Math.hypot(u.x-e.x,u.y-e.y)<=d.triggerRadius);let target=null,best=-Infinity;
+ for(const u of near){const distance=Math.hypot(u.x-e.x,u.y-e.y),score=d.freezeDuration?targets.filter(v=>Math.hypot(v.x-u.x,v.y-u.y)<=d.radius).length*1000-distance:-distance;if(score>best){best=score;target=u;}}
+ if(!target)return false;
+ e.bossCast={x:d.id==='huntsman'||d.freezeDuration?target.x:e.x,y:d.id==='huntsman'||d.freezeDuration?target.y:e.y,left:d.windup};
  floatText(e.x,e.y-35,d.ability,'gold',11);sfx('horn');return true;
 }
 function bossDrawWarnings(W){
@@ -91,33 +99,71 @@ const FOREST_ZONES=Object.freeze([
  Object.freeze({kind:'bramble',x:.43,y:.63,rx:.09,ry:39}),
  Object.freeze({kind:'bramble',x:.76,y:.28,rx:.085,ry:39})
 ]);
+const FROZEN_ZONES=Object.freeze([
+ Object.freeze({kind:'ice',x:.28,y:.34,rx:.095,ry:40}),
+ Object.freeze({kind:'ice',x:.52,y:.68,rx:.105,ry:43}),
+ Object.freeze({kind:'ice',x:.77,y:.35,rx:.095,ry:42})
+]);
+const BLIZZARD=Object.freeze({first:12,period:18,duration:5,rangeFactor:.7});
+function frostBlizzard(state=S){if(biomeId(state)!=='frozen'||state.phase!=='fight')return false;const t=state.fightT||0;return t>=BLIZZARD.first&&(t-BLIZZARD.first)%BLIZZARD.period<BLIZZARD.duration;}
+function frostRange(u,range,state=S){return frostBlizzard(state)&&!regionalDef(u)?.blizzardImmune&&(enemyRanged(u)||u.type==='A'||u.type==='M')?range*BLIZZARD.rangeFactor:range;}
+function frostFrozen(u,state=S){return biomeId(state)==='frozen'&&state.phase==='fight'&&Number.isFinite(u?.frostUntil)&&u.frostUntil>(state.fightT||0);}
+function frostChill(u,state=S){return biomeId(state)==='frozen'&&state.phase==='fight'&&Number.isFinite(u?.frostChillUntil)&&u.frostChillUntil>(state.fightT||0)?1-(u.frostChillStrength||.3):1;}
+function frostSlowResistance(e,factor){return 1-(1-factor)*(1-(regionalDef(e)?.slowResistance||0));}
+function frostClearMotion(u){delete u.iceVX;delete u.iceVY;}
+function frostResetUnit(u){frostClearMotion(u);delete u.frostUntil;delete u.frostChillUntil;delete u.frostChillStrength;delete u.frostPulseAt;}
+function frostWalkVector(u,dx,dy,dt,state=S,W){
+ if(biomeId(state)!=='frozen')return {dx,dy};
+ if(!Number.isFinite(dt)||dt<=0||frostFrozen(u,state)){frostClearMotion(u);return {dx:0,dy:0};}
+ if(!biomeContains(u,'ice',state,W)){frostClearMotion(u);return {dx,dy};}
+ const a=1-Math.exp(-dt*9),vx=dx/dt,vy=dy/dt;
+ u.iceVX=(Number.isFinite(u.iceVX)?u.iceVX:vx)*(1-a)+vx*a;
+ u.iceVY=(Number.isFinite(u.iceVY)?u.iceVY:vy)*(1-a)+vy*a;
+ if(Math.hypot(u.iceVX,u.iceVY)<1){frostClearMotion(u);return {dx:0,dy:0};}
+ return {dx:u.iceVX*dt,dy:u.iceVY*dt};
+}
+function frostCoast(u,dt,W){
+ if(biomeId(S)!=='frozen'||!Number.isFinite(u.iceVX)||u.moving)return;
+ if(u.down||u.hp<=0||frostFrozen(u)||u.kind&&spellEnemyRooted(u)){frostClearMotion(u);return;}
+ const v=frostWalkVector(u,0,0,dt,S,W);
+ const r=u.r||radius(u)||10;u.x=Math.max(WALL_X+r,Math.min(W-r,u.x+v.dx));u.y=Math.max(r,Math.min(WORLD_H-r,u.y+v.dy));u.moving=!!(v.dx||v.dy);
+}
+function frostHeraldPulse(e){
+ const d=regionalDef(e);if(!d?.pulseRadius||spellEnemyRooted(e)||S.fightT<(e.frostPulseAt||0))return;
+ const targets=bossTargets().filter(u=>Math.hypot(u.x-e.x,u.y-e.y)<=d.pulseRadius);
+ if(!targets.length)return;
+ e.frostPulseAt=S.fightT+d.pulseCooldown;
+ for(const u of targets){u.frostChillUntil=Math.max(u.frostChillUntil||0,S.fightT+d.pulseDuration);u.frostChillStrength=d.pulseSlow;}
+ S.fx.push({k:'ring',x:e.x,y:e.y,r:d.pulseRadius,c:'soul',t:.5,T:.5});floatText(e.x,e.y-30,'Frost aura','soul',10);
+}
 const EMPTY_BIOME_ZONES=Object.freeze([]);
-let biomeZoneWidth=-1,biomeZoneHeight=-1,biomeZoneCache=EMPTY_BIOME_ZONES;
+let biomeZoneWidth=-1,biomeZoneHeight=-1,biomeZoneRegion='',biomeZoneCache=EMPTY_BIOME_ZONES;
 function biomeZones(state=S,W){
- if(biomeId(state)!=='forest')return EMPTY_BIOME_ZONES;
+ const region=biomeId(state),defs=region==='forest'?FOREST_ZONES:region==='frozen'?FROZEN_ZONES:null;if(!defs)return EMPTY_BIOME_ZONES;
  if(W===undefined)W=worldW();
- if(W!==biomeZoneWidth||WORLD_H!==biomeZoneHeight){biomeZoneWidth=W;biomeZoneHeight=WORLD_H;biomeZoneCache=Object.freeze(FOREST_ZONES.map(z=>Object.freeze({...z,x:z.x*W,y:z.y*WORLD_H,rx:Math.max(25,z.rx*W)})));}
+ if(W!==biomeZoneWidth||WORLD_H!==biomeZoneHeight||region!==biomeZoneRegion){biomeZoneWidth=W;biomeZoneHeight=WORLD_H;biomeZoneRegion=region;biomeZoneCache=Object.freeze(defs.map(z=>Object.freeze({...z,x:z.x*W,y:z.y*WORLD_H,rx:Math.max(25,z.rx*W)})));}
  return biomeZoneCache;
 }
 function biomeContains(u,kind,state=S,W){
- if(biomeId(state)!=='forest'||!u||!Number.isFinite(u.x)||!Number.isFinite(u.y))return false;
+ if(biomeId(state)==='valley'||!u||!Number.isFinite(u.x)||!Number.isFinite(u.y))return false;
  for(const z of biomeZones(state,W)){if(z.kind!==kind)continue;const dx=(u.x-z.x)/z.rx,dy=(u.y-z.y)/z.ry;if(dx*dx+dy*dy<=1)return true;}
  return false;
 }
 function biomeProjectileFactor(u,state=S,W){return biomeContains(u,'cover',state,W)?.75:1;}
-function biomeWalkFactor(u,state=S,W){return regionalDef(u)?.brambleImmune?1:biomeContains(u,'bramble',state,W)?.7:1;}
+function biomeWalkFactor(u,state=S,W){return frostFrozen(u,state)?0:frostChill(u,state)*(regionalDef(u)?.brambleImmune?1:biomeContains(u,'bramble',state,W)?.7:1);}
 function biomeDraw(W,g=ctx){
- if(biomeId(S)!=='forest')return;
+ if(biomeId(S)==='valley')return;
  g.save();g.beginPath();g.rect(0,0,W,WORLD_H);g.clip();
  for(const z of biomeZones(S,W)){
-  const cover=z.kind==='cover',color=cover?'#8dc7a0':'#d5ad68';
-  g.fillStyle=cover?'#1d6544':'#664725';g.globalAlpha=.13;g.beginPath();g.ellipse(z.x,z.y,z.rx,z.ry,0,0,Math.PI*2);g.fill();
+  const ice=z.kind==='ice',cover=z.kind==='cover',color=ice?'#b3ebff':cover?'#8dc7a0':'#d5ad68';
+  g.fillStyle=ice?'#68b9d7':cover?'#1d6544':'#664725';g.globalAlpha=.13;g.beginPath();g.ellipse(z.x,z.y,z.rx,z.ry,0,0,Math.PI*2);g.fill();
   g.globalAlpha=.72;g.strokeStyle=color;g.lineWidth=1.2;g.setLineDash(cover?[5,4]:[2,4]);g.stroke();g.setLineDash([]);
-  g.fillStyle='#101c18';g.globalAlpha=.8;g.fillRect(z.x-31,z.y-z.ry+4,62,12);g.globalAlpha=1;g.fillStyle=color;g.textAlign='center';g.textBaseline='middle';g.font='bold 9px monospace';g.fillText(cover?'COVER':'BRAMBLES',z.x,z.y-z.ry+10);
+  g.fillStyle='#101c18';g.globalAlpha=.8;g.fillRect(z.x-31,z.y-z.ry+4,62,12);g.globalAlpha=1;g.fillStyle=color;g.textAlign='center';g.textBaseline='middle';g.font='bold 9px monospace';g.fillText(ice?'ICE':cover?'COVER':'BRAMBLES',z.x,z.y-z.ry+10);
  }
  g.restore();
 }
-function biomeRegionChoice(){const el=document.getElementById('campaignRegion');return el?.value==='forest'&&biomeUnlocked('forest')?'forest':'valley';}
-function biomeUnlocked(id){return id==='valley'||(id==='forest'&&campaignProfileInit().forestUnlocked===true);}
+function biomeRegionChoice(){const el=document.getElementById('campaignRegion'),id=el?.value;return Object.hasOwn(BIOME_DATA,id)&&biomeUnlocked(id)?id:'valley';}
+function biomeUnlocked(id){if(id==='valley')return true;const p=campaignProfileInit();return id==='forest'?p.forestUnlocked===true:id==='frozen'?p.frozenUnlocked===true:false;}
 function biomeUnlockForest(){const p=campaignProfileInit();return p.forestUnlocked===true||campaignProfileCommit({...p,forestUnlocked:true});}
-function biomeMenu(){const el=document.getElementById('campaignRegion');if(!el)return;const option=el.querySelector('option[value="forest"]'),unlocked=biomeUnlocked('forest');option.disabled=!unlocked;option.textContent=unlocked?'Cursed Forest':'Cursed Forest · locked';const length=document.getElementById('campaignLength');if(el.value==='forest'&&!unlocked)el.value='valley';if(el.value==='forest')length.value='5';length.disabled=el.value==='forest';document.getElementById('regionHint').textContent=el.value==='forest'?'Five waves · cover, brambles and the Grand Huntsman.':unlocked?'Cursed Forest unlocked. Select a region to begin.':'Defeat the fifth-wave boss in the Valley to unlock Cursed Forest.';}
+function biomeUnlockFrozen(){const p=campaignProfileInit();return p.frozenUnlocked===true||campaignProfileCommit({...p,forestUnlocked:true,frozenUnlocked:true});}
+function biomeMenu(){const el=document.getElementById('campaignRegion');if(!el)return;for(const d of Object.values(BIOME_DATA)){const option=el.querySelector('option[value="'+d.id+'"]');if(!option)continue;const unlocked=biomeUnlocked(d.id);option.disabled=!unlocked;option.textContent=d.name+(unlocked?'':' · locked');}if(!biomeUnlocked(el.value))el.value='valley';const length=document.getElementById('campaignLength');if(el.value!=='valley')length.value='5';length.disabled=el.value!=='valley';document.getElementById('regionHint').textContent=el.value==='frozen'?'Five waves · ice, blizzards and the Frost Inquisitor.':el.value==='forest'?'Five waves · defeat the Huntsman to unlock Frozen Wasteland.':biomeUnlocked('forest')?'Select an unlocked region.':'Defeat the fifth-wave boss in the Valley to unlock Cursed Forest.';}
