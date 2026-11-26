@@ -67,3 +67,6 @@ User confirmed Quick Boss access for Crusader and Huntsman; forest looked like V
 
 ## v22-alpha.7.31 — Cursed Forest visual art pass
 User validated all v7.30 changes; feedback: forest visually inferior, old wall instead of crystal. Dedicated 1100×500 SVG art composes cropped original textures, recolored crystal, winding woodland path, moss, roots, foliage, bramble and cover motifs. Cached image loaded with existing bounded loader; procedural forest and drawn crystal fallback. Lower tactical overlay opacity; no geometry or balance changes. Valley and boss routing untouched. Await visual playtest before further biomes.
+
+## v22-alpha.7.32 — Performance hotfix
+User accepted forest art as sufficient but reports low fluidity/game feel and map dropdown mismatch. Bake SVG into a raster canvas at load, cache terrain geometry, skip zone lookups in Valley, make region dropdown load map immediately and preserve/clamp wave, show measured FPS/worst frame interval in free Sandbox. No combat balance or art change; no new region until performance validated. Next: regional enemy packs.
