@@ -100,7 +100,7 @@ function heroAdvance(dt){
  if(!heroCanControl())heroClearKeys();
  const busy=martialAdvance(h,dt);if(busy==='charge')return;
  const {dx,dy,len}=martialMovement();
- if(len){h.martial.direction=martialDirection(dx,dy,h.facing);martialMove(h,dx/len*d.moveSpeed*dt,dy/len*d.moveSpeed*dt);}
+ if(len){h.martial.direction=martialDirection(dx,dy,h.facing);martialMove(h,dx/len*d.moveSpeed*dt*biomeWalkFactor(h),dy/len*d.moveSpeed*dt*biomeWalkFactor(h));}
  if(busy==='storm')return;
  let target=null,best=Infinity;
  for(const e of S.enemies){if(e.hp<=0)continue;const gap=Math.hypot(e.x-h.x,e.y-h.y)-e.r-d.radius;if(gap<=d.range&&gap<best){best=gap;target=e;}}
