@@ -119,7 +119,7 @@ function sandboxLaunchOpen(reconfigure=false){
  sbEl('slPreset').value=reconfigure?'retain':'starter';
  sbEl('slRelic').innerHTML=RELICS.map((r,i)=>r.disabled?'':'<option value="'+i+'">'+r.n+'</option>').join('');
  sbEl('slRelicFields').hidden=reconfigure;sbEl('slGod').checked=reconfigure?!!S.sandboxGod:false;sbEl('slAuto').checked=false;
- sbEl('slGo').textContent=reconfigure?'Load encounter':'Choose champion →';sbEl('slBack').textContent=reconfigure?'Return to battle':'Back to Academy';
+ sbEl('slGo').textContent=reconfigure?'Load encounter':'Choose champion →';sbEl('slBack').textContent=reconfigure?'Return to battle':frontCurrent==='campaignMapView'?'Back to Campaign':'Back to Academy';
  sandboxLaunchRefresh();if(previous?.bossId)sbEl('slBoss').value=previous.bossId;if(solo){sbEl('slEnemy').value=previous.queue[0].kind;sbEl('slCount').value='1';sandboxLaunchRefresh();}front('sandboxLaunchView');
 }
 function sandboxReadSetup(){
