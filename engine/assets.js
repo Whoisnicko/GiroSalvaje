@@ -17,11 +17,16 @@ let battlefieldArt=null,forestBattlefieldArt=null;
 function loadArtImage(src){
  return new Promise((resolve,reject)=>{const im=new Image();const timer=setTimeout(()=>finish(false),12000);function finish(ok){clearTimeout(timer);im.onload=im.onerror=null;ok?resolve(im):reject(new Error('Artwork unavailable: '+src.slice(0,100)));}im.onload=()=>finish(true);im.onerror=()=>finish(false);im.src=src;});
 }
+/* Rasterize the complex SVG once at load time. Never replay its vector scene in the frame loop. */
+function bakeForestBackdrop(image){
+ if(image?.width!==1100||image?.height!==500)return null;
+ try{const c=inkCanvas(1100,500),g=c.getContext('2d');if(!g)return null;g.drawImage(image,0,0,1100,500);return c;}catch(e){console.warn('Forest raster fallback',e);return null;}
+}
 function assetFrame(image,sx,sy){return {image,sx,sy,width:96,height:96};}
 async function buildHybridArt(){
  const [backdrop,forest,...sheets]=await Promise.all([loadArtImage(FULL_BATTLEFIELD_ART).catch(()=>null),loadArtImage(FOREST_BATTLEFIELD_ART).catch(()=>null),...BAKED_ART.sheets.map((url,i)=>loadArtImage(url).then(im=>{if(im.width!==768||im.height%96||im.height!==(i===BAKED_ART.sheets.length-1?96:768))throw Error('Invalid sprite sheet dimensions');return im;}).catch(e=>{console.warn('Sprite sheet fallback',i,e);return null;}))]);
  battlefieldArt=backdrop?.width===1100&&backdrop?.height===500?backdrop:null;
- forestBattlefieldArt=forest?.width===1100&&forest?.height===500?forest:null;
+ forestBattlefieldArt=bakeForestBackdrop(forest);
  let original=null;
  if(sheets.some(im=>!im))original=await loadArtImage(ILLUSTRATED_ATLAS).then(im=>im.width===384&&im.height===384?im:null).catch(()=>null);
  HYBRID.names.forEach((name,i)=>{
