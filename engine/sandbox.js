@@ -16,7 +16,7 @@ function sandboxPerf(now,delta){
 }
 function sandboxRefill(){if(!sandboxActive())return;S.gold=999999;S.spinsLeft=999;S.maxUnits=Math.min(S.maxUnits,SANDBOX_MAX_UNITS);}
 function sandboxCards(){S.deck=Object.keys(CARDS);S.hand=S.deck.map((id,di)=>({id,di,used:false}));S.aim=null;}
-function sandboxInitialize(){sandboxRefill();sandboxCards();S.sandboxGod=true;sbEl('sbWave').value=String(S.wave);sbEl('sbRegion').value=biomeId(S);sandboxStatus('Select any map, wave or boss. No campaign unlock required.');sbEl('sandboxPanel').open=true;sandboxRefreshWaveOptions();}
+function sandboxInitialize(){sandboxRefill();sandboxCards();S.sandboxGod=academyActive();sbEl('sbWave').value=String(S.wave);sbEl('sbRegion').value=biomeId(S);sandboxStatus('Select any map, wave or boss. No unlock required. Free Sandbox starts with real damage; God mode is optional.');sbEl('sandboxPanel').open=true;sandboxRefreshWaveOptions();}
 function sandboxCanEdit(){return sandboxActive()&&!menuOpen&&!spinning&&!S.drag&&!S.pendingMerge&&$('#ov').hidden&&$('#ov2').hidden&&!$('#unitBestiary').open&&!$('#runePractice').open&&['prep','fight'].includes(S.phase);}
 function sandboxEnter(heroId='sorcerer',build=null){
  if(!menuOpen||spinning||sandboxActive()||sandboxParked)return;
@@ -123,13 +123,13 @@ function renderSandbox(){
  sbEl('sbLoaded').textContent=biomeDef(S).name+' · Wave '+S.wave+' · '+(names.join(' / ')||'No boss');
  for(const b of p.querySelectorAll('[data-sb-boss]')){b.disabled=spinning||!ready;b.setAttribute('aria-pressed',String(S.sandboxEncounter?.bossId===b.dataset.sbBoss));}
  if(heroUsesMagic(S))magicRenderSandbox();
- sbEl('sbGod').textContent='God mode: '+(S.sandboxGod?'ON':'OFF');sbEl('sbGod').setAttribute('aria-pressed',String(S.sandboxGod));
+ sbEl('sbGod').textContent='God mode: '+(S.sandboxGod?'ON':'OFF');sbEl('sbGod').setAttribute('aria-pressed',String(S.sandboxGod));const damageMode=sbEl('sbDamageMode');damageMode.textContent=S.sandboxGod?'IMMUNE':'DAMAGE ON';damageMode.dataset.immune=String(S.sandboxGod);
  for(const b of p.querySelectorAll('[data-sb]')){const a=b.dataset.sb;b.disabled=spinning||!ready||(['fight','unit','clearUnits'].includes(a)&&!prep)||(a==='retry'&&!S.sandboxEncounter);}
 }
 function initSandboxControls(){
  sbEl('sbRegion').innerHTML=Object.values(BIOME_DATA).map(b=>'<option value="'+b.id+'">'+b.name+'</option>').join('');
  sbEl('sbBoss').innerHTML='<option value="" disabled>Select boss</option>'+sandboxBossOptions().map(b=>'<option value="'+b.id+'">'+b.name+'</option>').join('');
- sbEl('sbBossQuick').innerHTML=sandboxBossOptions().map(b=>'<button type="button" data-sb-boss="'+b.id+'" aria-pressed="false">Fight '+b.name+'</button>').join('');
+ sbEl('sbBossQuick').innerHTML='<button type="button" data-sb="god" id="sbGod" aria-pressed="false">God mode: OFF</button>'+sandboxBossOptions().map(b=>'<button type="button" data-sb-boss="'+b.id+'" aria-pressed="false">Fight '+b.name+'</button>').join('');
  sbEl('sbBoss').addEventListener('change',e=>sandboxPickBoss(e.target.value,false));
  sandboxRefreshWaveOptions();sbEl('sbRegion').addEventListener('change',e=>sandboxPickRegion(e.target.value));
  sbEl('sbUnit').innerHTML=MERGEABLE.map(t=>'<option value="'+t+'">'+NAMES[t]+'</option>').join('');
