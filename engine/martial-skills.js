@@ -56,6 +56,7 @@ function martialRetaliate(h,random=Math.random){
  martialEvent('counter',h.x,h.y,{r:d.radius,t:.40,T:.40});floatText(h.x,h.y-44,'Retaliation!','gold',11);sfx('heroCounter');return true;
 }
 function martialAvailability(id){
+ if(S?.hero&&frostFrozen(S.hero))return 'Frozen';
  if(!Object.hasOwn(MARTIAL_SKILLS,id)||!heroActive()||!heroCanControl()||id==='skin'&&!talentHas(S.hero,'juggernaut',3))return 'Unavailable';
  const d=talentSkill(id,S.hero);
  const m=S.hero.martial,lab=martialLab();
