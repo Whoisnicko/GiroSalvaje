@@ -64,3 +64,6 @@ User reports Huntsman selection leads to Crusader. Boss dropdown now loads on ch
 
 ## v22-alpha.7.30 — Region and boss identity
 User confirmed Quick Boss access for Crusader and Huntsman; forest looked like Valley, classic Commander looked like Crusader, title version stale. New cached procedural forest backdrop replaces Valley art in forest only. Crusader uses existing Knight art; Commander retains original art; named boss labels distinguish all three. Version rendered from a single HTML meta value. No boss stat, campaign layout, routing or save changes. Browser playtest pending.
+
+## v22-alpha.7.31 — Cursed Forest visual art pass
+User validated all v7.30 changes; feedback: forest visually inferior, old wall instead of crystal. Dedicated 1100×500 SVG art composes cropped original textures, recolored crystal, winding woodland path, moss, roots, foliage, bramble and cover motifs. Cached image loaded with existing bounded loader; procedural forest and drawn crystal fallback. Lower tactical overlay opacity; no geometry or balance changes. Valley and boss routing untouched. Await visual playtest before further biomes.
