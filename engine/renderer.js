@@ -1,6 +1,22 @@
 /* v19 renderer: canvas presentation, shared state from game core. Classic script; loaded before core. */
+function forestArtReady(){return typeof forestBattlefieldArt!=='undefined'&&!!forestBattlefieldArt;}
+function drawForestAltar(hurt,glow){
+ const W=worldW(),x=W*(79/1100),y=WORLD_H*(198/500),bw=Math.min(68,W*.12),by=WORLD_H*.27;
+ ctx.save();
+ // Missing artwork must still show a crystal, never the obsolete wall.
+ if(!forestArtReady()){
+  ctx.translate(x,y);ctx.fillStyle='#182b26';ctx.strokeStyle='#73937a';ctx.lineWidth=2;
+  ctx.beginPath();ctx.ellipse(0,29,Math.max(20,W*.07),18,0,0,Math.PI*2);ctx.fill();ctx.stroke();
+  ctx.strokeStyle='#76e4c1';ctx.beginPath();ctx.ellipse(0,26,18,8,0,0,Math.PI*2);ctx.stroke();
+  ctx.fillStyle='#49bda6';ctx.strokeStyle='#b6f9d7';ctx.beginPath();ctx.moveTo(0,-26);ctx.lineTo(12,-11);ctx.lineTo(9,13);ctx.lineTo(0,24);ctx.lineTo(-9,13);ctx.lineTo(-12,-11);ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.fillStyle='#b7ffde';ctx.beginPath();ctx.moveTo(0,-24);ctx.lineTo(0,22);ctx.lineTo(-9,13);ctx.lineTo(-12,-11);ctx.closePath();ctx.fill();ctx.translate(-x,-y);
+ }
+ if(hurt||glow){const radius=Math.max(18,W*.065),g=ctx.createRadialGradient(x,y,0,x,y,radius);g.addColorStop(0,hurt?'rgba(255,80,68,.48)':'rgba(96,255,187,.44)');g.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=g;ctx.fillRect(x-radius,y-radius,radius*2,radius*2);}
+ ctx.fillStyle='#10221d';ctx.fillRect(x-bw/2-2,by-2,bw+4,9);ctx.strokeStyle='#95a77f';ctx.lineWidth=1;ctx.strokeRect(x-bw/2-2,by-2,bw+4,9);bar(x-bw/2,by,bw,5,S.wallHp/S.wallMax,hurt?colors.red:colors.soul);ctx.restore();
+}
 function drawInkAltar(t){
  const hurt=S.fx.some(f=>f.k==='altar'),glow=S.fx.some(f=>f.k==='altarGlow');
+ if(biomeDef(S).backdrop==='forest'){drawForestAltar(hurt,glow);return;}
  // The illustrated backdrop already contains the crystal altar. Only the dynamic overlay is drawn here.
  if(battlefieldArt&&biomeDef(S).backdrop==='valley'){
   const W=worldW(),x=W*(79/1100),y=WORLD_H*(198/500),bw=Math.min(68,W*.12),by=WORLD_H*.27;
@@ -243,7 +259,7 @@ function drawForestBackdrop(W){
  }
  ctx.save();ctx.imageSmoothingEnabled=false;ctx.drawImage(forestFieldCache,0,0,W,WORLD_H);ctx.restore();
 }
-function drawInkBackdrop(W){if(biomeDef(S).backdrop==='forest'){drawForestBackdrop(W);return;}if(!battlefieldArt){drawV18Field(W);return;}ctx.save();ctx.imageSmoothingEnabled=false;ctx.drawImage(battlefieldArt,0,0,W,WORLD_H);ctx.restore();}
+function drawInkBackdrop(W){if(biomeDef(S).backdrop==='forest'){if(forestArtReady()){ctx.save();ctx.imageSmoothingEnabled=true;ctx.drawImage(forestBattlefieldArt,0,0,W,WORLD_H);ctx.restore();}else drawForestBackdrop(W);return;}if(!battlefieldArt){drawV18Field(W);return;}ctx.save();ctx.imageSmoothingEnabled=false;ctx.drawImage(battlefieldArt,0,0,W,WORLD_H);ctx.restore();}
 function drawInkShot(s,t){
  ctx.save();ctx.translate(Math.round(s.x),Math.round(s.y));ctx.rotate(s.ang||0);
  const pal=HYBRID.palette[s.k==='fire'?'fire':'orb'];
