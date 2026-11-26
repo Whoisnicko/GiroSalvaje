@@ -75,7 +75,7 @@ function spellExecute(id,target){
  if(id==='fire'){
   const dmg=masteryFireDamage(d,S.wave);
   const targets=S.enemies.filter(e=>e.hp>0&&Math.hypot(e.x-target.x,e.y-target.y)<=d.r);
-  targets.forEach(e=>hitEnemy(e,dmg,'m',{pierce:true,kb:30}));if(targets.length)masteryCredit('fire',token);
+  targets.forEach(e=>hitEnemy(e,dmg,'m',{pierce:true,kb:30,directAbility:true}));if(targets.length)masteryCredit('fire',token);
   if(d.burnDuration){S.arcaneBurns||=[];S.arcaneBurns.push({x:target.x,y:target.y,r:d.r,left:d.burnDuration,dps:masteryBurnDamage(d,S.wave),token});if(S.arcaneBurns.length>12)S.arcaneBurns.shift();}
   spellEvent('arcaneFire',target.x,target.y,.88,{r:d.r});
   burst(target.x,target.y,'m',24,140);burst(target.x,target.y,'gold',15,110);S.shake=Math.max(S.shake,3);
@@ -91,7 +91,7 @@ function spellExecute(id,target){
   const chain=spellChain(target.entity,d);
   // Freeze endpoints before damage; no repeated targets or distance from original instead of last.
   const points=chain.map(e=>({x:e.x,y:e.y}));
-  const power=masteryLightningDamage(d,S.wave);chain.forEach((e,i)=>{hitEnemy(e,power[i],'soul',{pierce:true,kb:0});burst(e.x,e.y,'soul',8,80);});
+  const power=masteryLightningDamage(d,S.wave);chain.forEach((e,i)=>{hitEnemy(e,power[i],'soul',{pierce:true,kb:0,directAbility:true});burst(e.x,e.y,'soul',8,80);});
   if(points.length){masteryCredit('lightning',token);spellEvent('arcaneLightning',points[0].x,points[0].y,.52,{points});}
   sfx('arcaneLightning');return chain.length+' enemies struck · '+power.slice(0,chain.length).join(' / ')+' damage.';
  }

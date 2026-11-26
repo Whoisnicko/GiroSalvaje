@@ -103,3 +103,6 @@ v7.41 playtest 8/8; user approved all three boss designs. Extract the three main
 
 ## v22-alpha.7.43 — Ashen Kingdom
 Fourth five-wave region unlocked by defeating Frozen Wasteland. Approved illustrated background, unique sprites, three burning zones, periodic ash cloud, Vanguard, Marksman, Priest and Iron Paladin. Nonstacking ground and bolt burn, attack buff, Molten Judgment residual ground. Independent local score and Sandbox/Codex. Balance provisional.
+
+## v22-alpha.7.44 — The Fallen Cathedral
+Ashen validated 15/15. Fifth region, five waves unlocked after Ashen; approved art and five sprites, three holy zones, bell shields, three exclusive enemies, two-stage High Exorcist. Desecrated Ground excluded (pending). Regional local scores, Codex and Sandbox. Provisional balance, browser validation required.

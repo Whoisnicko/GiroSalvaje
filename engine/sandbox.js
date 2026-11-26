@@ -39,7 +39,7 @@ function sandboxResetBattle(message='Battle reset.'){
  if(!sandboxActive())return;
  heroResetWave();magicResetWave();
  closeBestiary();S.units=S.units.filter(u=>!u.temp);for(const u of S.units){frostResetUnit(u);if(u.hx!=null){u.x=u.hx;u.y=u.hy;}delete u.hx;delete u.hy;u.skels=0;}
- ashResetBattle();S.phase='prep';S.enemies=[];S.queue=[];S.curQueue=[];S.shots=[];S.zones=[];S.fx=[];S.parts=[];S.floats=[];S.shake=0;S.buff={haste:0,slow:0};S.aim=null;S.aimP=null;S.sel=null;S.charge=false;S.confirmFight=false;S.fightT=0;S.spawnT=0;
+ ashResetBattle();catResetBattle();S.phase='prep';S.enemies=[];S.queue=[];S.curQueue=[];S.shots=[];S.zones=[];S.fx=[];S.parts=[];S.floats=[];S.shake=0;S.buff={haste:0,slow:0};S.aim=null;S.aimP=null;S.sel=null;S.charge=false;S.confirmFight=false;S.fightT=0;S.spawnT=0;
  sandboxHeal();sandboxCards();prepUndoClear();setResult('Sandbox',message);sandboxStatus(message);renderUI();
 }
 function sandboxEnemy(kind,w){const K=KIND[kind],W=waveInfo(w);return bossStamp({kind,hp:W.hp*K.hp,dmg:W.dmg*K.dmg,sp:W.sp*K.sp,r:K.r,range:K.range||0,armor:K.armor||K.boss?W.armor:0,boss:!!K.boss},w,biomeId(typeof S==='undefined'?null:S));}

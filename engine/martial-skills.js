@@ -52,7 +52,7 @@ function martialRetaliate(h,random=Math.random){
  if(m.retaliationCd>1e-7)return false;
  if(random()*100>=m.retaliationChance){m.retaliationChance=Math.min(d.maxChance,m.retaliationChance+d.increment);return false;}
  m.retaliationChance=d.chance;m.retaliationCd=d.cd;m.counterFlash=.32;h.lunge=.20;
- for(const e of martialNearby(h,d.radius))hitEnemy(e,classDamage(d.damage,h.wave),'steel',{kb:0});
+ for(const e of martialNearby(h,d.radius))hitEnemy(e,classDamage(d.damage,h.wave),'steel',{kb:0,directAbility:true});
  martialEvent('counter',h.x,h.y,{r:d.radius,t:.40,T:.40});floatText(h.x,h.y-44,'Retaliation!','gold',11);sfx('heroCounter');return true;
 }
 function martialAvailability(id){
@@ -69,7 +69,7 @@ function martialAvailability(id){
 function martialEvent(kind,x,y,extra={}){S.fx.push({k:'martial',kind,x,y,t:.48,T:.48,...extra});}
 function martialStormPulse(h){
  const d=talentSkill('storm',h);
- for(const e of martialNearby(h,d.radius))hitEnemy(e,d.damage,'steel',{kb:0});
+ for(const e of martialNearby(h,d.radius))hitEnemy(e,d.damage,'steel',{kb:0,directAbility:true});
  martialEvent('storm',h.x,h.y,{r:d.radius,t:.42,T:.42});sfx('heroStorm');
 }
 function martialCast(id){
@@ -79,7 +79,7 @@ function martialCast(id){
  if(!lab?.infinite)m.rage=Math.max(0,m.rage-d.cost);m.cooldowns[id]=lab?.noCooldown?0:d.cd;
  if(id==='cleave'){
   m.direction=dir;if(Math.abs(dir.x)>.01)h.facing=Math.sign(dir.x);h.lunge=.20;
-  for(const e of martialCleaveTargets(h,dir)){hitEnemy(e,d.damage,'steel',{kb:0});heroImpactPush(e,h,35);}
+  for(const e of martialCleaveTargets(h,dir)){hitEnemy(e,d.damage,'steel',{kb:0,directAbility:true});heroImpactPush(e,h,35);}
   martialEvent('cleave',h.x,h.y,{r:d.radius,angle:Math.atan2(dir.y,dir.x),arc:d.arc});sfx('heroCleave');
  }else if(id==='storm'){
   m.storm={left:d.duration,pulses:1};martialStormPulse(h);

@@ -1,5 +1,5 @@
 # Stop Humans!
-Dark-fantasy tactical autobattler. v22-alpha.7.43 — Ashen Kingdom.
+Dark-fantasy tactical autobattler. v22-alpha.7.44 — The Fallen Cathedral.
 Production: https://stophumans.pages.dev/
 Repository: https://github.com/Whoisnicko/StopHumans
-See ROADMAP-CAMPAIGN.md and PROYECTO-v22-alpha7p43.md.
+See ROADMAP-CAMPAIGN.md and PROYECTO-v22-alpha7p44.md.

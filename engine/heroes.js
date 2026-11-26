@@ -25,7 +25,7 @@ function heroNormalize(state,width=420){
  if(old.status==='active'&&Number.isFinite(old.x)&&Number.isFinite(old.y)&&Number.isFinite(old.hp)){
   h.status=old.hp>0?'active':'fallen';h.down=h.status==='fallen';h.hp=Math.max(0,Math.min(d.maxHp,old.hp*(Number.isFinite(old.maxHp)&&old.maxHp>0?d.maxHp/old.maxHp:1)));
   h.x=Math.max(WALL_X+d.radius,Math.min(Math.max(420,width)-d.radius,old.x));h.y=Math.max(d.radius,Math.min(WORLD_H-d.radius,old.y));
-  h.cd=Number.isFinite(old.cd)?Math.max(0,Math.min(d.attackInterval,old.cd)):0;h.facing=old.facing===-1?-1:1;h.martial=martialNormalize(old.martial,h.facing,h);if(biomeId(state)==='frozen')for(const k of ['frostUntil','frostChillUntil','frostChillStrength','iceVX','iceVY'])if(Number.isFinite(old[k]))h[k]=old[k];if(biomeId(state)==='ashen')for(const k of ['ashBurnUntil','ashBurnNext','ashBurnRate'])if(Number.isFinite(old[k]))h[k]=old[k];if(h.down){h.martial.storm=null;h.martial.charge=null;}
+  h.cd=Number.isFinite(old.cd)?Math.max(0,Math.min(d.attackInterval,old.cd)):0;h.facing=old.facing===-1?-1:1;h.martial=martialNormalize(old.martial,h.facing,h);if(biomeId(state)==='frozen')for(const k of ['frostUntil','frostChillUntil','frostChillStrength','iceVX','iceVY'])if(Number.isFinite(old[k]))h[k]=old[k];if(biomeId(state)==='ashen')for(const k of ['ashBurnUntil','ashBurnNext','ashBurnRate'])if(Number.isFinite(old[k]))h[k]=old[k];if(biomeId(state)==='cathedral'&&Number.isFinite(old.catSlowUntil))h.catSlowUntil=old.catSlowUntil;if(h.down){h.martial.storm=null;h.martial.charge=null;}
  }
  return h;
 }
@@ -87,7 +87,7 @@ function heroAdvanceKnockback(e,dt,width){
 function heroLand(){
  if(S.hero.status!=='descending')return false;
  const h=S.hero,d=talentHeroStats(h),pos=heroLandingPoint();h.status='active';h.descentProgress=1;h.x=pos.x;h.y=pos.y;h.cd=d.attackInterval*.5;
- const targets=heroImpactTargets(h),hits=targets.length;for(const e of targets){hitEnemy(e,d.descentDamage,'steel',{kb:0});heroImpactPush(e,h,d.descentKnockback);}
+ const targets=heroImpactTargets(h),hits=targets.length;for(const e of targets){hitEnemy(e,d.descentDamage,'steel',{kb:0,directAbility:true});heroImpactPush(e,h,d.descentKnockback);}
  S.fx.push({k:'heroLanding',x:h.x,y:h.y,r:d.descentRadius,t:.62,T:.62});burst(h.x,h.y,'gold',18,145);burst(h.x,h.y,'steel',14,110);feelImpact(h.x,h.y,'altar',null,d.descentRadius,true);S.shake=Math.max(S.shake||0,4);sfx('heroLand');
  floatText(h.x,h.y-42,hits?'Descent · '+hits+' hit':'Descent of the Warlord','gold',12);heroRender();persist();return true;
 }
@@ -96,7 +96,7 @@ function heroAdvance(dt){
   heroClearKeys();S.hero.descentProgress=Math.min(1,S.hero.descentProgress+dt/heroClass(S).descentDuration);if(S.hero.descentProgress>=1)heroLand();return;
  }
  if(!heroActive()){heroClearKeys();return;}
- const h=S.hero,d=talentHeroStats(h);h.flash=Math.max(0,h.flash-dt);h.lunge=Math.max(0,h.lunge-dt);h.cd=Math.max(0,h.cd-dt);h.moving=false;
+ const h=S.hero,d=talentHeroStats(h);h.flash=Math.max(0,h.flash-dt);h.lunge=Math.max(0,h.lunge-dt);h.cd=Math.max(0,h.cd-dt*catAttackRate(h));h.moving=false;
  if(frostFrozen(h)){frostClearMotion(h);return;}
  if(!heroCanControl())heroClearKeys();
  const busy=martialAdvance(h,dt);if(busy==='charge'){frostClearMotion(h);return;}
