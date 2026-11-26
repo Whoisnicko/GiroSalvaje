@@ -91,3 +91,6 @@ User approved all eleven Launchpad checks. Integrate the exact previously approv
 
 ## v22-alpha.7.39 — Cursed Forest Art Remake
 User validated all six Frozen art checks and approved the new forest illustration. Replace forest backdrop with exact approved art resized to 1100×500 WebP. Realign two Cover and two Brambles zones to upper middle/lower left ruins/log and lower middle/upper right thickets; unchanged radii and effects. Other scenery decorative. Emerald altar already painted; align HP and glow without duplicate crystal. Cached static composition and fallback retained. Valley, Frozen, Sandbox and enemy stats unchanged. Next: regional sprite approval.
+
+## v22-alpha.7.40 — Cursed Forest Enemy Art
+v7.39 playtest 6/6; user approved three original regional designs. Transparent 288×96 PNG atlas, 96×96 cells, cropped from approved image. Generate 12-index idle/walk/attack poses with original engine timing and white/gray variants once at load, no per-frame generation; portraits used by wave HUD, inspector and Codex. Optional art per regional definition with original sprite fallback; common humans, Frozen and bosses unchanged. No changes to stats, behavior, queues, progression, HUD or maps. Next: Frozen enemy art approval.
