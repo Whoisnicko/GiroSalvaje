@@ -1,5 +1,5 @@
 # Stop Humans!
-Dark-fantasy tactical autobattler. v22-alpha.7.19 — Command Center.
+Dark-fantasy tactical autobattler. v22-alpha.7.20 — Layout Lock.
 Production: https://stophumans.pages.dev/
 Repository: https://github.com/Whoisnicko/StopHumans
-See ROADMAP-CAMPAIGN.md and PROYECTO-v22-alpha7p19.md.
+See ROADMAP-CAMPAIGN.md and PROYECTO-v22-alpha7p20.md.

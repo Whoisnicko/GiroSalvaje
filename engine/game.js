@@ -344,11 +344,11 @@ const RETIRED_TERRAIN_CARDS = new Set(['lago','colina','pantano']);
 const isPrepCard = id => !!CARDS[id]?.prep;
 const usableNow = id => isPrepCard(id) ? S.phase === 'prep' : S.phase === 'fight';
 
-function cardHTML(id, attrs = '', extra = '', note = '', inHand=false){
+function cardHTML(id, attrs = '', extra = '', note = ''){
   const C = CARDS[id];
   const tag = isPrepCard(id) ? '<span class="tag prep">PREPARATION</span>' : C.aim ? '<span class="tag">AIM</span>' : '';
   const TY = { atk:'ATTACK', ctl:'CONTROL', sup:'SUPPORT', sum:'SUMMON' };
-  return `<button class="card ${C.t} ${extra}" ${attrs}>${inHand?'':tag}<span class="cn">${C.n}${inHand?'':note}</span><span class="art">${`<img src="${GOTHIC_DATA.cards[id]}" alt="" decoding="async">`}</span><span class="cd"><span class="ty">${TY[C.t]}${inHand?(isPrepCard(id)?' · PREP':C.aim?' · AIM':''):''}</span><span class="card-rules">${C.d()}</span></span></button>`;
+  return `<button class="card ${C.t} ${extra}" ${attrs}>${tag}<span class="cn">${C.n}${note}</span><span class="art">${`<img src="${GOTHIC_DATA.cards[id]}" alt="" decoding="async">`}</span><span class="cd"><span class="ty">${TY[C.t]}</span><span class="card-rules">${C.d()}</span></span></button>`;
 }
 
 /* ================= Tips ================= */
@@ -1091,29 +1091,15 @@ function loop(now){
 
 /* ================= UI ================= */
 function setResult(a, b){ S.result = a; S.resultSub = b; }
-/* Presentation only. Preserve the existing control IDs and saved campaign data. */
-const HUD_PHASES=Object.freeze({relic:['CHOOSE RELIC','Select your starting power'],prep:['PREPARATION','Summon · arrange · defend'],fight:['INVASION','Cast cards and use your hero'],reward:['VICTORY','Choose a blessing'],journey:['TRAVELLING','Choose your path'],win:['VICTORY','Campaign completed'],over:['DEFEAT','The altar has fallen']});
-let hudChipMarkup='',hudPhaseMarkup='',hudRouteMarkup='';
 function renderChips(){
-  const wrap=document.querySelector('.wrap'),phase=HUD_PHASES[S.phase]||HUD_PHASES.prep;
-  wrap.dataset.phase=S.phase;
   $('#hudHeroClass').textContent=heroClass(S).name;
   $('#hudHeroClass').dataset.class=heroClass(S).id;
-  const hp=Math.max(0,Math.ceil(S.wallHp)),max=S.wallMax,pct=clamp(S.wallHp/Math.max(1,max)*100,0,100);
-  const wave=Math.min(S.wave,campaignLimit()),limit=campaignLimit(),field=fieldCount(),reserve=S.bench.filter(Boolean).length;
-  const marks=Array.from({length:limit},(_,i)=>`<i class="${i+1<wave||S.phase==='win'?'cleared':i+1===wave?'current':''}${(i+1)%5===0?' boss':''}"></i>`).join('');
-  const markup=`<span class="chip wave-chip"><span class="metric-label">${S.sandbox?'SANDBOX':'WAVE'}</span><b>${wave}<small> / ${limit}</small></b><span class="hud-wave-track" aria-hidden="true">${marks}</span></span>
-    <span class="chip altar-chip ${pct<35?'bad':''}"><span class="metric-label">ALTAR HP</span><b>${hp}<small> / ${max}</small></b><span class="hud-hp-track" role="meter" aria-label="Altar health" aria-valuemin="0" aria-valuemax="${max}" aria-valuenow="${Math.min(max,hp)}"><i style="width:${pct}%"></i></span></span>
-    <span class="chip soul"><span class="metric-label">SOULS</span><b><span aria-hidden="true">◆</span> ${sandboxActive()?'∞':S.gold}</b></span>
-    <span class="chip minor-chip"><span class="metric-label">ARMY</span><b>${field}<small> / ${S.maxUnits}</small></b></span>
-    <span class="chip minor-chip"><span class="metric-label">RESERVE</span><b>${reserve}<small> / 3</small></b></span>`;
-  if(markup!==hudChipMarkup){$('#chips').innerHTML=markup;hudChipMarkup=markup;}
-  const phaseMarkup=`<span class="phase-dot" aria-hidden="true"></span><div><b>${phase[0]}</b><small>${phase[1]}</small></div>`;
-  if(phaseMarkup!==hudPhaseMarkup){$('#phaseBrief').innerHTML=phaseMarkup;hudPhaseMarkup=phaseMarkup;}
-  const route=S.campaign&&S.wave>1&&!S.sandbox?journeySelected():null;
-  const brief=route?`<small>LAST DESTINATION</small><b style="color:${route.color}">${route.name}</b><span>${S.phase==='prep'&&routeDiscount('artifact')?'Artifact discount active':S.phase==='prep'&&routeDiscount('infusion')?'Infusion discount active':'Route '+(route.side?'II':'I')+' · after wave '+route.wave}</span>`:'';
-  const routeEl=$('#routeBrief');routeEl.hidden=!route||!['prep','fight'].includes(S.phase);
-  if(brief!==hudRouteMarkup){routeEl.innerHTML=brief;hudRouteMarkup=brief;}
+  $('#chips').innerHTML = `
+    <span class="chip wave-chip"><span class="hud-icon" aria-hidden="true">⚔</span> Wave <b>${Math.min(S.wave, campaignLimit())}/${campaignLimit()}</b></span>
+    <span class="chip ${S.wallHp < S.wallMax * 0.35 ? 'bad' : ''}"><span class="hud-icon hp-icon" aria-hidden="true">♥</span> Altar <b>${S.wallHp}/${S.wallMax}</b></span>
+    <span class="chip soul"><img src="${URL_.alma}" alt="" class="hud-gem"> Souls <b>${sandboxActive()?'∞':S.gold}</b></span>
+    <span class="chip minor-chip">Monsters <b>${fieldCount()}/${S.maxUnits}</b></span>
+    <span class="chip minor-chip">Reserve <b>${S.bench.filter(Boolean).length}/3</b></span>`;
   tacticalWave();
 }
 function renderBuyCard(){
@@ -1123,16 +1109,16 @@ function renderBuyCard(){
 }
 function renderHand(){
   const fight = S.phase === 'fight';
-  $('#handTitle').innerHTML = 'YOUR HAND ('+S.hand.filter(c=>!c.used).length+')<small>'+ (fight ? 'Play a ready card · AIM requires a target' : 'Combat cards unlock when the invasion begins')+'</small>';
+  $('#handTitle').innerHTML = 'YOUR HAND ('+S.hand.filter(c=>!c.used).length+')<small>'+ (fight ? 'Click a card to cast' : 'Combat cards activate during battle')+'</small>';
   $('#deckLink').textContent = `View deck (${S.deck.length})`;
   $('#relic').innerHTML = S.relic ? `<span class="medal" title="${S.relic.d}">${relicArt(S.relic)}</span><span class="rn">${S.relic.n}</span><span class="rd">${S.relic.d}</span>` : '';
   const canBuy = buyable().length > 0 && S.gold >= cardCost();
   $('#hand').innerHTML = S.hand.map((c, i) => {
     const now = !c.used && (S.phase === 'prep' || S.phase === 'fight') && usableNow(c.id);
     const later = !c.used && !now;
-    return cardHTML(c.id, `data-cardi="${i}" ${now ? '' : 'disabled'} title="${CARDS[c.id].n}${c.free?' · free':c.fresh?' · new':''} — ${CARDS[c.id].d()}${later?(isPrepCard(c.id)?' · Preparation only':' · Play during combat'):''}"`, `${c.used ? 'used' : ''} ${later ? 'later' : ''} ${S.aim === i ? 'aim' : ''} ${c.fresh && S.phase === 'prep' ? 'fresh' : ''}`, c.free ? ' · free' : c.fresh && S.phase === 'prep' ? ' · new' : '',true);
+    return cardHTML(c.id, `data-cardi="${i}" ${now ? '' : 'disabled'} title="${later ? (isPrepCard(c.id) ? 'Preparation only' : 'Play during combat') : ''}"`, `${c.used ? 'used' : ''} ${later ? 'later' : ''} ${S.aim === i ? 'aim' : ''} ${c.fresh && S.phase === 'prep' ? 'fresh' : ''}`, c.free ? ' · free' : c.fresh && S.phase === 'prep' ? ' · new' : '');
   }).join('')
-    + (S.phase === 'prep' || fight ? `<button class="card buy" title="Draw a random card from your deck" data-act="buycard" ${canBuy ? '' : 'disabled'}><span class="plus">+</span><span class="bt">Draw card</span><span class="bc">${cardCost()} souls</span></button>` : '');
+    + (S.phase === 'prep' || fight ? `<button class="card buy" data-act="buycard" ${canBuy ? '' : 'disabled'}><span class="plus">+</span><span class="bt">Draw a random card from your deck</span><span class="bc">${cardCost()} souls</span></button>` : '');
   const cards=[...$('#hand').querySelectorAll('[data-cardi]')],mid=(cards.length-1)/2;
   cards.forEach((card,i)=>{const delta=i-mid,angle=Math.max(-6,Math.min(6,delta*3.6));card.style.setProperty('--fan-angle',angle+'deg');card.style.setProperty('--fan-offset',Math.min(4,Math.abs(delta)*2)+'px');card.style.setProperty('--fan-z',String(i+1));});
 }
@@ -1156,7 +1142,7 @@ function renderUI(){
     <div class="spin-counter" aria-live="polite">⟳ <b>${sandboxActive()?"∞":S.spinsLeft}</b> ${S.spinsLeft === 1 ? "spin" : "spins"} remaining</div>
     <button class="btn ${prep && S.spinsLeft === 0 && canBuy ? 'nudge' : ''}" data-act="buy" ${canBuy ? '' : 'disabled'}>Buy spin · <span class="s">${cost} souls</span></button>
     <button class="btn" data-act="slot" ${prep && S.gold >= slotCost() && !spinning && (!sandboxActive()||S.maxUnits<SANDBOX_MAX_UNITS) ? '' : 'disabled'} title="Increase field capacity">+1 slot (${S.maxUnits}→${S.maxUnits + 1}) · <span class="s">${slotCost()} souls</span></button>
-    <button class="btn fight ${S.confirmFight ? 'warn' : ''} ${prep && S.spinsLeft === 0 && !canBuy ? 'nudge' : ''}" data-act="fight" ${prep && !spinning ? '' : 'disabled'}>${S.phase==='fight'?'INVASION ACTIVE':S.confirmFight ? 'DEFEND ANYWAY' : 'DEFEND!'}</button>`;
+    <button class="btn fight ${S.confirmFight ? 'warn' : ''} ${prep && S.spinsLeft === 0 && !canBuy ? 'nudge' : ''}" data-act="fight" ${prep && !spinning ? '' : 'disabled'}>${S.confirmFight ? 'DEFEND ANYWAY' : 'DEFEND!'}</button>`;
   const groups = {};
   allMine().forEach(u => { const k = u.type + u.lvl; groups[k] = groups[k] || { u, n:0 }; groups[k].n += u.pile; });
   $('#roster').innerHTML = Object.values(groups).sort((a, b) => b.u.lvl - a.u.lvl).map(({ u, n }) => {
