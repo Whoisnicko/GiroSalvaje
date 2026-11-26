@@ -2,7 +2,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('nod
 const read=p=>fs.readFileSync(path.join(__dirname,'../',p),'utf8'),noop=()=>{};
 const grad={addColorStop:noop},g=new Proxy({createLinearGradient:()=>grad},{get:(o,k)=>k in o?o[k]:noop,set:(o,k,v)=>(o[k]=v,true)});
 let built=0;const drawn=[];
-const context=vm.createContext({KIND:{com:{n:'Commander',spr:'comandante',hp:14,dmg:2.2,sp:.6,r:22}},MAX_WAVE:10,WORLD_H:260,FOE_NOTE:{},waveInfo:()=>({hp:100,dmg:10,sp:40,armor:3}),rollWave:()=>[],inkCanvas:(w,h)=>({id:'forest-'+(++built),width:w,height:h,getContext:()=>g}),battlefieldArt:{id:'valley-art'},ctx:{save:noop,restore:noop,drawImage:im=>drawn.push(im.id)},S:{biomeId:'valley'}});
+const context=vm.createContext({KIND:{com:{n:'Commander',spr:'comandante',hp:14,dmg:2.2,sp:.6,r:22}},MAX_WAVE:10,WORLD_H:260,FOE_NOTE:{},waveInfo:()=>({hp:100,dmg:10,sp:40,armor:3}),rollWave:()=>[],inkCanvas:(w,h)=>({id:'forest-'+(++built),width:w,height:h,getContext:()=>g}),battlefieldArt:{id:'valley-art'},ctx:new Proxy({drawImage:im=>drawn.push(im.id)},{get:(o,k)=>k in o?o[k]:noop,set:(o,k,v)=>(o[k]=v,true)}),S:{biomeId:'valley'}});
 for(const p of ['engine/biomes-bosses.js','engine/renderer.js','engine/sandbox.js'])vm.runInContext(read(p),context);
 const run=s=>vm.runInContext(s,context);
 run("const a=sandboxEncounter('valley',1,'crusader'),b=sandboxEncounter('valley',1,'huntsman'),c=sandboxEncounter('valley',1,'classic')");
