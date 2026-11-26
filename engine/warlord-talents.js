@@ -82,7 +82,7 @@ function talentPick(branch,rank){
 }
 function talentProceed(){
  if(!menuOpen||document.getElementById('talentView').hidden||talentMode==='library')return false;
- if(talentMode==='sandbox'){sandboxEnter('warlord',talentPending);return true;}
+ if(talentMode==='sandbox'){sandboxEnter('warlord',talentPending,sandboxTakeSetup());return true;}
  const rank=talentInit().ranks[talentPending.branch]||0;talentPending=talentBuild({...talentPending,rank:Math.min(rank,talentPending.rank)});
  if(validSave(loadedSave)){document.getElementById('confirmHeroName').textContent='The Warlord'+(talentPending.rank?' · '+TALENT_BRANCHES[talentPending.branch].name+' '+talentPending.rank:'');front('confirmView');return true;}
  launchNew('warlord',talentPending);return true;
