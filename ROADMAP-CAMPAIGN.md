@@ -70,3 +70,6 @@ User validated all v7.30 changes; feedback: forest visually inferior, old wall i
 
 ## v22-alpha.7.32 — Performance hotfix
 User accepted forest art as sufficient but reports low fluidity/game feel and map dropdown mismatch. Bake SVG into a raster canvas at load, cache terrain geometry, skip zone lookups in Valley, make region dropdown load map immediately and preserve/clamp wave, show measured FPS/worst frame interval in free Sandbox. No combat balance or art change; no new region until performance validated. Next: regional enemy packs.
+
+## v22-alpha.7.33 — Static forest render cache
+User validated v7.32 dropdown and effects; Forest still feels slower and FPS hidden below scroll. Composite static forest raster and tactical markings once per logical dimensions, draw as one bitmap, disable interpolation in hot path. FPS moved into Sandbox summary, visible when collapsed, fixed-width. No timing/FX/terrain changes. Real performance unverified; user requests proceeding with content, further art/perf work deferred unless major blocker. Next: regional enemy packs.
