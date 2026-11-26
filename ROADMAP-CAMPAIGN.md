@@ -133,3 +133,6 @@ Role-specific procedural motion using shipped artwork; visual-only summon/fusion
 
 ## v22-alpha.7.53 — UI Art Integration I
 7.52 user playtest 7/7 approved, Necromancy correction confirmed. Static Warlord combat model and original Sorcerer runes in class selection, existing art frames and palette across secondary screens, Sanctum card and spell art. No gameplay/balance change; Dark Gate/map/HUD preserved by scope; original missing PNGs still pending. Browser validation pending. Next UI Art Integration II. Backlog unchanged.
+
+## v22-alpha.7.54 — UI Art Integration II
+7.53 user playtest 8/8 approved. Combat art pass: live inset meters, hold and winning indicators, card states, accessible labels and art fallbacks, corrected merge guide. Layout, mechanics, approved art and balance preserved. Targeted source checks passed; browser validation pending. Replayability backlog unchanged. Next UI Art Integration III.

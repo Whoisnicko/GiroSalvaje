@@ -1,0 +1,26 @@
+const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
+const read=p=>fs.readFileSync(path.join(__dirname,'..',p),'utf8');
+const src=read('engine/combat-ui-art.js'),g=read('engine/game.js'),h=read('index.html'),css=read('ui-combat-art-v54.css');
+const harness=`
+const escapeHTML=s=>String(s).replaceAll('<','&lt;').replaceAll('"','&quot;'),SYM={W:{n:'Zombie'}};
+const state={phase:'prep',spinsLeft:2,held:new Set([0]),holdsMax:2,wins:new Set([0,1])},res={};
+res.percent=battleMeterPercent(35,80)===43.8;res.low=battleMeterPercent(-1,80)===0;res.high=battleMeterPercent(120,80)===100;
+res.zero=battleMeterPercent(20,0)===0;res.nan=battleMeterPercent(NaN,80)===0;
+res.meter=battleMeterAttrs(40,80,'Altar health').includes('aria-valuenow="40"')&&battleMeterAttrs(40,80,'Altar health').includes('--battle-fill:50%');
+res.caption=battleSummonCaption(state,false)==='Pull to summon · 1/2 held';state.holdsMax=3;res.blessing=battleSummonCaption(state,false).includes('1/3 held');
+state.spinsLeft=0;res.buy=battleSummonCaption(state,false)==='Buy a spin · 1/3 held';res.roll=battleSummonCaption(state,true)==='Summoning…';state.phase='fight';res.lock=battleSummonCaption(state,false)==='Summoning locked during battle';
+res.heldWin=battleCellLabel('W',0,state)==='Zombie, held, winning line';res.win=battleCellLabel('W',1,state)==='Zombie, winning line';res.plain=battleCellLabel('W',2,state)==='Zombie';
+res.cardReady=battleCardState('fresh')==='ready';res.cardLater=battleCardState(' later ')==='later';res.cardAim=battleCardState('aim later')==='aim';res.cardUsed=battleCardState('used aim')==='used';
+res.art=battleArtHTML('data:image/png;base64,abc','ZOM').includes('onerror="this.hidden=true"');
+res.fallback=!battleArtHTML(null,'ZOM').includes('<img')&&battleArtHTML(null,'ZOM').includes('ZOM');
+res.escape=battleArtHTML(null,'<bad>').includes('&lt;bad>');
+return res;`;
+const res=new Function(src+'\n'+harness)();for(const [k,v] of Object.entries(res))assert.equal(v,true,k);
+assert.ok(g.includes('battleMeterAttrs(S.wallHp,S.wallMax')&&g.includes('battleMeterAttrs(fieldCount(),S.maxUnits'),'meter hooks');
+assert.ok(g.includes('battleSummonCaption(S,spinning)')&&g.includes('aria-pressed="${S.held.has(i)}"'),'slot hooks');
+assert.ok(g.includes('battleArtHTML(GOTHIC_DATA.cards[id],C.ic)')&&g.includes('battleCardState(extra)'),'card hooks');
+assert.ok(g.includes('With <b>${mergeN} stacked</b>')&&g.includes("dataset.mergeN!==String(S.mods.mergeN)"),'Necromancy guide');
+assert.ok(h.indexOf('engine/combat-ui-art.js')<h.indexOf('engine/game.js?v='),'script order');
+assert.ok(!css.includes('#homeView')&&!css.includes('#front')&&!css.includes('#cv'),'scope');
+assert.ok(css.includes('.cell.held.win')&&css.includes('prefers-reduced-motion'),'combined state and accessibility');
+console.log(res);

@@ -1,0 +1,5 @@
+# v22-alpha.7.54 — UI Art Integration II
+
+7.53 browser playtest 8/8 approved: load, champion selection, Codex, Treasury, Sanctum, doctrines/secondary menus, original title/map, navigation/visuals. Historical validations and Replayability backlog preserved.
+
+Combat UI art pass: original sprites, card art and layout remain. Live inset meters in existing Altar/Monsters/Reserve chips; accessible numeric meter values; Souls/Wave contrast; held cyan, winning gold and combined two-tone state; hold count from real state (including blessing), native pressed labels; summoning lever/status and Defend warning treatments; card type/ready/later/used/aim treatments, image fallback symbols for slot and card art. Merge guide now reflects actual threshold instead of fixed 3. No new game mechanics, changes to spins, RNG, card costs, combat, canvas layout, save schema, assets or balance. Reduced motion and keyboard focus retained. 28 targeted source checks in isolated JS; browser and full regression pending. Missing independent approved button/medal PNGs remain deferred, no replacement designs. Next UI Art Integration III: Grimoire, Hades Shop, rewards/results.

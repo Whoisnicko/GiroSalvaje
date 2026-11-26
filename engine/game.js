@@ -357,7 +357,7 @@ function cardHTML(id, attrs = '', extra = '', note = ''){
   const C = CARDS[id];
   const tag = isPrepCard(id) ? '<span class="tag prep">PREPARATION</span>' : C.aim ? '<span class="tag">AIM</span>' : '';
   const TY = { atk:'ATTACK', ctl:'CONTROL', sup:'SUPPORT', sum:'SUMMON' };
-  return `<button class="card ${C.t} ${extra}" ${attrs}>${tag}<span class="cn">${C.n}${note}</span><span class="art">${`<img src="${GOTHIC_DATA.cards[id]}" alt="" decoding="async">`}</span><span class="cd"><span class="ty">${TY[C.t]}</span><span class="card-rules">${C.d()}</span></span></button>`;
+  return `<button class="card ${C.t} ${extra}" data-card-state="${battleCardState(extra)}" ${attrs}>${tag}<span class="cn">${C.n}${note}</span><span class="art">${battleArtHTML(GOTHIC_DATA.cards[id],C.ic)}</span><span class="cd"><span class="ty">${TY[C.t]}</span><span class="card-rules">${C.d()}</span></span></button>`;
 }
 
 /* ================= Tips ================= */
@@ -603,7 +603,7 @@ function castAim(p){
 
 /* ================= Máquina ================= */
 let spinning = false;
-const cellHTML = k => img(SYM[k].spr);
+const cellHTML = k => battleArtHTML(URL_[SYM[k].spr],SYM[k].n.slice(0,3).toUpperCase());
 async function spin(){
   if (S.phase !== 'prep' || spinning || S.spinsLeft <= 0) return;
   if(S.drag||S.pendingMerge)return;
@@ -1146,10 +1146,10 @@ function renderChips(){
   $('#hudHeroClass').dataset.class=heroClass(S).id;
   $('#chips').innerHTML = `
     <span class="chip wave-chip"><span class="hud-icon" aria-hidden="true">⚔</span> Wave <b>${Math.min(S.wave, campaignLimit())}/${campaignLimit()}</b></span>
-    <span class="chip ${S.wallHp < S.wallMax * 0.35 ? 'bad' : ''}"><span class="hud-icon hp-icon" aria-hidden="true">♥</span> Altar <b>${S.wallHp}/${S.wallMax}</b></span>
+    <span class="chip battle-meter altar-meter ${S.wallHp < S.wallMax * 0.35 ? 'bad' : ''}" ${battleMeterAttrs(S.wallHp,S.wallMax,'Altar health')}><span class="hud-icon hp-icon" aria-hidden="true">♥</span> Altar <b>${S.wallHp}/${S.wallMax}</b></span>
     <span class="chip soul"><img src="${URL_.alma}" alt="" class="hud-gem"> Souls <b>${sandboxActive()?'∞':S.gold}</b></span>
-    <span class="chip minor-chip">Monsters <b>${fieldCount()}/${S.maxUnits}</b></span>
-    <span class="chip minor-chip">Reserve <b>${S.bench.filter(Boolean).length}/3</b></span>`;
+    <span class="chip minor-chip battle-meter capacity-meter" ${battleMeterAttrs(fieldCount(),S.maxUnits,'Field capacity')}>Monsters <b>${fieldCount()}/${S.maxUnits}</b></span>
+    <span class="chip minor-chip battle-meter reserve-meter" ${battleMeterAttrs(S.bench.filter(Boolean).length,3,'Reserve capacity')}>Reserve <b>${S.bench.filter(Boolean).length}/3</b></span>`;
   tacticalWave();
 }
 function renderBuyCard(){
@@ -1173,9 +1173,10 @@ function renderHand(){
   cards.forEach((card,i)=>{const delta=i-mid,angle=Math.max(-6,Math.min(6,delta*3.6));card.style.setProperty('--fan-angle',angle+'deg');card.style.setProperty('--fan-offset',Math.min(4,Math.abs(delta)*2)+'px');card.style.setProperty('--fan-z',String(i+1));});
 }
 function renderPay(){
+  const mergeN=S?.mods?.mergeN||3;$('#pay').dataset.mergeN=String(mergeN);
   $('#pay').innerHTML = `<div><b>3 matching symbols in a line</b> (row, column or diagonal):</div>
     <div class="row">${['W','A','M','C'].map(k => `<span>${img(SYM[k].spr)}<b>${SYM[k].n}</b> · ${SYM[k].role}</span>`).join('')}</div>
-    <div><b>Merge:</b> during preparation, drop a monster onto another of the same type and level. With <b>3 stacked</b> they merge (★★, ★★★). Pay for everything with <b style="color:var(--soul)">souls</b>.</div>`;
+    <div><b>Merge:</b> during preparation, drop a monster onto another of the same type and level. With <b>${mergeN} stacked</b> they merge (★★, ★★★). Pay for everything with <b style="color:var(--soul)">souls</b>.</div>`;
 }
 const FOE_NOTE = { sol:'Melee', bal:'Range: 150 px', cab:'Armor reduces damage per hit', jin:'Very fast', cle:'Heals nearby humans', ant:'Ignores monsters, ×3 Altar damage', com:'Armored boss',...Object.fromEntries(Object.entries(REGIONAL_ENEMIES).map(([id,d])=>[id,d.description])) };
 function renderIntel(){if(S){tacticalWave();tacticalTick(performance.now(),true);}}
@@ -1183,11 +1184,13 @@ function renderUI(){
   if(sandboxActive())sandboxRefill();
   renderChips(); renderHand(); renderIntel(); renderArtifactShelf();
   const prep = S.phase === 'prep';
-  $('#reels').innerHTML = S.grid.map((k, i) => `<button class="cell ${S.held.has(i) ? 'held' : ''} ${S.wins.has(i) ? 'win' : ''}" data-cell="${i}" ${prep && !spinning ? '' : 'disabled'} aria-label="${SYM[k].n}${S.held.has(i) ? ', held' : ''}">${cellHTML(k)}</button>`).join('');
+  $('#reels').innerHTML = S.grid.map((k, i) => `<button class="cell ${S.held.has(i) ? 'held' : ''} ${S.wins.has(i) ? 'win' : ''}" data-cell="${i}" ${prep && !spinning ? '' : 'disabled'} aria-label="${battleCellLabel(k,i,S)}" aria-pressed="${S.held.has(i)}">${cellHTML(k)}</button>`).join('');
   $('#result').innerHTML = `${S.result}<small>${S.resultSub}</small>`;
   const cost = spinCost(), canBuy = prep && S.gold >= cost && !spinning;
   const lever=$('#summonLever');lever.disabled=!prep||S.spinsLeft<=0||spinning;lever.classList.toggle('is-pulling',spinning);lever.setAttribute('aria-busy',String(spinning));
-  $('#summonCaption').textContent=spinning?'Summoning…':prep&&S.spinsLeft>0?'Pull the lever to summon':prep?'No summons left · buy a spin':'Summoning locked during battle';
+  $('#summonCaption').textContent=battleSummonCaption(S,spinning);
+  $('#reels').dataset.phase=spinning?'rolling':prep?'prep':'locked';
+  if($('#pay').dataset.mergeN!==String(S.mods.mergeN))renderPay();
   $('#btns').innerHTML = `
     <div class="spin-counter" aria-live="polite">⟳ <b>${sandboxActive()?"∞":S.spinsLeft}</b> ${S.spinsLeft === 1 ? "spin" : "spins"} remaining</div>
     <button class="btn ${prep && S.spinsLeft === 0 && canBuy ? 'nudge' : ''}" data-act="buy" ${canBuy ? '' : 'disabled'}>Buy spin · <span class="s">${cost} souls</span></button>
