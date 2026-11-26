@@ -52,3 +52,6 @@ User confirmed v7.23. Three derived spatial synergies (Boneguard, Spectral Choir
 
 ## v22-alpha.7.26 — Valley of Souls / The Crusader
 User accepted v7.25; PREPARATION/AIM overlap is non-blocking, deferred to final polish. First biome registry and wave-5 boss variant, using existing art and battlefield. No HUD reflow, new terrain rules, reward, or save version. Legacy pre-generated queues unchanged. Further biomes, balance and unique art pending.
+
+## v22-alpha.7.27 — Regional progression / Cursed Forest
+User validated Crusader mechanics and selected option B: independent five-wave regional campaigns. Forest unlock is a durable monotonic profile flag after valley wave 5 victory outside sandbox; legacy profile defaults locked. Forest uses original field with deterministic drawn forest zones, symmetric projectile cover and walking slow, distinct wave-5 Huntsman with marked fixed-position volley. No permanent traps, unique assets or forest-only normal enemies yet. Classic valley 10 remains and rankings stay separate. Next: playtest and balance before more regions.
