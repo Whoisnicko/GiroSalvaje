@@ -94,10 +94,10 @@ function bossDrawWarnings(W){
 
 /* Deterministic world-space ellipses. No stored coordinates or collision changes. */
 const FOREST_ZONES=Object.freeze([
- Object.freeze({kind:'cover',x:.24,y:.29,rx:.085,ry:34}),
- Object.freeze({kind:'cover',x:.59,y:.73,rx:.085,ry:34}),
- Object.freeze({kind:'bramble',x:.43,y:.63,rx:.09,ry:39}),
- Object.freeze({kind:'bramble',x:.76,y:.28,rx:.085,ry:39})
+ Object.freeze({kind:'cover',x:.52,y:.28,rx:.085,ry:34}),
+ Object.freeze({kind:'cover',x:.26,y:.65,rx:.085,ry:34}),
+ Object.freeze({kind:'bramble',x:.50,y:.66,rx:.09,ry:39}),
+ Object.freeze({kind:'bramble',x:.77,y:.30,rx:.085,ry:39})
 ]);
 const FROZEN_ZONES=Object.freeze([
  Object.freeze({kind:'ice',x:.28,y:.34,rx:.095,ry:40}),

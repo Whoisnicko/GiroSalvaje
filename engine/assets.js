@@ -11,14 +11,14 @@ function atlasFrame(src,state,f,name){
  return c;
 }
 const FULL_BATTLEFIELD_ART='assets/battlefield-full-v19.webp';
-const FOREST_BATTLEFIELD_ART='assets/battlefield-cursed-forest.svg?v=22a7p31';
+const FOREST_BATTLEFIELD_ART='assets/battlefield-forest-v39.webp?v=22a7p39';
 const FROZEN_BATTLEFIELD_ART='assets/battlefield-frozen-v38.webp?v=22a7p38';
 let battlefieldArt=null,forestBattlefieldArt=null,frozenBattlefieldArt=null;
 // A bounded image request prevents a missing resource from blocking the menu.
 function loadArtImage(src){
  return new Promise((resolve,reject)=>{const im=new Image();const timer=setTimeout(()=>finish(false),12000);function finish(ok){clearTimeout(timer);im.onload=im.onerror=null;ok?resolve(im):reject(new Error('Artwork unavailable: '+src.slice(0,100)));}im.onload=()=>finish(true);im.onerror=()=>finish(false);im.src=src;});
 }
-/* Rasterize the complex SVG once at load time. Never replay its vector scene in the frame loop. */
+/* Rasterize the forest artwork once at load time. */
 function bakeForestBackdrop(image){
  if(image?.width!==1100||image?.height!==500)return null;
  try{const c=inkCanvas(1100,500),g=c.getContext('2d');if(!g)return null;g.drawImage(image,0,0,1100,500);return c;}catch(e){console.warn('Forest raster fallback',e);return null;}

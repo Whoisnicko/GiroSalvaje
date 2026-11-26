@@ -10,7 +10,7 @@ assert.deepEqual(drawn,['valley','fallback-1']);assert.equal(built,1);assert.equ
 run("forestBattlefieldArt=null;drawInkBackdrop(1000);drawInkBackdrop(1000);drawInkAltar(0)");
 assert.deepEqual(drawn.slice(-2),['fallback-2','fallback-2']);assert.equal(built,2);assert.ok(shapes.includes('ellipse'));
 run("S.biomeId='valley';drawInkBackdrop(1000)");assert.equal(drawn.at(-1),'valley');
-assert.equal(run("biomeProjectileFactor({x:240,y:75.4},{biomeId:'forest'},1000)"),.75);
-assert.equal(run("biomeWalkFactor({x:430,y:163.8},{biomeId:'forest'},1000)"),.7);
-const svg=read('assets/battlefield-cursed-forest.svg');assert.ok(svg.includes('width="1100" height="500"'));assert.ok(svg.includes('url(#altarClip)'));assert.ok(svg.includes('data:image/webp;base64,UklGR'));assert.ok(!svg.includes('xlink:href="http'));
-console.log('Forest art selection, fallback crystal, unchanged terrain and asset structure OK');
+assert.equal(run("biomeProjectileFactor({x:520,y:72.8},{biomeId:'forest'},1000)"),.75);
+assert.equal(run("biomeWalkFactor({x:500,y:171.6},{biomeId:'forest'},1000)"),.7);
+const img=fs.readFileSync(path.join(__dirname,'../assets/battlefield-forest-v39.webp'));assert.equal(img.toString('ascii',0,4),'RIFF');assert.equal(img.toString('ascii',8,12),'WEBP');assert.equal(require('node:crypto').createHash('sha1').update(Buffer.concat([Buffer.from('blob '+img.length+'\0'),img])).digest('hex'),'15b0ceeeb432e47b9807d423bd81ba270b071f9a');
+console.log('Forest illustrated art, fallback crystal, aligned zones and exact binary OK');

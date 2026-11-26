@@ -88,3 +88,6 @@ User approved control deck prototype and preconfiguration workflow. Preselect re
 
 ## v22-alpha.7.38 — Frozen Wasteland illustrated art
 User approved all eleven Launchpad checks. Integrate the exact previously approved ice background, converted to 1100×500 WebP; keep ice hitboxes and dynamic indicators; avoid a duplicate drawn altar. Cache the static composite, preserve procedural fallback, no balance/UI changes. Binary asset uploaded and verified byte-for-byte before merging to main. Forest remake and exclusive sprites remain subsequent art approval phases.
+
+## v22-alpha.7.39 — Cursed Forest Art Remake
+User validated all six Frozen art checks and approved the new forest illustration. Replace forest backdrop with exact approved art resized to 1100×500 WebP. Realign two Cover and two Brambles zones to upper middle/lower left ruins/log and lower middle/upper right thickets; unchanged radii and effects. Other scenery decorative. Emerald altar already painted; align HP and glow without duplicate crystal. Cached static composition and fallback retained. Valley, Frozen, Sandbox and enemy stats unchanged. Next: regional sprite approval.

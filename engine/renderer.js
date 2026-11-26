@@ -2,7 +2,7 @@
 function forestArtReady(){return typeof forestBattlefieldArt!=='undefined'&&!!forestBattlefieldArt;}
 function frozenArtReady(){return typeof frozenBattlefieldArt!=='undefined'&&!!frozenBattlefieldArt;}
 function drawForestAltar(hurt,glow,frozen=false){
- const W=worldW(),illustratedIce=frozen&&frozenArtReady(),x=W*(illustratedIce?.078:79/1100),y=WORLD_H*(illustratedIce?.32:198/500),bw=Math.min(68,W*.12),by=WORLD_H*(illustratedIce?.18:.27);
+ const W=worldW(),illustratedIce=frozen&&frozenArtReady(),illustratedForest=!frozen&&forestArtReady(),x=W*(illustratedIce?.078:illustratedForest?.08:79/1100),y=WORLD_H*(illustratedIce?.32:illustratedForest?.415:198/500),bw=Math.min(68,W*.12),by=WORLD_H*(illustratedIce?.18:illustratedForest?.09:.27);
  ctx.save();
  // Missing artwork must still show a crystal, never the obsolete wall.
  if(frozen?!frozenArtReady():!forestArtReady()){
