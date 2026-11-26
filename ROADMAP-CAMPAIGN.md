@@ -82,3 +82,6 @@ User approved all regional enemy checks but reported Huntsman not damaging targe
 
 ## v22-alpha.7.36 — Frozen Wasteland
 Third five-wave campaign; Forest completion unlocks permanently, independent local ranking. Ice inertia, periodic blizzards, three regional enemies and Frost Inquisitor (Glacial Prison). Cached procedural ice art and blue crystal. Sandbox and Codex integrated. Stats and art provisional; browser playtest pending.
+
+## v22-alpha.7.37 — Sandbox Launchpad
+User approved control deck prototype and preconfiguration workflow. Preselect region, wave/boss/enemy, army preset, relic, damage and auto-start, then existing champion/doctrine. Reconfigure encounter without leaving sandbox or changing campaign. Compact toolbar and four advanced tabs, filtered regional roster. No artwork or combat changes. Approved Frozen art and Forest remake deferred to next art phase.
