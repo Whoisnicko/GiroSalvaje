@@ -14,6 +14,10 @@ function synergyRulesFor(type){return SYNERGIES.filter(r=>r.source===type||r.tar
 function synergyDraw(u,s){
  if(!synergyActive(u).length)return;
  // Small noninteractive gold marker; no HUD geometry or sprite alterations.
- ctx.save();ctx.globalAlpha=.95;ctx.fillStyle='#1b2428';ctx.strokeStyle='#f4cf81';ctx.lineWidth=1.5;
- const x=u.x+s*.5+5,y=u.y+s*.35;ctx.beginPath();ctx.moveTo(x,y-5);ctx.lineTo(x+5,y);ctx.lineTo(x,y+5);ctx.lineTo(x-5,y);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();
+ ctx.save();ctx.globalAlpha=.95;
+ const x=u.x+s*.5+5,y=u.y+s*.35;
+ // Two linked gold rings: synergy, not an empty status tile.
+ ctx.lineCap='round';ctx.lineJoin='round';
+ for(const [color,width] of [['#1b2428',3.2],['#f4cf81',1.6]]){ctx.strokeStyle=color;ctx.lineWidth=width;ctx.beginPath();ctx.arc(x-2,y,2.8,0,Math.PI*2);ctx.stroke();ctx.beginPath();ctx.arc(x+2,y,2.8,0,Math.PI*2);ctx.stroke();}
+ ctx.restore();
 }
