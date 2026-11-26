@@ -1,21 +1,22 @@
 /* v19 renderer: canvas presentation, shared state from game core. Classic script; loaded before core. */
 function forestArtReady(){return typeof forestBattlefieldArt!=='undefined'&&!!forestBattlefieldArt;}
-function drawForestAltar(hurt,glow){
+function drawForestAltar(hurt,glow,frozen=false){
  const W=worldW(),x=W*(79/1100),y=WORLD_H*(198/500),bw=Math.min(68,W*.12),by=WORLD_H*.27;
  ctx.save();
  // Missing artwork must still show a crystal, never the obsolete wall.
- if(!forestArtReady()){
+ if(frozen||!forestArtReady()){
   ctx.translate(x,y);ctx.fillStyle='#182b26';ctx.strokeStyle='#73937a';ctx.lineWidth=2;
   ctx.beginPath();ctx.ellipse(0,29,Math.max(20,W*.07),18,0,0,Math.PI*2);ctx.fill();ctx.stroke();
   ctx.strokeStyle='#76e4c1';ctx.beginPath();ctx.ellipse(0,26,18,8,0,0,Math.PI*2);ctx.stroke();
-  ctx.fillStyle='#49bda6';ctx.strokeStyle='#b6f9d7';ctx.beginPath();ctx.moveTo(0,-26);ctx.lineTo(12,-11);ctx.lineTo(9,13);ctx.lineTo(0,24);ctx.lineTo(-9,13);ctx.lineTo(-12,-11);ctx.closePath();ctx.fill();ctx.stroke();
-  ctx.fillStyle='#b7ffde';ctx.beginPath();ctx.moveTo(0,-24);ctx.lineTo(0,22);ctx.lineTo(-9,13);ctx.lineTo(-12,-11);ctx.closePath();ctx.fill();ctx.translate(-x,-y);
+  ctx.fillStyle=frozen?'#5eb7eb':'#49bda6';ctx.strokeStyle=frozen?'#d4f6ff':'#b6f9d7';ctx.beginPath();ctx.moveTo(0,-26);ctx.lineTo(12,-11);ctx.lineTo(9,13);ctx.lineTo(0,24);ctx.lineTo(-9,13);ctx.lineTo(-12,-11);ctx.closePath();ctx.fill();ctx.stroke();
+  ctx.fillStyle=frozen?'#d9f6ff':'#b7ffde';ctx.beginPath();ctx.moveTo(0,-24);ctx.lineTo(0,22);ctx.lineTo(-9,13);ctx.lineTo(-12,-11);ctx.closePath();ctx.fill();ctx.translate(-x,-y);
  }
  if(hurt||glow){const radius=Math.max(18,W*.065),g=ctx.createRadialGradient(x,y,0,x,y,radius);g.addColorStop(0,hurt?'rgba(255,80,68,.48)':'rgba(96,255,187,.44)');g.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=g;ctx.fillRect(x-radius,y-radius,radius*2,radius*2);}
  ctx.fillStyle='#10221d';ctx.fillRect(x-bw/2-2,by-2,bw+4,9);ctx.strokeStyle='#95a77f';ctx.lineWidth=1;ctx.strokeRect(x-bw/2-2,by-2,bw+4,9);bar(x-bw/2,by,bw,5,S.wallHp/S.wallMax,hurt?colors.red:colors.soul);ctx.restore();
 }
 function drawInkAltar(t){
  const hurt=S.fx.some(f=>f.k==='altar'),glow=S.fx.some(f=>f.k==='altarGlow');
+ if(biomeId(S)==='frozen'){drawForestAltar(hurt,glow,true);return;}
  if(biomeDef(S).backdrop==='forest'){drawForestAltar(hurt,glow);return;}
  // The illustrated backdrop already contains the crystal altar. Only the dynamic overlay is drawn here.
  if(battlefieldArt&&biomeDef(S).backdrop==='valley'){
@@ -46,13 +47,13 @@ function draw(){
   const W = worldW(), t = (prefs.reduced || motionPreference.matches) ? 0 : performance.now() / 1000;
   ctx.save();
   const camera=feelCamera();ctx.translate(camera.x,camera.y);
-  drawInkBackdrop(W);
+  drawInkBackdrop(W);frostDrawWeather(W);
   if (S.phase === 'prep') {
     const zm = zoneMax();
     ctx.fillStyle = colors.soul; ctx.globalAlpha = 0.05; ctx.fillRect(WALL_X, 0, zm - WALL_X, WORLD_H); ctx.globalAlpha = 1;
     ctx.setLineDash([6, 6]); ctx.strokeStyle = colors.gold; ctx.beginPath(); ctx.moveTo(zm, 0); ctx.lineTo(zm, WORLD_H); ctx.stroke(); ctx.setLineDash([]);
     ctx.font = '600 11px Rubik, sans-serif'; ctx.textBaseline = 'alphabetic';
-    ctx.textAlign = 'left'; ctx.fillStyle = colors.gold; ctx.fillText((biomeId(S)==='forest'?'CURSED FOREST':'YOUR VALLEY')+' · drag your monsters', WALL_X + 8, WORLD_H - 8);
+    ctx.textAlign = 'left'; ctx.fillStyle = colors.gold; ctx.fillText((biomeId(S)==='valley'?'YOUR VALLEY':biomeDef(S).name.toUpperCase())+' · drag your monsters', WALL_X + 8, WORLD_H - 8);
     const entry=invasionX(W);ctx.strokeStyle='#e7a36c';ctx.globalAlpha=.5;ctx.setLineDash([3,5]);ctx.beginPath();ctx.moveTo(entry,10);ctx.lineTo(entry,WORLD_H-22);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;ctx.textAlign='right';ctx.fillStyle=colors.steel;ctx.fillText('← INVASION ENTRY',W-8,WORLD_H-8);
   }
   for (const z of S.zones) { ctx.fillStyle = colors.muted; ctx.globalAlpha = .14 + .06 * Math.sin(t * 12); ctx.beginPath(); ctx.arc(z.x, z.y, z.r, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1; }
@@ -105,7 +106,7 @@ function draw(){
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   const ents = [...S.units.map(u => ({ u })), ...S.bench.filter(Boolean).map(u => ({ u })), ...S.enemies.map(e => ({ e })),...(heroActive()?[{hero:S.hero}]:[])].sort((a, b) => (a.u || a.e || a.hero).y - (b.u || b.e || b.hero).y);
   for (const it of ents) {
-    if(it.hero){heroDraw(it.hero,t);continue;}
+    if(it.hero){heroDraw(it.hero,t);frostDrawStatus(it.hero,42);continue;}
     if (it.u) {
       const u = it.u, inBench = u.y >= WORLD_H - 6 && !S.units.includes(u), s = inBench ? Math.min(size(u), 44) : size(u) * 1.28, dragging = S.drag && S.drag.u === u, ph = u.ph;
       const pose = feelPose(u,visualPose(u, performance.now() / 1000)), phTime = motionPreference.matches ? 0 : t;
@@ -142,7 +143,7 @@ function draw(){
       if (u.lvl > 1 && !u.temp) { ctx.fillStyle = colors.gold; ctx.font = '11px Rubik, sans-serif'; ctx.fillText('★'.repeat(u.lvl), u.x, u.y - s / 2 - 8); }
       if (u.train) { ctx.fillStyle = colors.bg; ctx.fillRect(u.x - s / 2 - 12, u.y + s / 2 - 12, 30, 13); ctx.fillStyle = colors.leaf; ctx.font = '600 10px Rubik, sans-serif'; ctx.fillText(`+${u.train * 50}%`, u.x - s / 2 + 3, u.y + s / 2 - 5); }
       if (u.pile > 1) { ctx.fillStyle = colors.bg; ctx.fillRect(u.x + s / 2 - 16, u.y - s / 2 - 2, 26, 14); ctx.fillStyle = colors.gold; ctx.font = '600 10px Rubik, sans-serif'; ctx.fillText(`${u.pile}/${S.mods.mergeN}`, u.x + s / 2 - 3, u.y - s / 2 + 5); }
-      bar(u.x - 14, u.y - s / 2 - 6, 34, 5, u.hp / u.maxHp, colors.leaf); infusionDraw(u,s); synergyDraw(u,s);
+      bar(u.x - 14, u.y - s / 2 - 6, 34, 5, u.hp / u.maxHp, colors.leaf); infusionDraw(u,s); synergyDraw(u,s);frostDrawStatus(u,s);
     } else {
       const e = it.e, K = KIND[e.kind], s = (e.r * 2 + 14) * 1.28, pose = feelPose(e,visualPose(e, performance.now() / 1000));
       const walk = motionPreference.matches ? 0 : e.moving ? Math.abs(Math.sin(t * 10 + e.ph)) * -3 : Math.sin(t * 2 + e.ph) * 1;
@@ -273,7 +274,28 @@ function forestStaticLayer(W){
   forestComposite=layer;forestCompositeSource=source;forestCompositeW=W;forestCompositeH=WORLD_H;return layer;
  }catch(e){return null;}
 }
+let frozenField=null,frozenFieldW=0;
+function frozenStaticLayer(W){
+ if(frozenField&&frozenFieldW===W)return frozenField;
+ const density=Math.min(2,1600/W,1000/WORLD_H),layer=inkCanvas(Math.ceil(W*density),Math.ceil(WORLD_H*density)),g=layer.getContext('2d');
+ g.scale(layer.width/W,layer.height/WORLD_H);
+ let seed=4137;const rnd=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
+ const poly=(p,c)=>{g.fillStyle=c;g.beginPath();p.forEach(([x,y],i)=>i?g.lineTo(x,y):g.moveTo(x,y));g.closePath();g.fill();};
+ const sky=g.createLinearGradient(0,0,0,WORLD_H);sky.addColorStop(0,'#223748');sky.addColorStop(.25,'#829aa9');sky.addColorStop(.55,'#93aab7');sky.addColorStop(1,'#354f62');g.fillStyle=sky;g.fillRect(0,0,W,WORLD_H);
+ for(let i=0;i<W*2;i++){const x=rnd()*W,y=rnd()*WORLD_H;g.fillStyle=rnd()<.5?'#c6d9e655':'#354d6444';g.fillRect(x,y,2+rnd()*5,1+rnd()*2);}
+ g.strokeStyle='#465c6a';g.lineWidth=55;g.beginPath();g.moveTo(0,WORLD_H*.5);g.bezierCurveTo(W*.3,WORLD_H*.35,W*.6,WORLD_H*.65,W,WORLD_H*.48);g.stroke();g.strokeStyle='#788c99';g.lineWidth=44;g.stroke();
+ for(const z of biomeZones(S,W)){g.fillStyle='#5baac7';g.beginPath();g.ellipse(z.x,z.y,z.rx,z.ry,0,0,Math.PI*2);g.fill();g.strokeStyle='#c6edfa';g.lineWidth=1.5;g.stroke();for(let i=0;i<12;i++){const a=rnd()*Math.PI*2,k=.25+rnd()*.6,x=z.x+Math.cos(a)*z.rx*k,y=z.y+Math.sin(a)*z.ry*k;g.strokeStyle='#d4f3ff88';g.beginPath();g.moveTo(x,y);g.lineTo(x+8,y-4);g.lineTo(x+14,y+1);g.stroke();}}
+ for(let x=0;x<W+25;x+=34+rnd()*28){const y=20+rnd()*15,k=22+rnd()*22;poly([[x-20,y+8],[x-12,y-k*.6],[x+2,y-k],[x+17,y-9],[x+23,y+8]],'#233c52');poly([[x-12,y-k*.6],[x+2,y-k],[x+17,y-9],[x+1,y-15]],'#bfd5e4');const b=WORLD_H-8+rnd()*8;poly([[x-14,b+9],[x-8,b-21],[x+4,b-36],[x+13,b-10],[x+25,b+9]],'#284658');poly([[x-8,b-21],[x+4,b-36],[x+13,b-10],[x+2,b-17]],'#9bbccc');}
+ biomeDraw(W,g);frozenField=layer;frozenFieldW=W;return layer;
+}
+function frostDrawWeather(W){
+ if(!frostBlizzard())return;ctx.save();ctx.fillStyle='#a9d9f211';ctx.fillRect(0,0,W,WORLD_H);ctx.font='bold 11px monospace';ctx.textAlign='center';ctx.fillStyle='#122b40e8';ctx.fillRect(W/2-91,5,182,19);ctx.fillStyle='#d4f4ff';ctx.fillText('BLIZZARD · REACH −30%',W/2,18);ctx.restore();
+}
+function frostDrawStatus(u,s){
+ if(!frostFrozen(u)&&frostChill(u)===1)return;ctx.save();ctx.strokeStyle=frostFrozen(u)?'#b6f2ff':'#85b7ef';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(u.x,u.y,s*.55,s*.34,0,0,Math.PI*2);ctx.stroke();ctx.restore();
+}
 function drawInkBackdrop(W){
+ if(biomeId(S)==='frozen'){ctx.save();ctx.imageSmoothingEnabled=false;ctx.drawImage(frozenStaticLayer(W),0,0,W,WORLD_H);ctx.restore();return;}
  if(biomeDef(S).backdrop==='forest'){
   if(forestArtReady()){
    const layer=forestStaticLayer(W);
