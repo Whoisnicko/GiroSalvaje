@@ -73,3 +73,6 @@ User accepted forest art as sufficient but reports low fluidity/game feel and ma
 
 ## v22-alpha.7.33 — Static forest render cache
 User validated v7.32 dropdown and effects; Forest still feels slower and FPS hidden below scroll. Composite static forest raster and tactical markings once per logical dimensions, draw as one bitmap, disable interpolation in hot path. FPS moved into Sandbox summary, visible when collapsed, fixed-width. No timing/FX/terrain changes. Real performance unverified; user requests proceeding with content, further art/perf work deferred unless major blocker. Next: regional enemy packs.
+
+## v22-alpha.7.34 — Regional enemy pack: Cursed Forest
+Three forest-only units (Pathfinder, Forest Ranger, Forest Purifier) replace guaranteed slots without increasing wave sizes. Data-driven counts, cover-seeking ranger, Brambles immunity only for pathfinder, flaming cover-piercing bolts for purifier. Existing sprite art with P/R/F markers, Codex and Sandbox solo tests. Stats provisional. Valley and bosses unchanged. Next: validate pack, then Frozen Wasteland.
