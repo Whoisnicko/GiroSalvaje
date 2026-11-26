@@ -55,3 +55,6 @@ User accepted v7.25; PREPARATION/AIM overlap is non-blocking, deferred to final 
 
 ## v22-alpha.7.27 — Regional progression / Cursed Forest
 User validated Crusader mechanics and selected option B: independent five-wave regional campaigns. Forest unlock is a durable monotonic profile flag after valley wave 5 victory outside sandbox; legacy profile defaults locked. Forest uses original field with deterministic drawn forest zones, symmetric projectile cover and walking slow, distinct wave-5 Huntsman with marked fixed-position volley. No permanent traps, unique assets or forest-only normal enemies yet. Classic valley 10 remains and rankings stay separate. Next: playtest and balance before more regions.
+
+## v22-alpha.7.28 — Sandbox Encounter Director
+User requested immediate access to maps, waves and bosses. Free Sandbox exposes registry-driven region and boss selectors, load/play, and retry. Boss-only fights choose native region and wave automatically; full waves retain normal enemy queues. Switching while fighting resets transient state and retains army. No profile unlocks, ranking or campaign HUD changes.
