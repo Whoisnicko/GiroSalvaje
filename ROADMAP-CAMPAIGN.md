@@ -112,3 +112,6 @@ Cathedral v7.44 validated 17/17. Five approved legendary starting relics, one ex
 
 ## v22-alpha.7.46 — Campaign Progression
 Regional Rewards validated 15/15. New Game opens interactive map based on approved composition, live region states, real battlefield previews, sprites, relics, local short scores and progress. Original champion/name/classic/confirmation flow retained, no gameplay or schema change. Responsive sidebar and detail panel. Browser validation pending.
+
+## v22-alpha.7.47 — Replayability I
+v7.46 13/13 validated. Normal/Veteran/Nightmare regional difficulty (100/120/140% HP, 100/115/130% damage), persistent rank, per-tier local scores, old saves Normal, Classic/Sandbox unchanged. Contextual Back and Escape. Approved art, challenges, mastery medals/VFX, unified gothic buttons and meaningful higher-tier rewards reserved for Replayability II/III. Steam launch prize proposal recorded separately; no money/revenue share implementation.

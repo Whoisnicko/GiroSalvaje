@@ -147,7 +147,7 @@ function sandboxTakeSetup(){const p=sandboxPendingSetup;sandboxPendingSetup=null
 function sandboxLaunchInit(){
  for(const id of ['slRegion','slMode','slRoster','slEnemy'])sbEl(id).addEventListener('change',sandboxLaunchRefresh);
  sbEl('slGo').addEventListener('click',sandboxLaunchProceed);
- sbEl('slBack').addEventListener('click',()=>{sandboxPendingSetup=null;if(sandboxSetupReopen){closeFront();return;}academyOpen();});
+ sbEl('slBack').addEventListener('click',()=>{sandboxPendingSetup=null;if(sandboxSetupReopen){closeFront();return;}frontBack();});
 }
 function sandboxTab(tab){
  const panel=sbEl('sandboxPanel');for(const b of panel.querySelectorAll('[data-sb-tab]'))b.setAttribute('aria-selected',String(b.dataset.sbTab===tab));

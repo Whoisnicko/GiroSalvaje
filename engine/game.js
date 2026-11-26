@@ -289,7 +289,7 @@ function waveInfo(w){
   return { boss, n, table, hp:HUM.hp * Math.pow(HUM.grow, w - 1), dmg:HUM.dmg + w * HUM.dmgW, sp:30 + w * 2, armor:2 + Math.floor(w / 3) };
 }
 /* La oleada se sortea al empezar la preparación, así el panel muestra exactamente lo que viene. */
-function rollWave(w,region='valley'){
+function rollWave(w,region='valley',difficulty='normal'){
   const W = waveInfo(w);
   const regional=regionalSlots(w,region);
   // Spread guaranteed regional units through the existing queue without increasing the wave size.
@@ -299,6 +299,7 @@ function rollWave(w,region='valley'){
     return { kind:k, hp:W.hp * K.hp, dmg:W.dmg * K.dmg, sp:rnd(.85, 1.15) * W.sp * K.sp, r:K.r, range:K.range || 0, armor:K.armor ? W.armor : 0 };
   });
   if (W.boss) q.splice(Math.floor(W.n / 2), 0, bossStamp({ kind:'com', hp:W.hp * KIND.com.hp, dmg:W.dmg * KIND.com.dmg, sp:W.sp * KIND.com.sp, r:22, boss:true, armor:W.armor },w,region));
+  if(difficulty!=='normal'){const d=DIFFICULTIES[difficultyId(difficulty)];for(const e of q){e.hp*=d.hp;e.dmg*=d.damage;}}
   return q;
 }
 const HUM = { hp:20, grow:1.46, dmg:6.5, dmgW:1.95 }; // fuerza de los humans (ajustada con partidas simuladas)
@@ -398,7 +399,7 @@ function bigMsg(text){ const d = document.createElement('div'); d.className = 'b
 
 let S, colors = {};
 
-function newGame(sandbox=false,heroId='sorcerer',build=null,maxWaves=DEFAULT_CAMPAIGN_WAVES,region='valley'){
+function newGame(sandbox=false,heroId='sorcerer',build=null,maxWaves=DEFAULT_CAMPAIGN_WAVES,region='valley',difficulty='normal'){
   S = {
     sandbox:!!sandbox,sandboxGod:!!sandbox,biomeId:biomeId({biomeId:region}),hero:heroNew(heroId,build),
     wave:1, wallHp:80, wallMax:80, gold:0, spinsPer:3, spinsLeft:3, bought:0, cardBuys:0, holdsMax:2, handSize:3, startZombiee:1, relic:null,
@@ -408,7 +409,7 @@ function newGame(sandbox=false,heroId='sorcerer',build=null,maxWaves=DEFAULT_CAM
     bench:[null, null, null], sel:null, nextQueue:[], seenKinds:new Set(), maxUnits:8, slotBuys:0,
     mods:{ archSpd:1, warHp:1, mageDmg:1, splash:1, coin:1, coinBonus:0, mergeN:3, wallRegen:0 }, offer:[], endOffer:[], result:'', resultSub:'',
   };
-  if(!sandbox){S.runId=sessionRunId;S.campaign=CampaignSave.metadata(sessionRunId,{id:sessionRunId,routeEconomy:1,maxWaves});}
+  if(!sandbox){S.runId=sessionRunId;S.campaign=CampaignSave.metadata(sessionRunId,{id:sessionRunId,routeEconomy:1,maxWaves,difficulty});}
   setResult('Choose your relic', '');
   renderUI();
   showOv(`<h2>Defend ${biomeDef(S).name}</h2>
@@ -423,7 +424,7 @@ function startRun(i){
   S.phase = 'prep';
   genTerrain();
   drawHand();
-  S.nextQueue = rollWave(S.wave,biomeId(S));
+  S.nextQueue = rollWave(S.wave,biomeId(S),campaignDifficulty(S));
   if(sandboxActive())sandboxInitialize();
   setResult('Prepare your defense', `You have ${S.spinsLeft} spins before wave 1.`);
   hideOv(); renderUI(); tip('spin'); sfx('horn');
@@ -947,7 +948,7 @@ function endWave(){
   if(!routeEconomyActive())S.gold += 3; S.spinsLeft = S.spinsPer; S.bought = 0; S.phase = 'prep';
   genTerrain();
   drawHand();
-  S.nextQueue = rollWave(S.wave,biomeId(S));
+  S.nextQueue = rollWave(S.wave,biomeId(S),campaignDifficulty(S));
   setResult(`Wave ${done} survived`, `${routeEconomyActive()?"Choose a destination for your travel reward.":"+3 souls."} You have ${S.spinsLeft} spins and new cards.${knowledgeNote}${valorNote}`);
   if (done % 2 === 0) {
     S.phase = 'reward';
@@ -1293,23 +1294,26 @@ function restore(v){
 }
 function showRewardRestored(){showOv(`<h2>Choose your reward</h2><div class="offers">${S.offer.map((o,i)=>`<button class="offer" data-act="reward" data-i="${i}"><span class="ic">${rewardArt(o)}</span><span class="nm">${o.n}</span><span class="ds">${o.d}</span></button>`).join('')}</div>`);}
 function showEndRestored(){const claimed=campaignEndClaimed(),legacy=S.campaign?.legacyTerminal;showOv(`<h2>${S.phase==='win'?'The Altar stands!':'The Altar has fallen'}</h2><p>${S.phase==='win'?'You survived all '+campaignLimit()+' waves.':'You reached wave '+S.wave+' of '+campaignLimit()+'.'} ${S.kills} humans defeated.</p>${S.phase==='win'&&biomeId(S)==='valley'&&biomeUnlocked('forest')?'<p>Cursed Forest unlocked · select it in New Game.</p>':S.phase==='win'&&biomeId(S)==='forest'&&biomeUnlocked('frozen')?'<p>Frozen Wasteland unlocked · select it in New Game.</p>':S.phase==='win'&&biomeId(S)==='frozen'&&biomeUnlocked('ashen')?'<p>Ashen Kingdom unlocked · select it in New Game.</p>':S.phase==='win'&&biomeId(S)==='ashen'&&biomeUnlocked('cathedral')?'<p>The Fallen Cathedral unlocked · select it in New Game.</p>':S.phase==='win'&&biomeId(S)==='cathedral'?'<p>All five regional battles conquered!</p>':''}${S.phase==='win'&&campaignProfileInit().regionalRewards?.includes(biomeId(S))?'<p class="regional-unlock-note">Legendary regional relic available in Infernal Treasury.</p>':''}${claimed?`<p>${legacy?'This completed legacy run is archived. Its reward status cannot be recovered safely.':'Your permanent card reward has been saved.'}</p><button class="go" data-front="home">Return to menu</button>`:`<p>Choose one card for your next run.</p><div class="cards-row">${S.endOffer.map((id,i)=>cardHTML(id,`data-act="endcard" data-i="${i}"`)).join('')}</div><p id="endRewardNotice" role="status"></p>`}<button class="btn" data-front="scores">View scores</button>`);}
-function front(panel){heroCancelAim(false);heroClearKeys();magicCancel();closeBestiary();tacticalHide();$('#front').hidden=false;menuOpen=true;document.querySelector('.wrap').inert=true;$('#ov').inert=true;$('#ov2').inert=true;for(const el of document.querySelectorAll('.front-view'))el.hidden=el.id!==panel;$('#'+panel+' button:not([disabled]),#'+panel+' input')?.focus();}
-function closeFront(){menuOpen=false;$('#front').hidden=true;document.querySelector('.wrap').inert=false;$('#ov').inert=false;$('#ov2').inert=false;last=performance.now();resize();if(S)renderPrepUndo();}
+let frontHistory=[],frontCurrent=null;
+function frontHistoryStep(history,current,next){if(next==='homeView')return [];if(!current||current===next)return history;const i=history.lastIndexOf(next);return i>=0?history.slice(0,i):[...history,current];}
+function frontBack(){const target=frontHistory.at(-1);if(target==='campaignMapView'){campaignMapOpen();return;}if(target==='homeView'||!target){showHome();return;}front(target);}
+function front(panel){frontHistory=frontHistoryStep(frontHistory,frontCurrent,panel);frontCurrent=panel;heroCancelAim(false);heroClearKeys();magicCancel();closeBestiary();tacticalHide();$('#front').hidden=false;menuOpen=true;document.querySelector('.wrap').inert=true;$('#ov').inert=true;$('#ov2').inert=true;for(const el of document.querySelectorAll('.front-view'))el.hidden=el.id!==panel;$('#'+panel+' button:not([disabled]),#'+panel+' input')?.focus();}
+function closeFront(){frontHistory=[];frontCurrent=null;menuOpen=false;$('#front').hidden=true;document.querySelector('.wrap').inert=false;$('#ov').inert=false;$('#ov2').inert=false;last=performance.now();resize();if(S)renderPrepUndo();}
 function showHome(){if(spinning)return;if(sandboxActive()){sandboxExit();return;}if(S){cancelDrag();persist();}if(!S||storageOK)loadedSave=store.get(SAVE_KEY,null);if(!validSave(loadedSave))loadedSave=null;regionalRelicSync(loadedSave?.state);knowledgeFromSave(loadedSave);knowledgeFromScores();talentFromSave(loadedSave);talentFromScores();if(talentDirty)talentFlush();if(knowledgeDirty)knowledgeFlush();knowledgeSummaryRender();$('#knowledgeSummary').textContent+=' · Starting deck: '+META.deck.length+' cards'+(campaignProfileIssue?' · Profile storage unavailable':'');$('#playerName').value=profile.name;const canContinue=!!(S||loadedSave);$('#continueBtn').disabled=!canContinue;$('#homeView').classList.toggle('has-save',canContinue);$('#homeError').textContent='';$('#continueInfo').textContent=loadedSave?`${loadedSave.name} · ${heroClass(loadedSave.state).name} · Wave ${Math.min(loadedSave.state.wave,loadedSave.version<18?10:campaignLimit(loadedSave.state))}/${loadedSave.version<18?10:campaignLimit(loadedSave.state)} · ${new Date(loadedSave.savedAt).toLocaleString('en')}`:'The invasion awaits.';if(S&&!loadedSave)$('#continueInfo').textContent='Current run · ready to resume';$('#continueBtn').title=$('#continueInfo').textContent;front('homeView');}
 function beginNew(){let name=$('#playerName').value.trim().slice(0,20);if(!name){$('#nameError').textContent='Enter your name (1–20 characters).';$('#playerName').focus();return;}profile.name=name;durableWrite(PROFILE_KEY,profile);heroChoose('campaign');}
-function launchNew(heroId=heroPending,build=talentPending,maxWaves=Number($('#campaignLength').value)===10?10:5){const region=biomeRegionChoice();if(region!=='valley')maxWaves=5;if(talentDirty&&!talentFlush()){alert('Your Valor progress could not be saved. Enable browser storage before replacing this run.');return;}if(knowledgeDirty&&!knowledgeFlush()){alert('Your permanent spell knowledge could not be saved. Enable browser storage before replacing this run.');return;}campaignProfileInit();runName=profile.name;sessionRunId=uid();loadedSave=null;try{localStorage.removeItem(SAVE_KEY);}catch(e){}savedWorldWidth=null;closeFront();newGame(false,heroId,build,maxWaves===10?10:5,region);$('#saveStatus').textContent='Choose a relic to create your first save.';}
+function launchNew(heroId=heroPending,build=talentPending,maxWaves=Number($('#campaignLength').value)===10?10:5){const region=biomeRegionChoice(),difficulty=difficultyId(campaignMapDifficulty);if(region!=='valley'||difficulty!=='normal')maxWaves=5;if(!difficultyUnlocked(campaignProfileInit(),region,difficulty))return;if(talentDirty&&!talentFlush()){alert('Your Valor progress could not be saved. Enable browser storage before replacing this run.');return;}if(knowledgeDirty&&!knowledgeFlush()){alert('Your permanent spell knowledge could not be saved. Enable browser storage before replacing this run.');return;}campaignProfileInit();runName=profile.name;sessionRunId=uid();loadedSave=null;try{localStorage.removeItem(SAVE_KEY);}catch(e){}savedWorldWidth=null;closeFront();newGame(false,heroId,build,maxWaves===10?10:5,region,difficulty);$('#saveStatus').textContent='Choose a relic to create your first save.';}
 function scores(){const v=store.get(SCORES_KEY,[]);return Array.isArray(v)?v:[];}
-function recordScore(won){if(sandboxActive())return;const list=scores();if(list.some(r=>r.runId===sessionRunId))return;const maxWaves=campaignLimit(),wave=won?maxWaves:Math.max(0,S.wave-1);const r={runId:sessionRunId,name:runName,heroClass:heroClass(S).id,kills:S.kills,wave,maxWaves,biomeId:biomeId(S),won,score:wave*100+S.kills*10+(won?500:0),date:Date.now()};list.push(r);durableWrite(SCORES_KEY,[5,10,'forest','frozen','ashen','cathedral'].flatMap(n=>list.filter(r=>scoreRegion(r)===n).sort((a,b)=>b.score-a.score).slice(0,50)));}
+function recordScore(won){if(sandboxActive())return;const list=scores();if(list.some(r=>r.runId===sessionRunId))return;const maxWaves=campaignLimit(),wave=won?maxWaves:Math.max(0,S.wave-1);const r={runId:sessionRunId,name:runName,heroClass:heroClass(S).id,kills:S.kills,wave,maxWaves,biomeId:biomeId(S),difficulty:campaignDifficulty(S),won,score:wave*100+S.kills*10+(won?500:0),date:Date.now()};list.push(r);durableWrite(SCORES_KEY,[...new Set(list.map(scoreBucket))].flatMap(n=>list.filter(r=>scoreBucket(r)===n).sort((a,b)=>b.score-a.score).slice(0,50)));}
 function scoreRows(rows){return rows.length?rows.slice(0,20).map((r,i)=>`<tr><td>${i+1}</td><td>${escapeHTML(r.name)}</td><td>${Number(r.score)||0}</td><td>${Number(r.wave)||0}/${r.maxWaves===5?5:10}</td></tr>`).join(''):'<tr><td colspan="4">No scores yet.</td></tr>';}
 function scoreRegion(r){return biomeId(r)!=='valley'?biomeId(r):(r.maxWaves||10);}
 function scoreMode(){const v=$('#scoreLength').value;return ['forest','frozen','ashen','cathedral'].includes(v)?v:Number(v)===10?10:5;}
-function modeScores(){return scores().filter(r=>scoreRegion(r)===scoreMode()).sort((a,b)=>b.score-a.score);}
-function showScores(){front('scoresView');$('#scoreRows').innerHTML=scoreRows(modeScores());$('#scoreScope').textContent='Local scores · '+(typeof scoreMode()==='string'?BIOME_DATA[scoreMode()].name+' · 5 waves':scoreMode()+' waves');$('#publishScore').disabled=scoreMode()!==10||!modeScores().length;document.querySelector('[data-front=cloud]').disabled=scoreMode()!==10;$('#cloudStatus').textContent=scoreMode()!==10?'Regional campaigns have a separate local ranking. Online ranking is classic only.':'Local scores work offline. Online ranking requires the server.';}
+function modeScores(){const d=scoreMode()===10?'normal':difficultyId($('#scoreDifficulty').value);return scores().filter(r=>scoreRegion(r)===scoreMode()&&scoreDifficulty(r)===d).sort((a,b)=>b.score-a.score);}
+function showScores(){if(scoreMode()===10)$('#scoreDifficulty').value='normal';$('#scoreDifficulty').disabled=scoreMode()===10;front('scoresView');$('#scoreRows').innerHTML=scoreRows(modeScores());$('#scoreScope').textContent='Local scores · '+(typeof scoreMode()==='string'?BIOME_DATA[scoreMode()].name+' · 5 waves':scoreMode()+' waves')+' · '+DIFFICULTIES[difficultyId($('#scoreDifficulty').value)].name;$('#publishScore').disabled=scoreMode()!==10||!modeScores().length;document.querySelector('[data-front=cloud]').disabled=scoreMode()!==10;$('#cloudStatus').textContent=scoreMode()!==10?'Regional campaigns have a separate local ranking. Online ranking is classic only.':'Local scores work offline. Online ranking requires the server.';}
 async function cloudScores(){if(scoreMode()!==10)return;try{const r=await fetch('/api/scores',{signal:AbortSignal.timeout(6000)});if(!r.ok)throw Error();const j=await r.json();if(!Array.isArray(j.scores))throw Error();if(scoreMode()!==10)return;$('#scoreRows').innerHTML=scoreRows(j.scores);$('#scoreScope').textContent='Online leaderboard';$('#cloudStatus').textContent='Public scores for this edition.';}catch(e){$('#cloudStatus').textContent='Online ranking is unavailable. Your scores are saved locally.';}}
 async function publishScore(){if(scoreMode()!==10)return;const r=modeScores()[0];if(!r)return;$('#publishScore').disabled=true;try{const res=await fetch('/api/scores',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(r),signal:AbortSignal.timeout(6000)});if(!res.ok)throw Error();await cloudScores();$('#cloudStatus').textContent='Your best score was published as '+r.name+'.';}catch(e){$('#cloudStatus').textContent='Publishing failed. Your local score is safe; retry when the server is online.';}finally{$('#publishScore').disabled=false;}}
 function exportSave(){if(sandboxActive())return;persist();const p=campaignProfileBackup(),v=validSave(loadedSave)?CampaignSave.decode(loadedSave):null;const backup=v?{...v,profileState:p,spellKnowledge:p.spellKnowledge,warlordTalents:p.warlordTalents}:{format:'stophumans-profile',version:1,profileState:p};const url=URL.createObjectURL(new Blob([JSON.stringify(backup)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download=v?'StopHumans-save.json':'StopHumans-profile.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),2000);}
 function showSettings(){front('settingsView');$('#mergeConfirmOpt').checked=askMerge;$('#volume').value=Math.round(prefs.volume*100);$('#musicOpt').checked=AU.music;$('#soundOpt').checked=AU.sfx;$('#motionOpt').checked=prefs.reduced;$('#effectsOpt').value=prefs.effects;}
-const oldEndRun=endRun;endRun=function(won){if(sandboxActive()){sandboxResetBattle('Test complete. Ready to retry.');return;}if(won)regionalRelicGrant(biomeId(S));recordScore(won);oldEndRun(won);showEndRestored();persist();};
+const oldEndRun=endRun;endRun=function(won){if(sandboxActive()){sandboxResetBattle('Test complete. Ready to retry.');return;}if(won){regionalRelicGrant(biomeId(S));if(S.campaign?.maxWaves===5&&!masteryGrant(S))bigMsg('Mastery progress could not be saved');}recordScore(won);oldEndRun(won);showEndRestored();persist();};
 const oldStartRun=startRun;startRun=function(i){oldStartRun(i);persist();if(S?.phase==='prep'&&!S.sandbox)tutorialStart();};
 const oldRenderUI=renderUI;renderUI=function(){oldRenderUI();if(S&&S.phase!=='relic')persist();};
 let savedWorldWidth=null;
@@ -1352,13 +1356,13 @@ resize=function(){
 };
 if(typeof ResizeObserver!=='undefined'){const stageObserver=new ResizeObserver(()=>{if(compactLayout())resize();});stageObserver.observe($('#battleViewport'));}
 document.addEventListener('click',ev=>{const b=ev.target.closest('[data-front]');if(!b||b.disabled)return;ev.preventDefault();const a=b.dataset.front;
- if(a==='home')showHome();if(a==='new')campaignMapOpen(true);if(a==='campaign')campaignMapOpen();if(a==='campaign-start')campaignMapStart();if(a==='campaign-scores')campaignMapScores();if(a==='campaign-sandbox')sandboxLaunchOpen();if(a==='new-confirm')beginNew();if(a==='credits')front('creditsView');if(a==='confirm'&&!$('#confirmView').hidden)launchNew(heroPending);if(a==='back')showHome();if(a==='resume')closeFront();
+ if(a==='home')showHome();if(a==='new')campaignMapOpen(true);if(a==='campaign')campaignMapOpen();if(a==='campaign-start')campaignMapStart();if(a==='campaign-scores')campaignMapScores();if(a==='campaign-sandbox')sandboxLaunchOpen();if(a==='new-confirm')beginNew();if(a==='credits')front('creditsView');if(a==='confirm'&&!$('#confirmView').hidden)launchNew(heroPending);if(a==='back')frontBack();if(a==='resume')closeFront();
  if(a==='continue'){try{if(S){closeFront();if(S.phase==='journey')journeyShow();}else if(loadedSave)restore(loadedSave);}catch(e){$('#homeError').textContent='Could not restore this run. Start a new one or import a backup.';}}
  if(a==='sanctum')sanctumOpen();if(a==='codex')codexOpen();if(a==='treasury')relicTreasuryOpen();if(a==='sanctum-talents')talentOpen('library');if(a==='settings')showSettings();if(a==='scores')showScores();if(a==='cloud')cloudScores();if(a==='publish')publishScore();if(a==='export')exportSave();if(a==='import')$('#importFile').click();
 });
 $('#heroSelectView').addEventListener('click',ev=>{const b=ev.target.closest('[data-hero-class]');if(b&&!b.disabled)heroSelect(b.dataset.heroClass);});
-document.addEventListener('keydown',ev=>{if(ev.target.matches('input,select,textarea'))ev.stopImmediatePropagation();if(menuOpen){if(ev.key==='Escape'&&(!$('#heroSelectView').hidden||!$('#confirmView').hidden||!$('#newGameView').hidden||!$('#creditsView').hidden||!$('#sanctumView').hidden||!$('#codexView').hidden||!$('#treasuryView').hidden||!$('#campaignMapView').hidden)){showHome();}else if(ev.key==='Escape'&&S){closeFront();}else if(ev.key==='Enter'&&ev.target.id==='playerName')beginNew();ev.stopImmediatePropagation();}},true);
-$('#scoreLength').addEventListener('change',showScores);$('#campaignRegion').addEventListener('change',biomeMenu);
+document.addEventListener('keydown',ev=>{if(ev.target.matches('input,select,textarea'))ev.stopImmediatePropagation();if(menuOpen){if(ev.key==='Escape'&&frontCurrent==='sandboxLaunchView'&&sandboxSetupReopen){closeFront();}else if(ev.key==='Escape'&&frontCurrent&&frontCurrent!=='homeView'){frontBack();}else if(ev.key==='Escape'&&S){closeFront();}else if(ev.key==='Enter'&&ev.target.id==='playerName')beginNew();ev.stopImmediatePropagation();}},true);
+$('#scoreLength').addEventListener('change',showScores);$('#scoreDifficulty').addEventListener('change',showScores);$('#campaignRegion').addEventListener('change',biomeMenu);
 $('#mergeConfirmOpt').addEventListener('change',e=>setMergeConfirmation(e.target.checked));
 $('#settingsView').addEventListener('change',e=>{if(e.target.id==='mergeConfirmOpt')return;prefs.volume=+$('#volume').value/100;prefs.reduced=$('#motionOpt').checked;prefs.effects=$('#effectsOpt').value;setMusic($('#musicOpt').checked);setSfx($('#soundOpt').checked);savePrefs();});
 $('#importFile').addEventListener('change',async ev=>{const f=ev.target.files[0];if(!f)return;try{if(f.size>2e6)throw Error();const v=JSON.parse(await f.text());if(v.format==='stophumans-profile'&&v.version===1){campaignImportProfile(v.profileState);showHome();return;}if(!validSave(v))throw Error();if(S||loadedSave){if(!confirm('Replace the current campaign with this backup? Permanent progress will be merged.'))return;}restore(v);if(!storageOK)alert('Campaign restored in memory, but browser storage failed. Keep your backup.');}catch(e){alert('Import failed or incomplete. Use a compatible Stop Humans campaign or profile backup and check browser storage.');}finally{ev.target.value='';}});

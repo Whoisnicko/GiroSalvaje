@@ -6,13 +6,13 @@ const CAMPAIGN_MAP=Object.freeze([
  Object.freeze({id:'ashen',roman:'IV',x:62.87,y:33.605,w:29.792,h:12.925,color:'#f4a05e',image:'assets/battlefield-ashen-v43.webp',lore:'Cross a kingdom consumed by fire, where burning ground threatens both armies.'}),
  Object.freeze({id:'cathedral',roman:'V',x:31.325,y:13.197,w:31.982,h:12.517,color:'#d3a4fa',image:'assets/battlefield-cathedral-v44.webp',lore:'The final stronghold of the human church. Face the High Exorcist and his divine ascension.'})
 ]);
-let campaignMapSelected=null;
+let campaignMapSelected=null,campaignMapDifficulty='normal';
 function campaignMapModel(profile,records){
- const conquered=new Set(profile.regionalRewards||[]);
+ const conquered=new Set(profile.regionalRewards||[]),mastery=normalizeMastery(profile);
  return CAMPAIGN_MAP.map((d,i)=>{
   const unlocked=i===0||profile[['','forestUnlocked','frozenUnlocked','ashenUnlocked','cathedralUnlocked'][i]]===true;
-  const list=records.filter(r=>r&&r.maxWaves===5&&(r.biomeId===d.id||(d.id==='valley'&&!r.biomeId))&&Number.isFinite(r.score));
-  return {...d,def:BIOME_DATA[d.id],conquered:conquered.has(d.id),unlocked,status:conquered.has(d.id)?'conquered':unlocked?'available':'locked',best:list.length?Math.max(...list.map(r=>r.score)):null,previous:i?CAMPAIGN_MAP[i-1].id:null};
+  const list=records.filter(r=>r&&scoreDifficulty(r)===(d.id===campaignMapSelected?campaignMapDifficulty:'normal')&&r.maxWaves===5&&(r.biomeId===d.id||(d.id==='valley'&&!r.biomeId))&&Number.isFinite(r.score));
+  return {...d,mastery:mastery[d.id],def:BIOME_DATA[d.id],conquered:conquered.has(d.id),unlocked,status:conquered.has(d.id)?'conquered':unlocked?'available':'locked',best:list.length?Math.max(...list.map(r=>r.score)):null,previous:i?CAMPAIGN_MAP[i-1].id:null};
  });
 }
 function campaignMapData(){return campaignMapModel(campaignProfileInit(),scores());}
@@ -22,6 +22,7 @@ function campaignMapPortrait(e){const key=enemySprite(e),src=URL_[key];return sr
 function campaignMapRender(){
  const rows=campaignMapData(),selected=rows.find(r=>r.id===campaignMapSelected)||rows[0],count=rows.filter(r=>r.conquered).length;
  campaignMapSelected=selected.id;
+ if(!difficultyUnlocked(campaignProfileInit(),selected.id,campaignMapDifficulty))campaignMapDifficulty='normal';
  $('#cmNodes').innerHTML=rows.map(d=>'<button type="button" class="cm-node '+d.status+(d.id===selected.id?' selected':'')+'" data-cm-region="'+d.id+'" aria-pressed="'+(d.id===selected.id)+'" aria-label="'+d.def.name+' — '+d.status+'" style="--nx:'+d.x+'%;--ny:'+d.y+'%;--nw:'+d.w+'%;--nh:'+d.h+'%;--accent:'+d.color+'"><span class="cm-rank">'+d.roman+'</span><span class="cm-node-name">'+d.def.name+'</span><span class="cm-node-status" aria-hidden="true">'+(d.conquered?'✓':d.unlocked?'◆':'🔒')+'</span></button>').join('');
  $('#cmProgressText').textContent=count+' / 5 Regions Conquered';$('#cmProgressPct').textContent=count*20+'%';$('#cmProgressFill').style.width=count*20+'%';$('#cmProgress').setAttribute('aria-valuenow',count);
  const d=selected,b=BOSS_DATA[d.def.bossId],relic=REGIONAL_RELICS.find(r=>r.region===d.id),enemies=Object.entries(REGIONAL_ENEMIES).filter(([id,e])=>e.region===d.id).map(([id])=>id),roster=enemies.length?enemies:['sol','bal','cab'];
@@ -31,13 +32,14 @@ function campaignMapRender(){
  '<h3 class="cm-section-title">'+(enemies.length?'Regional enemies':'Human forces')+'</h3><div class="cm-roster">'+roster.map(kind=>'<div><div class="cm-portrait">'+campaignMapPortrait({kind})+'</div><span>'+KIND[kind].n+'</span></div>').join('')+'</div>'+
  '<h3 class="cm-section-title">Regional boss</h3><div class="cm-boss"><div class="cm-portrait">'+campaignMapPortrait({kind:b.kind,bossId:b.id})+'</div><div><strong>'+b.name+'</strong><span>'+b.ability+'</span>'+(b.ascension?'<span>Phase II · Divine Ascension</span>':'')+'</div></div>'+
  '<h3 class="cm-section-title">Regional reward</h3><div class="cm-reward"><div class="cm-relic">'+relicArt(relic)+'</div><div><strong>'+relic.n+'</strong><p>'+relic.d+'</p><small>'+ (d.conquered?'Unlocked':'Reward on conquest')+'</small></div></div>'+
- '<div class="cm-record"><span>Personal best · 5 waves</span><b>'+(d.best===null?'—':d.best.toLocaleString('en-US'))+'</b></div>'+
+ '<section class="cm-difficulties"><label for="cmDifficulty">Difficulty · '+d.mastery+'/3 mastered</label><select id="cmDifficulty" '+(!d.unlocked?'disabled':'')+'>'+Object.entries(DIFFICULTIES).map(([id,v])=>'<option value="'+id+'" '+(id===campaignMapDifficulty?'selected ':'')+(!difficultyUnlocked(campaignProfileInit(),d.id,id)?'disabled':'')+'>'+v.name+(!difficultyUnlocked(campaignProfileInit(),d.id,id)?' · locked':v.rank<=d.mastery?' · conquered':'')+'</option>').join('')+'</select><small>Enemy HP '+Math.round(DIFFICULTIES[campaignMapDifficulty].hp*100)+'% · damage '+Math.round(DIFFICULTIES[campaignMapDifficulty].damage*100)+'%</small></section>'+
+ '<div class="cm-record"><span>Personal best · '+DIFFICULTIES[campaignMapDifficulty].name+'</span><b>'+(d.best===null?'—':d.best.toLocaleString('en-US'))+'</b></div>'+
  '<button class="btn cm-start" type="button" data-front="campaign-start" '+(!d.unlocked?'disabled':'')+'>'+(d.conquered?'Revisit Region':d.unlocked?'Enter Region':'Region Locked')+'</button>'+
  (!d.unlocked?'<p class="cm-lock-note">Conquer '+BIOME_DATA[d.previous].name+' to unlock.</p>':'')+
  '<button type="button" class="btn cm-score" data-front="campaign-scores">View regional scores</button>';
 }
-function campaignMapOpen(reset=false){regionalRelicSync(loadedSave?.state);const rows=campaignMapData();if(reset||!rows.some(r=>r.id===campaignMapSelected))campaignMapSelected=campaignMapDefault(rows);campaignMapRender();front('campaignMapView');}
-function campaignMapSelect(id){if(!CAMPAIGN_MAP.some(r=>r.id===id))return;campaignMapSelected=id;campaignMapRender();$('#cmNodes').querySelector('[data-cm-region="'+id+'"]')?.focus({preventScroll:true});}
-function campaignMapStart(){const id=campaignMapSelected;if(!campaignMapCanStart(id))return;$('#campaignLength').value='5';$('#campaignRegion').value=id;biomeMenu();$('#cmChosenRegion').textContent=BIOME_DATA[id].name;$('#nameError').textContent='';$('#playerName').value=profile.name;front('newGameView');$('#playerName').focus();}
-function campaignMapScores(){if(!CAMPAIGN_MAP.some(r=>r.id===campaignMapSelected))return;$('#scoreLength').value=campaignMapSelected==='valley'?'5':campaignMapSelected;showScores();}
-function campaignMapInit(){$('#cmNodes').addEventListener('click',ev=>{const b=ev.target.closest('[data-cm-region]');if(b)campaignMapSelect(b.dataset.cmRegion);});}
+function campaignMapOpen(reset=false){regionalRelicSync(loadedSave?.state);const rows=campaignMapData();if(reset||!rows.some(r=>r.id===campaignMapSelected)){campaignMapSelected=campaignMapDefault(rows);campaignMapDifficulty='normal';}campaignMapRender();front('campaignMapView');}
+function campaignMapSelect(id){if(!CAMPAIGN_MAP.some(r=>r.id===id))return;if(campaignMapSelected!==id)campaignMapDifficulty='normal';campaignMapSelected=id;campaignMapRender();$('#cmNodes').querySelector('[data-cm-region="'+id+'"]')?.focus({preventScroll:true});}
+function campaignMapStart(){const id=campaignMapSelected;if(!campaignMapCanStart(id)||!difficultyUnlocked(campaignProfileInit(),id,campaignMapDifficulty))return;$('#campaignLength').value='5';$('#campaignRegion').value=id;biomeMenu();if(campaignMapDifficulty!=='normal')$('#campaignLength').disabled=true;$('#cmChosenRegion').textContent=BIOME_DATA[id].name+(campaignMapDifficulty==='normal'?'':' · '+DIFFICULTIES[campaignMapDifficulty].name);$('#nameError').textContent='';$('#playerName').value=profile.name;front('newGameView');$('#playerName').focus();}
+function campaignMapScores(){if(!CAMPAIGN_MAP.some(r=>r.id===campaignMapSelected))return;$('#scoreLength').value=campaignMapSelected==='valley'?'5':campaignMapSelected;$('#scoreDifficulty').value=campaignMapDifficulty;showScores();}
+function campaignMapInit(){$('#cmDetail').addEventListener('change',ev=>{if(ev.target.id==='cmDifficulty'&&difficultyUnlocked(campaignProfileInit(),campaignMapSelected,ev.target.value)){campaignMapDifficulty=ev.target.value;campaignMapRender();$('#cmDifficulty')?.focus();}});$('#cmNodes').addEventListener('click',ev=>{const b=ev.target.closest('[data-cm-region]');if(b)campaignMapSelect(b.dataset.cmRegion);});}

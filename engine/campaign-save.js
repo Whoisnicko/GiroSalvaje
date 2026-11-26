@@ -1,5 +1,19 @@
 /* Campaign schema and permanent deck receipts. Route economy is versioned; legacy runs retain their original rewards. */
 const CAMPAIGN_SAVE_VERSION=18;
+const DIFFICULTIES=Object.freeze({
+ normal:Object.freeze({name:'Normal',hp:1,damage:1,rank:1}),
+ veteran:Object.freeze({name:'Veteran',hp:1.2,damage:1.15,rank:2}),
+ nightmare:Object.freeze({name:'Nightmare',hp:1.4,damage:1.3,rank:3})
+});
+function difficultyId(id){return Object.hasOwn(DIFFICULTIES,id)?id:'normal';}
+function campaignDifficulty(state=S){return state?.sandbox||state?.campaign?.maxWaves!==5?'normal':difficultyId(state.campaign.difficulty);}
+function normalizeMastery(p){const conquered=normalizeRegionalRewards(p),out={};for(const id of ['valley','forest','frozen','ashen','cathedral']){const rank=Number.isInteger(p.mastery?.[id])?Math.max(0,Math.min(3,p.mastery[id])):0;out[id]=Math.max(rank,conquered.includes(id)?1:0);}return out;}
+function mergeMastery(a,b){const x=normalizeMastery(a),y=normalizeMastery(b);return Object.fromEntries(Object.keys(x).map(id=>[id,Math.max(x[id],y[id])]));}
+function difficultyUnlocked(profile,region,id){return Object.hasOwn(DIFFICULTIES,id)&&DIFFICULTIES[id].rank<=1+(normalizeMastery(profile)[region]||0);}
+function masteryGrant(state=S){if(!state||state.sandbox||state.phase!=='win'||state.campaign?.maxWaves!==5||state.wave!==6)return false;const p=campaignProfileInit(),region=biomeId(state),rank=DIFFICULTIES[campaignDifficulty(state)].rank,mastery=normalizeMastery(p);if(!difficultyUnlocked(p,region,campaignDifficulty(state)))return false;if(mastery[region]>=rank)return true;return campaignProfileCommit({...p,mastery:{...mastery,[region]:rank}});}
+function scoreDifficulty(r){return r?.maxWaves===5?difficultyId(r.difficulty):'normal';}
+function scoreBucket(r){return String(scoreRegion(r))+'|'+scoreDifficulty(r);}
+
 const DEFAULT_CAMPAIGN_WAVES=5, CLASSIC_CAMPAIGN_WAVES=10;
 function campaignLimit(state=S){return state?.sandbox?(['forest','frozen','ashen','cathedral'].includes(state.biomeId)?5:CLASSIC_CAMPAIGN_WAVES):state?.campaign?.maxWaves===10?10:DEFAULT_CAMPAIGN_WAVES;}
 const CAMPAIGN_PROFILE_KEY='gs22.campaignProfile.v1';
@@ -13,7 +27,7 @@ const CampaignSave=(()=>{
  function metadata(id,raw,legacyTerminal=false){
   const m=object(raw)?raw:{};
   const maxWaves=m.id===id&&m.maxWaves===5?5:10,route=Journey.normalizeRoute(m.route).filter(n=>Number(n.slice(1,-2))<maxWaves);
-  return {version:1,id,maxWaves,routeEconomy:m.id===id&&m.routeEconomy===1?1:0,seed:m.id===id&&Number.isInteger(m.seed)&&m.seed>=0&&m.seed<=0xffffffff?m.seed:hash(id),nodeId:route.at(-1)||null,route,
+  return {version:1,id,maxWaves,difficulty:maxWaves===5&&m.id===id?difficultyId(m.difficulty):'normal',routeEconomy:m.id===id&&m.routeEconomy===1?1:0,seed:m.id===id&&Number.isInteger(m.seed)&&m.seed>=0&&m.seed<=0xffffffff?m.seed:hash(id),nodeId:route.at(-1)||null,route,
    claimedWaveRewards:Array.isArray(m.claimedWaveRewards)?[...new Set(m.claimedWaveRewards.filter(x=>Number.isInteger(x)&&x>=1&&x<maxWaves))]:[],legacyTerminal:legacyTerminal||m.legacyTerminal===true};
  }
  function valid(v){const s=v?.state;return !!(object(v)&&[14,15,16,17,18].includes(v.version)&&object(s)&&!s.sandbox&&(['prep','fight','reward','win','over'].includes(s.phase)||(v.version>=16&&s.phase==='journey'&&s.wave>=2&&s.wave<=10))&&Number.isInteger(s.wave)&&s.wave>=1&&s.wave<=11&&(v.version<18||([5,10].includes(s.campaign?.maxWaves)&&(s.phase==='win'?s.wave===s.campaign.maxWaves+1:s.wave<=s.campaign.maxWaves)))&&['units','enemies','ter','bench','held','wins','seenKinds','shots','hand','deck','offer','grid','queue','nextQueue','fx','floats','parts','zones'].every(k=>Array.isArray(s[k]))&&s.bench.length===3&&s.grid.length===9&&Number.isFinite(s.gold)&&Number.isFinite(s.wallHp)&&Number.isFinite(s.maxUnits)&&(v.version===14||(validId(v.runId)&&s.campaign?.version===1&&s.campaign.id===v.runId)));}
@@ -29,7 +43,7 @@ function campaignProfileNormalize(v){
  if(!v||v.version!==1||!Array.isArray(v.baseDeck)||!Array.isArray(v.claims))throw Error('Invalid permanent profile');
  const baseDeck=v.baseDeck.filter(campaignCardId);if(!baseDeck.length)throw Error('Empty starting deck');
  const claims=new Map();for(const r of v.claims){if(!CampaignSave.validId(r?.runId)||!campaignCardId(r?.cardId))throw Error('Invalid reward receipt');if(!claims.has(r.runId))claims.set(r.runId,{runId:r.runId,cardId:r.cardId});}
- return {version:1,baseDeck,claims:[...claims.values()],forestUnlocked:v.forestUnlocked===true||v.frozenUnlocked===true||v.ashenUnlocked===true||v.cathedralUnlocked===true,frozenUnlocked:v.frozenUnlocked===true||v.ashenUnlocked===true||v.cathedralUnlocked===true,ashenUnlocked:v.ashenUnlocked===true||v.cathedralUnlocked===true,cathedralUnlocked:v.cathedralUnlocked===true,regionalRewards:normalizeRegionalRewards(v)};
+ return {version:1,baseDeck,claims:[...claims.values()],forestUnlocked:v.forestUnlocked===true||v.frozenUnlocked===true||v.ashenUnlocked===true||v.cathedralUnlocked===true,frozenUnlocked:v.frozenUnlocked===true||v.ashenUnlocked===true||v.cathedralUnlocked===true,ashenUnlocked:v.ashenUnlocked===true||v.cathedralUnlocked===true,cathedralUnlocked:v.cathedralUnlocked===true,regionalRewards:normalizeRegionalRewards(v),mastery:normalizeMastery(v)};
 }
 function campaignProfileDisk(){const raw=localStorage.getItem(CAMPAIGN_PROFILE_KEY);return raw===null?null:campaignProfileNormalize(JSON.parse(raw));}
 function campaignProfileMerge(a,b){
@@ -38,12 +52,12 @@ function campaignProfileMerge(a,b){
  const baseDeck=a.baseDeck.slice(),counts=new Map(),seen=new Map();for(const id of baseDeck)counts.set(id,(counts.get(id)||0)+1);
  for(const id of b.baseDeck){const n=(seen.get(id)||0)+1;seen.set(id,n);if(n>(counts.get(id)||0))baseDeck.push(id);}
  const claims=new Map(a.claims.map(r=>[r.runId,r]));for(const r of b.claims)if(!claims.has(r.runId))claims.set(r.runId,r);
- return {version:1,baseDeck,claims:[...claims.values()],forestUnlocked:a.forestUnlocked===true||b.forestUnlocked===true||a.frozenUnlocked===true||b.frozenUnlocked===true||a.ashenUnlocked===true||b.ashenUnlocked===true||a.cathedralUnlocked===true||b.cathedralUnlocked===true,frozenUnlocked:a.frozenUnlocked===true||b.frozenUnlocked===true||a.ashenUnlocked===true||b.ashenUnlocked===true||a.cathedralUnlocked===true||b.cathedralUnlocked===true,ashenUnlocked:a.ashenUnlocked===true||b.ashenUnlocked===true||a.cathedralUnlocked===true||b.cathedralUnlocked===true,cathedralUnlocked:a.cathedralUnlocked===true||b.cathedralUnlocked===true,regionalRewards:[...new Set([...normalizeRegionalRewards(a),...normalizeRegionalRewards(b)])]};
+ return {version:1,baseDeck,claims:[...claims.values()],forestUnlocked:a.forestUnlocked===true||b.forestUnlocked===true||a.frozenUnlocked===true||b.frozenUnlocked===true||a.ashenUnlocked===true||b.ashenUnlocked===true||a.cathedralUnlocked===true||b.cathedralUnlocked===true,frozenUnlocked:a.frozenUnlocked===true||b.frozenUnlocked===true||a.ashenUnlocked===true||b.ashenUnlocked===true||a.cathedralUnlocked===true||b.cathedralUnlocked===true,ashenUnlocked:a.ashenUnlocked===true||b.ashenUnlocked===true||a.cathedralUnlocked===true||b.cathedralUnlocked===true,cathedralUnlocked:a.cathedralUnlocked===true||b.cathedralUnlocked===true,regionalRewards:[...new Set([...normalizeRegionalRewards(a),...normalizeRegionalRewards(b)])],mastery:mergeMastery(a,b)};
 }
 function campaignProfileApply(p){campaignProfile=p;META.deck=[...p.baseDeck,...p.claims.map(r=>r.cardId)];}
 function campaignProfileInit(){
  if(campaignProfile)return campaignProfile;
- const fallback={version:1,baseDeck:META.deck.slice(),claims:[],forestUnlocked:false,frozenUnlocked:false,ashenUnlocked:false,cathedralUnlocked:false,regionalRewards:[]};
+ const fallback={version:1,baseDeck:META.deck.slice(),claims:[],forestUnlocked:false,frozenUnlocked:false,ashenUnlocked:false,cathedralUnlocked:false,regionalRewards:[],mastery:{valley:0,forest:0,frozen:0,ashen:0,cathedral:0}};
  try{const p=campaignProfileDisk();if(p)campaignProfileApply(p);else{localStorage.setItem(CAMPAIGN_PROFILE_KEY,JSON.stringify(fallback));campaignProfileApply(fallback);}campaignProfileIssue=false;}
  catch(e){campaignProfileIssue=true;campaignProfileApply(fallback);}
  return campaignProfile;
