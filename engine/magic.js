@@ -77,6 +77,7 @@ function magicConfirm(p,now=performance.now()){
  const id=magicRune,d=SPELL_DATA[id],target=magicTarget(id,p);
  if(!target){magicSetMessage('Invalid target — aim inside the battlefield or select a living unit.');return false;}
  if(!magicAvailable(id)){magicCancel('Spell unavailable.');return false;}
+ if(id==='barrier'&&!spellBarrierPlan(target.entity,masterySpell(id)).length){magicSetMessage('Stronger shields already active. Choose another guardian.');return false;}
  const m=magicData();if(!m.infinite)m.mana=Math.max(0,m.mana-d.mana);m.cooldowns[id]=m.noCooldown?0:d.cd;
 
  const outcome=spellExecute(id,target);

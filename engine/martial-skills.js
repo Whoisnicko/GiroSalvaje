@@ -72,10 +72,12 @@ function martialStormPulse(h){
  for(const e of martialNearby(h,d.radius))hitEnemy(e,d.damage,'steel',{kb:0,directAbility:true});
  martialEvent('storm',h.x,h.y,{r:d.radius,t:.42,T:.42});sfx('heroStorm');
 }
+function martialCryTargets(h,d){return S.units.filter(u=>!u.down&&u.hp>0&&(!u.type||!BASE[u.type]?.support)&&Math.hypot(u.x-h.x,u.y-h.y)<=d.radius);}
 function martialCast(id){
  if(martialAvailability(id)!=='Ready')return false;
  const h=S.hero,m=h.martial,d=talentSkill(id,h),lab=martialLab(),input=martialMovement(),dir=input.len?martialDirection(input.dx,input.dy,h.facing):m.direction;
  if(id==='charge'){const end=heroClampLanding({x:h.x+dir.x*d.distance,y:h.y+dir.y*d.distance});if(!end||Math.hypot(end.x-h.x,end.y-h.y)<1)return false;}
+ if(id==='cry'&&!(talentHas(h,'juggernaut',1)?martialNearby(h,d.radius):martialCryTargets(h,d)).length){floatText(h.x,h.y-45,'No eligible targets','gold',11);return false;}
  if(!lab?.infinite)m.rage=Math.max(0,m.rage-d.cost);m.cooldowns[id]=lab?.noCooldown?0:d.cd;
  if(id==='cleave'){
   m.direction=dir;if(Math.abs(dir.x)>.01)h.facing=Math.sign(dir.x);h.lunge=.20;
@@ -91,7 +93,7 @@ function martialCast(id){
   const targets=martialNearby(h,d.radius);for(const e of targets)e.heroTauntUntil=Math.max(e.heroTauntUntil||0,S.fightT+(e.boss?d.bossDuration:d.duration));
   martialEvent('taunt',h.x,h.y,{r:d.radius,t:.8,T:.8});floatText(h.x,h.y-45,'Challenge · '+targets.length+' taunted','gold',12);sfx('heroTaunt');
  }else if(id==='cry'){
-  let count=0;for(const u of S.units){if(!u.down&&u.hp>0&&Math.hypot(u.x-h.x,u.y-h.y)<=d.radius){u.warCryUntil=Math.max(u.warCryUntil||0,S.fightT+d.duration);count++;}}
+  const targets=martialCryTargets(h,d);for(const u of targets)u.warCryUntil=Math.max(u.warCryUntil||0,S.fightT+d.duration);const count=targets.length;
   martialEvent('cry',h.x,h.y,{r:d.radius,t:.8,T:.8});floatText(h.x,h.y-45,'War Cry · '+count+' allies','gold',12);sfx('heroCry');
  }
  heroRender();persist();return true;

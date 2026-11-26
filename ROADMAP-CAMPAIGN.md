@@ -118,3 +118,6 @@ v7.46 13/13 validated. Normal/Veteran/Nightmare regional difficulty (100/120/140
 
 ## v22-alpha.7.48 — Replayability II-A / Global Balance handoff
 User confirmed live 7.48 and 8/16 checks, no errors reported. Remaining 8 browser checks, II-B and III deferred by user (BACKLOG-REPLAYABILITY.md). Global Balance active. Source baseline captured; no gameplay changes. Next: Advanced Animations, Professional Polish, Steam Release & Marketing. Historical approvals preserved.
+
+## v22-alpha.7.49 — Global Balance II
+Guardian training conservation, live Banshee aura, resource protection for no-effect Sorcerer Barrier and Warlord War Cry/taunt. Base stats and mastery unchanged; targeted tests passed, browser and full regression pending. Replayability backlog preserved. Next: Global Balance III.

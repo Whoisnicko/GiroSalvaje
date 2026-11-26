@@ -69,6 +69,11 @@ function spellHarvestDeath(e){
  delete e.arcaneHarvestId;delete e.arcaneHarvestUntil;cast.left--;S.gold++;masteryCredit('harvest',cast.token);
  spellEvent('arcaneSoul',e.x,e.y,.70,{r:16});burst(e.x,e.y,'leaf',9,85);feelSoul(e.x,e.y);sfx('arcaneSoul');return 1;
 }
+function spellBarrierPlan(u,d){
+ const targets=[{ally:u,n:Math.max(1,Math.round(u.maxHp*d.hpFraction))}];
+ if(d.splashShield)for(const ally of S.units)if(ally!==u&&!ally.down&&ally.hp>0&&Math.hypot(ally.x-u.x,ally.y-u.y)<=d.splashRange)targets.push({ally,n:Math.max(1,Math.round(ally.maxHp*d.splashShield))});
+ return targets.filter(({ally,n})=>!((ally.arcaneShield||0)>n&&ally.arcaneShieldTime>0));
+}
 function spellExecute(id,target){
  const d=masterySpell(id),token=masteryCastToken();
  if(!d?.implemented)return 'preview only (no combat effect).';
@@ -84,8 +89,8 @@ function spellExecute(id,target){
  if(id==='barrier'){
   const u=target.entity,capacity=Math.max(1,Math.round(u.maxHp*d.hpFraction));
   const apply=(ally,n)=>{if((ally.arcaneShield||0)>n&&ally.arcaneShieldTime>0)return false;ally.arcaneShield=n;ally.arcaneShieldMax=n;ally.arcaneShieldTime=d.duration;ally.arcaneShieldToken=token;spellEvent('arcaneShield',ally.x,ally.y,.55,{r:radius(ally)+9});floatText(ally.x,ally.y-radius(ally)-16,'+'+n+' shield','soul',12);return true;};
-  apply(u,capacity);let nearby=0;if(d.splashShield)for(const ally of S.units){if(ally!==u&&!ally.down&&ally.hp>0&&Math.hypot(ally.x-u.x,ally.y-u.y)<=d.splashRange&&apply(ally,Math.max(1,Math.round(ally.maxHp*d.splashShield))))nearby++;}
-  sfx('arcaneShield');return capacity+' shield HP · '+d.duration+'s.'+(nearby?' '+nearby+' nearby guardians shielded.':'');
+  let nearby=0,primary=false;for(const {ally,n} of spellBarrierPlan(u,d))if(apply(ally,n)){if(ally===u)primary=true;else nearby++;}
+  sfx('arcaneShield');return (primary?capacity+' shield HP · '+d.duration+'s.':'Stronger primary shield retained.')+(nearby?' '+nearby+' nearby guardians shielded.':'');
  }
  if(id==='lightning'){
   const chain=spellChain(target.entity,d);

@@ -260,9 +260,9 @@ const skelCap = lvl => [3, 4, 6][lvl - 1];
 const BANSHEE_RANGE = [120, 165, 220];
 /* Cuánto potencia la Banshee a un monstruo según dónde está (vale la Banshee más fuerte que lo cubra). */
 function bansheeOn(u){
-  if (!u || u.down || u.y >= WORLD_H || !S.units.includes(u)) return 0;
+  if (!u || u.down || u.hp<=0 || u.y >= WORLD_H || !S.units.includes(u)) return 0;
   let b = 0;
-  for (const s of S.units) if (s.type === 'B' && s !== u && !s.down && !frostFrozen(s) && dist(s, u) <= stats('B',s.lvl,s).range) b = Math.max(b, bansheeBuff(s.lvl));
+  for (const s of S.units) if (s.type === 'B' && s !== u && !s.down && s.hp>0 && !frostFrozen(s) && dist(s, u) <= stats('B',s.lvl,s).range) b = Math.max(b, bansheeBuff(s.lvl));
   return b;
 }
 const MAX_UNITS = 8, MAX_WAVE = 10, WORLD_H = 260, LOGIC_H = 322, WALL_X = 40, TILE = 52, ROWS = 5; // debajo del campo (260-322) va la reserva
@@ -443,7 +443,7 @@ function stats(type, lvl, u, state=S){
   if (type === 'A') cd /= state.mods.archSpd;
   if (type === 'M') { dmg *= state.mods.mageDmg; splash *= state.mods.splash; }
   if (type === 'L') { hp = b.hp + 10 * state.wave; dmg = b.dmg + 2 * state.wave; }
-  if (u && u.train) { hp *= 1 + .5 * u.train; dmg *= 1 + .5 * u.train; } // entrenamiento en la reserva: +50% por oleada
+  if (u && u.train) { const factor=1+.5*guardianTraining(u); hp *= factor; dmg *= factor; } // entrenamiento en la reserva: +50% por oleada
   if (u && u.pile > 1) { hp *= u.pile; dmg *= u.pile; } // una pila de 2 pelea como 2 monsters juntos
   if(artifactOwned("bloodfang",state)) dmg*=1.2;
   if(artifactOwned("boneplate",state)) hp*=1.25;
@@ -509,10 +509,14 @@ function summon(type){
 }
 const mergeable = (a, b) => a && b && a !== b && a.type === b.type && a.lvl === b.lvl && a.lvl < 3 && !a.temp && !b.temp && a.type !== 'L';
 /* Fusión manual: soltar un monstruo sobre otro igual los apila; al juntar 3 (o 2 con Necromancy) se fusionan. */
+// Copy-weighted average; both the fusion and any leftover stack inherit the same average.
+function guardianTraining(u){return Number.isFinite(u?.train)?Math.max(0,Math.min(3,u.train)):0;}
+function mergeTraining(target,src){const a=target.pile,b=src.pile;return (guardianTraining(target)*a+guardianTraining(src)*b)/(a+b);}
+function trainingPercent(u){return Math.round(guardianTraining(u)*500)/10;}
 function doMerge(target, src, chosenInfusion){
   const keptInfusion=infusionMergeChoice(target,src,chosenInfusion);
   prepUndoRecord('Merge / stack '+NAMES[target.type]);
-  const total = target.pile + src.pile, train = Math.max(target.train || 0, src.train || 0);
+  const total = target.pile + src.pile, train = mergeTraining(target,src);
   removeUnit(src);
   if (total < S.mods.mergeN) {
     target.pile = total; target.train = train; if(keptInfusion)target.infusion=keptInfusion; infusionReset(target); refreshHp(target);
@@ -526,7 +530,7 @@ function doMerge(target, src, chosenInfusion){
   removeUnit(target);
   if (bi >= 0) S.bench[bi] = nu; else S.units.push(nu);
   if (bi < 0) fieldUnits().forEach(o => { if (o !== nu && Math.hypot(o.x - nu.x, o.y - nu.y) < radius(o) + radius(nu) + 2) { const p = findFree(o, o.x, o.y, null); if (p) { o.x = p.x; o.y = p.y; } } });
-  if (leftover > 0) { const lu = makeUnit(target.type, target.lvl); lu.pile = leftover; refreshHp(lu); if (!(fieldCount() + leftover <= S.maxUnits && placeNew(lu)) && !toBench(lu)) S.gold += 3; }
+  if (leftover > 0) { const lu = makeUnit(target.type, target.lvl); lu.pile = leftover; lu.train=train; refreshHp(lu); if (!(fieldCount() + leftover <= S.maxUnits && placeNew(lu)) && !toBench(lu)) S.gold += 3; }
   S.sel = nu;
   S.fx.push({ k:'fusion', x:nu.x, y:nu.y, t:0.9, T:0.9 });
   burst(nu.x, nu.y, 'gold', 20, 160); burst(nu.x, nu.y, 'soul', 10, 110); S.shake = Math.max(S.shake, 3);
@@ -931,7 +935,7 @@ function endWave(){
   S.units.forEach(u => { if (u.down) { u.down = false; floatText(u.hx ?? u.x, (u.hy ?? u.y) - 26, 'Revived!', 'leaf', 11); } if (u.hx != null) { u.x = u.hx; u.y = u.hy; } refreshHp(u); });
   // Los monsters que esperaron en la reserva entrenan: +50% de vida y daño permanente (máximo +150%).
   let trained = 0;
-  S.bench.forEach(u => { if (u && u.train < 3) { u.train++; refreshHp(u); trained++; floatText(u.x, u.y - 30, `Trained! +${u.train * 50}%`, 'leaf', 11); } });
+  S.bench.forEach(u => { if (u && guardianTraining(u) < 3) { u.train=Math.min(3,guardianTraining(u)+1); refreshHp(u); trained++; floatText(u.x, u.y - 30, `Trained! +${trainingPercent(u)}%`, 'leaf', 11); } });
   if (trained) { sfx('coin'); setTimeout(() => tip('train'), 700); }
   S.zones = []; S.shots = []; S.aim = null;
   if (S.mods.wallRegen) S.wallHp = Math.min(S.wallMax, S.wallHp + S.mods.wallRegen);
@@ -1009,6 +1013,7 @@ function askMergeConfirm(target, src){
   o.innerHTML = `<div class="panel confirm"><h2>${fuse ? 'Merge?' : 'Stack?'}</h2>
     <div class="cm-row">${img(USPR[src.type])}<span class="cm-plus">+</span>${img(USPR[target.type])}<span class="cm-plus">→</span>${fuse ? `<span class="cm-res">${img(USPR[target.type])}<b>${'★'.repeat(target.lvl + 1)}</b></span>` : `<span class="cm-res"><b>${total}/${S.mods.mergeN}</b></span>`}</div>
     <p>${fuse ? `Your ${total} <b>${name}</b> merge into <b>${NAMES[target.type]} ${'★'.repeat(target.lvl + 1)}</b>.` : `Stack <b>${total} ${name}</b> (${total}/${S.mods.mergeN}). Add ${S.mods.mergeN - total} more to merge.`}</p>
+    <p>Combined training: +${trainingPercent({train:mergeTraining(target,src)})}% HP / ATK.</p>
     ${infusionMergeHTML(target,src)}
     <label class="cm-ask"><input type="checkbox" id="noAsk"> Do not ask again</label>
     <div class="btns"><button class="go" data-act="mergeYes">${fuse ? 'Merge' : 'Stack'}</button><button class="btn" data-act="mergeNo">Cancel</button></div></div>`;

@@ -62,7 +62,7 @@ function tacticalModel(e){
   if(e.type==='N')add('skull','Skeletons raised',(e.skels||0)+' / '+skelCap(e.lvl));if(e.type==='B')add('spark','Aura bonus','+'+Math.round(bansheeBuff(e.lvl)*100)+'%');
   if(e.arcaneShield>0&&e.arcaneShieldTime>0&&!e.down)tags.push('Soul Barrier '+tacNum(e.arcaneShield,0)+' HP · '+tacNum(e.arcaneShieldTime)+'s');
   if(infusionOf(e))tags.push(infusionOf(e).name);
-  if(e.pile>1)tags.push('Stack '+e.pile+'/'+S.mods.mergeN);if(e.train)tags.push('Training +'+e.train*50+'% HP/ATK');if(bf)tags.push('Banshee +'+Math.round(bf*100)+'%');if(haste>1&&!support)tags.push('Dragon Roar ×2');if(e.temp)tags.push('Temporary');tags.push(e.down?'Fallen':bench?'Reserve':'Active');
+  if(e.pile>1)tags.push('Stack '+e.pile+'/'+S.mods.mergeN);if(e.train)tags.push('Training +'+trainingPercent(e)+'% HP/ATK');if(bf)tags.push('Banshee +'+Math.round(bf*100)+'%');if(haste>1&&!support)tags.push('Dragon Roar ×2');if(e.temp)tags.push('Temporary');tags.push(e.down?'Fallen':bench?'Reserve':'Active');
   for(const id of (S.artifacts||[])){if(id==='bloodfang'&&!support||id==='boneplate'||id==='hourglass'&&!support||id==='lens'&&base.ranged)tags.push(SHOP_ARTIFACTS[id].name);}
  }
  return {enemy,name,portrait,role,note,stars,hp,max,rows,tags,combat};
