@@ -41,6 +41,7 @@ function draw(){
   }
   for (const z of S.zones) { ctx.fillStyle = colors.muted; ctx.globalAlpha = .14 + .06 * Math.sin(t * 12); ctx.beginPath(); ctx.arc(z.x, z.y, z.r, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1; }
 
+  bossDrawWarnings(W);
   feelDraw('ground');
   drawInkAltar(t);
 
