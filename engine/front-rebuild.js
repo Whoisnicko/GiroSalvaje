@@ -3,12 +3,14 @@
  const view=document.getElementById('campaignMapView'),stage=document.getElementById('cm61-stage'),world=document.getElementById('cm61-world');
  const art=new Image();art.onload=()=>document.documentElement.classList.add('g61-assets-ready');art.onerror=()=>document.documentElement.classList.remove('g61-assets-ready');art.src='assets/ui/gothic-controls-v61.webp?v=22a7p61';
  const homeAtlas=new Image();homeAtlas.onload=()=>document.documentElement.classList.add('g63-assets-ready');homeAtlas.onerror=()=>document.documentElement.classList.remove('g63-assets-ready');homeAtlas.src='assets/ui/gothic-controls-wide-v63.webp?v=22a7p63';
+ const loadV66=path=>new Promise((resolve,reject)=>{const img=new Image();img.onload=resolve;img.onerror=reject;img.src=path;});
+ Promise.all([loadV66('assets/ui/home-primary-v66.webp?v=22a7p66'),loadV66('assets/ui/home-secondary-v66.webp?v=22a7p66')]).then(()=>document.documentElement.classList.add('g66-home-ready')).catch(()=>document.documentElement.classList.remove('g66-home-ready'));
  if(!view||!stage||!world)return;
  // New art is loaded only when campaign opens. Keep the complete v62 fallback until both images decode.
  let campaignArtRequested=false, toolbarRequested=false;
  const loadCampaignArt=()=>{
   if(view.hidden)return;
-  if(!toolbarRequested){toolbarRequested=true;const toolbar=new Image();toolbar.onload=()=>document.documentElement.classList.add("g65-nav-ready");toolbar.onerror=()=>document.documentElement.classList.remove("g65-nav-ready");toolbar.src="assets/ui/campaign-nav-v65.webp?v=22a7p65";}
+  if(!toolbarRequested){toolbarRequested=true;const toolbar=new Image();toolbar.onload=()=>document.documentElement.classList.add("g65-nav-ready");toolbar.onerror=()=>document.documentElement.classList.remove("g65-nav-ready");toolbar.src="assets/ui/campaign-nav-v65.webp?v=22a7p65";loadV66("assets/ui/campaign-nav-v66.webp?v=22a7p66").then(()=>document.documentElement.classList.add("g66-nav-ready")).catch(()=>document.documentElement.classList.remove("g66-nav-ready"));}
   if(campaignArtRequested)return;
   campaignArtRequested=true;
   const load=path=>new Promise((resolve,reject)=>{const img=new Image();img.onload=resolve;img.onerror=reject;img.src=path;});
