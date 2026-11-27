@@ -212,7 +212,7 @@ Object.assign(URL_,GOTHIC_DATA.sprites);
 const artReady=Promise.resolve();
 const img=k=>`<img src="${URL_[k]}" alt="" decoding="async">`;
 const relicArt=r=>{if(r.id){const src=regionalRelicArt(r);return src?'<img class="regional-relic-art" src="'+src+'" alt="">':'<span class="regional-relic-fallback" aria-hidden="true">'+r.ic+'</span>';}const i=Number.isInteger(r.art)&&r.art>=0&&r.art<6?r.art:5;return `<span class="starter-relic-art" style="--relic-x:${(i%3)*50}%;--relic-y:${Math.floor(i/3)*100}%" aria-hidden="true"><span>${r.ic||"◆"}</span></span>`;};
-function rewardArt(o){const id=Object.keys(CARDS).find(k=>CARDS[k].n===o.n);const theme={'Ectoplasm':'niebla','Tough Flesh':'festin','Ancient Fire':'rugido','Soul Harvest':'cosecha','Full Moon':'aullido','Steady Claws':'manos','Fortified Altar':'ofrenda','Necromancy':'huesos'};return `<img src="${GOTHIC_DATA.cards[id||theme[o.n]||'cripta']}" alt="">`;}
+function rewardArt(o){const id=Object.keys(CARDS).find(k=>CARDS[k].n===o.n);const theme={'Ectoplasm':'niebla','Tough Flesh':'festin','Ancient Fire':'rugido','Soul Harvest':'cosecha','Full Moon':'aullido','Steady Claws':'manos','Fortified Altar':'ofrenda','Necromancy':'huesos'};return battleArtHTML(GOTHIC_DATA.cards[id||theme[o.n]||'cripta'],o.ic||'◆');}
 
 function visualPose(u,t){
   let v=VISUAL.get(u);
@@ -221,7 +221,15 @@ function visualPose(u,t){
   const cast=(u.type==='N'&&(u.skels||0)>v.skels)||((u.type==='B'||(u.kind==='cle'&&S.fx.some(f=>f.k==='ring'&&f.c==='gold'&&f.x===u.x&&f.y===u.y))||(u.kind&&enemyRanged(u))||(u.kind&&u.x<=WALL_X+(u.r||0)+3))&&u.cd>v.cd+.1);
   if((u.lunge>0&&!(v.lunge>0))||cast){v.attackStart=t;v.attackUntil=t+.36;}
   const dx=Number.isFinite(u.x)&&Number.isFinite(v.lastX)?u.x-v.lastX:0;
-  if(u.type&&!BASE[u.type]?.support){if(t<v.attackUntil&&Number.isFinite(u.lx)&&Math.abs(u.lx)>.15)v.face=Math.sign(u.lx);else if(u.moving&&Math.abs(dx)>.15)v.face=Math.sign(dx);}
+  if(u.type&&!BASE[u.type]?.support){
+    if(S.phase!=='fight'){v.face=1;v.attackUntil=0;v.target=null;}
+    else if(!u.down&&!frostFrozen(u)){
+      if(t<v.attackUntil&&u.lunge>0&&Number.isFinite(u.lx)&&Math.abs(u.lx)>.15)v.face=Math.sign(u.lx);
+      else if(u.moving){if(Math.abs(dx)>.015)v.face=Math.sign(dx);}
+      else if(v.target&&v.target.hp>0&&Number.isFinite(v.target.x)&&Math.abs(v.target.x-u.x)>.15)v.face=Math.sign(v.target.x-u.x);
+      else if(t>=v.attackUntil||!(u.lunge>0))v.face=1;
+    }
+  }
   v.lastX=u.x;v.down=!!u.down;v.cd=u.cd;v.skels=u.skels||0;v.lunge=u.lunge||0;
   if(u.down||frostFrozen(u))return {frame:0,rise:1,flipX:v.face<0,still:true};
   if(prefs.reduced||motionPreference.matches)return {frame:t<v.attackUntil?10:0,rise:1,flipX:v.face<0,still:true};
@@ -739,6 +747,7 @@ function update(dt){
   const banshees = S.units.filter(u => u.type === 'B' && !u.down);
   for (const u of S.units) {
     u.flash = Math.max(0, u.flash - dt); u.lunge = Math.max(0, u.lunge - dt); u.moving = false;
+    const visual=VISUAL.get(u);if(visual)visual.target=null;
     if (u.down||u.hp<=0||frostFrozen(u)) {frostClearMotion(u);continue;}                                   // caído: queda en el piso hasta la próxima oleada
     const st = stats(u.type, u.lvl, u);
     // Aura de la Banshee: +30/50/80% de daño y velocidad de ataque a los monsters cercanos
@@ -757,6 +766,7 @@ function update(dt){
     let tgt = null, best = 1e9;
     for (const e of alive) { const d = dist(e, u) - e.r - radius(u); if (d < best) { best = d; tgt = e; } }
     if (!tgt || best > frostRange(u,st.range)) continue;
+    if(visual)visual.target=tgt;
     u.cd -= dt * (S.buff.haste > 0 ? 2 : 1) * (1 + buff) * (warCry?1+cryStats.speedBonus:1) * synergyFactor(u,'attackRate') * catAttackRate(u) * relicGuardianFactor(u);
     if (u.cd > 0) continue;
     u.cd = st.cd;
@@ -1216,7 +1226,7 @@ function showDeck(){
     <button class="go" data-act="closedeck">Close</button></div>`;
   o.hidden = false; o.querySelector('[data-act="closedeck"]').focus();
 }
-function showOv(html){ heroCancelAim(false);heroClearKeys();magicCancel();closeBestiary();const o = $('#ov'); o.innerHTML = `<div class="panel">${html}</div>`; o.hidden = false; const b = o.querySelector('button'); if (b) b.focus(); }
+function showOv(html){ heroCancelAim(false);heroClearKeys();magicCancel();closeBestiary();const o = $('#ov'); const skin=outcomePanelClass(S?.phase);o.innerHTML = `<div class="panel ${skin}">${html}</div>`; o.hidden = false; const b = o.querySelector('button'); if (b) b.focus(); }
 function hideOv(){ $('#ov').hidden = true; }
 
 document.addEventListener('click', e => {
@@ -1322,8 +1332,8 @@ function restore(v){
  if(S.phase==='reward')showRewardRestored();if(S.phase==='journey')journeyShow();if(['win','over'].includes(S.phase))showEndRestored();
  persist();
 }
-function showRewardRestored(){showOv(`<h2>Choose your reward</h2><div class="offers">${S.offer.map((o,i)=>`<button class="offer" data-act="reward" data-i="${i}"><span class="ic">${rewardArt(o)}</span><span class="nm">${o.n}</span><span class="ds">${o.d}</span></button>`).join('')}</div>`);}
-function showEndRestored(){const claimed=campaignEndClaimed(),legacy=S.campaign?.legacyTerminal;showOv(`<h2>${S.phase==='win'?'The Altar stands!':'The Altar has fallen'}</h2><p>${S.phase==='win'?'You survived all '+campaignLimit()+' waves.':'You reached wave '+S.wave+' of '+campaignLimit()+'.'} ${S.kills} humans defeated.</p>${S.phase==='win'&&biomeId(S)==='valley'&&biomeUnlocked('forest')?'<p>Cursed Forest unlocked · select it in New Game.</p>':S.phase==='win'&&biomeId(S)==='forest'&&biomeUnlocked('frozen')?'<p>Frozen Wasteland unlocked · select it in New Game.</p>':S.phase==='win'&&biomeId(S)==='frozen'&&biomeUnlocked('ashen')?'<p>Ashen Kingdom unlocked · select it in New Game.</p>':S.phase==='win'&&biomeId(S)==='ashen'&&biomeUnlocked('cathedral')?'<p>The Fallen Cathedral unlocked · select it in New Game.</p>':S.phase==='win'&&biomeId(S)==='cathedral'?'<p>All five regional battles conquered!</p>':''}${S.phase==='win'&&campaignProfileInit().regionalRewards?.includes(biomeId(S))?'<p class="regional-unlock-note">Legendary regional relic available in Infernal Treasury.</p>':''}${challengeResultHTML(S)}${claimed?`<p>${legacy?'This completed legacy run is archived. Its reward status cannot be recovered safely.':'Your permanent card reward has been saved.'}</p><button class="go" data-front="home">Return to menu</button>`:`<p>Choose one card for your next run.</p><div class="cards-row">${S.endOffer.map((id,i)=>cardHTML(id,`data-act="endcard" data-i="${i}"`)).join('')}</div><p id="endRewardNotice" role="status"></p>`}<button class="btn" data-front="scores">View scores</button>`);}
+function showRewardRestored(){showOv(`<h2>Choose your reward</h2><div class="offers">${S.offer.map((o,i)=>`<button class="offer" data-act="reward" data-i="${i}"><span class="ic">${rewardArt(o)}</span><span class="nm">${o.n} <small class="reward-kind">· ${o.kind||'Reward'}</small></span><span class="ds">${o.d}</span></button>`).join('')}</div>`);}
+function showEndRestored(){const claimed=campaignEndClaimed(),legacy=S.campaign?.legacyTerminal;showOv(`<h2>${S.phase==='win'?'The Altar stands!':'The Altar has fallen'}</h2><p>${S.phase==='win'?'You survived all '+campaignLimit()+' waves.':'You reached wave '+S.wave+' of '+campaignLimit()+'.'} ${S.kills} humans defeated.</p>${outcomeSummary(S,campaignLimit(),BIOME_DATA[biomeId(S)].name)}${S.phase==='win'&&biomeId(S)==='valley'&&biomeUnlocked('forest')?'<p>Cursed Forest unlocked · select it in New Game.</p>':S.phase==='win'&&biomeId(S)==='forest'&&biomeUnlocked('frozen')?'<p>Frozen Wasteland unlocked · select it in New Game.</p>':S.phase==='win'&&biomeId(S)==='frozen'&&biomeUnlocked('ashen')?'<p>Ashen Kingdom unlocked · select it in New Game.</p>':S.phase==='win'&&biomeId(S)==='ashen'&&biomeUnlocked('cathedral')?'<p>The Fallen Cathedral unlocked · select it in New Game.</p>':S.phase==='win'&&biomeId(S)==='cathedral'?'<p>All five regional battles conquered!</p>':''}${S.phase==='win'&&campaignProfileInit().regionalRewards?.includes(biomeId(S))?'<p class="regional-unlock-note">Legendary regional relic available in Infernal Treasury.</p>':''}${challengeResultHTML(S)}${claimed?`<p>${legacy?'This completed legacy run is archived. Its reward status cannot be recovered safely.':'Your permanent card reward has been saved.'}</p><button class="go" data-front="home">Return to menu</button>`:`<p>Choose one card for your next run.</p><div class="cards-row">${S.endOffer.map((id,i)=>cardHTML(id,`data-act="endcard" data-i="${i}"`)).join('')}</div><p id="endRewardNotice" role="status"></p>`}<button class="btn" data-front="scores">View scores</button>`);}
 let frontHistory=[],frontCurrent=null;
 function frontHistoryStep(history,current,next){if(next==='homeView')return [];if(!current||current===next)return history;const i=history.lastIndexOf(next);return i>=0?history.slice(0,i):[...history,current];}
 function frontBack(){const target=frontHistory.at(-1);if(target==='campaignMapView'){campaignMapOpen();return;}if(target==='homeView'||!target){showHome();return;}front(target);}

@@ -1,0 +1,44 @@
+/* Final menu art pass: shipped frames and existing art. No card redesign. */
+#runePractice{background:radial-gradient(ellipse at 50% 0,#493529,#211d24 70%);border:6px solid #9b774b;border-image:url('assets/ui/frame-bronze-v19.svg') 12 stretch;box-shadow:0 20px 65px #000c}
+#runePractice .rune-heading{border-bottom:1px solid #907047;margin-bottom:8px}
+#runePractice .grimoire-seal{background:radial-gradient(#51402f,#181923);color:#f8d99c}
+#runePractice .rune-entry{background:linear-gradient(#36303a,#1d2029);color:#eddbb7;border-color:#8a7051}
+#runePractice .rune-entry[data-knowledge="sealed"] svg{filter:saturate(.55)}
+#runePractice .rune-entry[data-knowledge="learned"] .grimoire-index-state{color:#a7dbb6}
+#runePractice .rune-entry[data-knowledge="test"] .grimoire-index-state{color:#addfec}
+#runePractice .rune-entry[aria-pressed="true"]{background:linear-gradient(#dcc18a,#b58c52);color:#2b2017;border-color:#f4d29c;box-shadow:inset 0 0 0 2px #765033}
+#runePractice .rune-entry[aria-pressed="true"] .grimoire-index-state{color:#36291e}
+#runePractice .grimoire-spread{background:linear-gradient(90deg,#231913,#705034 49%,#362619 51%,#231913);border-color:#b99259}
+#runePractice .grimoire-page{background:repeating-linear-gradient(0deg,#70472108 0 1px,transparent 1px 4px),radial-gradient(ellipse,#f2e3c2,#e5ce9f 72%,#c5a16e);color:#30231d}
+#runePractice .grimoire-illustration{background:radial-gradient(ellipse,#f1dfb7,#d6b47f);border-color:#a27b4c}
+#runePractice .rune-drawing{border:5px solid #967346;border-image:url('assets/ui/frame-bronze-v19.svg') 12 stretch}
+#runePractice .grimoire-tiers span.mastery-owned{background:#654c36;color:#fce3b3}
+#runePractice button:focus-visible,#ov2 .hades-shop button:focus-visible,#ov .outcome-panel button:focus-visible,#ov .wave-reward-panel button:focus-visible{outline:2px solid #71cced;outline-offset:2px}
+#ov2 .hades-shop:not(.vault-rage) .shop-content{background:radial-gradient(ellipse at 50% 0,#34303b,#151c26 70%)}
+#ov2 .hades-shop .shop-balance{background:linear-gradient(#233d4d,#111c27);color:#a5ebff}
+#ov2 .hades-shop .shop-item{background:linear-gradient(145deg,#30303a,#141b25);border-color:#93734c}
+#ov2 .hades-shop .shop-item[data-shop-state="owned"]{border-color:#7eaf8c;background:linear-gradient(145deg,#25392f,#151d26)}
+#ov2 .hades-shop .shop-item[data-shop-state="owned"] .shop-buy:disabled{color:#a7e0b6;opacity:.85}
+#ov2 .hades-shop .shop-item[data-shop-state="unaffordable"] .shop-buy:disabled{color:#e0b8a1;opacity:.75}
+#ov2 .hades-shop .shop-item[data-shop-state="available"] .shop-buy:not(:disabled){background:linear-gradient(#2b514c,#132f31);color:#c7f4e5}
+#ov2 .hades-shop .shop-item[data-shop-state="test"] .shop-buy{color:#aadbec;opacity:.8}
+#ov2 .hades-shop .scroll-art{background:radial-gradient(ellipse,var(--scroll-color)22,#141a25);border-color:#ad8758}
+#ov2 .hades-shop .shop-foot .go{background:linear-gradient(#51402b,#261e23);color:#f5d7a5}
+#ov .outcome-panel,#ov .wave-reward-panel{--outcome-accent:#e3c28b;position:relative;background:radial-gradient(ellipse at top,#3b3032,#171d28 65%);color:#e7decf}
+#ov .outcome-win{--outcome-accent:#e6c78d;background:radial-gradient(ellipse at top,#4b402c,#17242a 60%,#141a23)}
+#ov .outcome-loss{--outcome-accent:#e5a08c;background:radial-gradient(ellipse at top,#4d292b,#211b26 58%,#151923)}
+#ov .outcome-panel h2,#ov .wave-reward-panel h2{color:var(--outcome-accent);text-shadow:0 2px #12131c}
+#ov .outcome-summary{width:100%;padding:8px;border:1px solid #856f51;background:#111923}
+#ov .outcome-region{margin:0 0 7px;text-align:center;color:var(--outcome-accent);font:700 12px/1.35 Georgia,serif}
+#ov .outcome-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+#ov .outcome-stats>div{min-width:0;display:grid;gap:3px;padding:6px 3px;text-align:center;border:1px solid #6d5944;background:linear-gradient(#30303b,#171e28)}
+#ov .outcome-stats small{font:10px/1.25 system-ui,sans-serif;color:#d4c4ad;overflow-wrap:anywhere}
+#ov .outcome-stats strong{font:700 clamp(16px,3vw,24px)/1.15 Georgia,serif;color:var(--outcome-accent)}
+#ov .wave-reward-panel .offer{background:linear-gradient(145deg,#2f303b,#161d27);border-color:#a18356;color:#f4dfbd}
+#ov .wave-reward-panel .offer .ic{position:relative;border:1px solid #94794c;background:#141b25;overflow:hidden}
+#ov .wave-reward-panel .offer .ic img{position:relative}
+#ov .wave-reward-panel .offer .ds{color:#d8d0c4}
+#ov .wave-reward-panel .reward-kind{color:#9ed7e9}
+body.reduce-motion #runePractice .grimoire-rune-seal svg,body.reduce-motion #ov2 .hades-shop .shop-item{animation:none!important;transition:none!important}
+@media(prefers-reduced-motion:reduce){#runePractice .grimoire-rune-seal svg,#ov2 .hades-shop .shop-item{animation:none!important;transition:none!important}}
+@media(max-width:440px){#ov .outcome-summary{padding:5px}#ov .outcome-stats>div{padding:5px 2px}#ov .outcome-region{font-size:11px}}
