@@ -1374,7 +1374,7 @@ resize=function(){
  const shared=compact&&logicalW>=650;
  // Do not relocate slots during a drag; cancel only if switching layout modes.
  if(wrap.classList.contains('shared-reserve')!==shared){if(S?.drag)cancelDrag();wrap.classList.toggle('shared-reserve',shared);}
- const availH=compact?stage.clientHeight:Infinity;if(availH<1)return;
+ const availH=(compact||document.querySelector(".wrap").classList.contains("hud-small"))?stage.clientHeight:Infinity;if(availH<1)return;
  const fit=fitBattlefield(w,availH,logicalW);
  if(!Number.isFinite(fit.scale)||fit.scale<=0)return;
  const density=Math.min(dpr,Math.sqrt(8294400/(fit.w*fit.h)));
@@ -1394,7 +1394,7 @@ resize=function(){
    wrap.style.setProperty('--reserve-width',Math.max(0,(logicalW-benchSlot(0).x+32)*scale)+'px');
  }
 };
-if(typeof ResizeObserver!=='undefined'){const stageObserver=new ResizeObserver(()=>{if(compactLayout())resize();});stageObserver.observe($('#battleViewport'));}
+if(typeof ResizeObserver!=='undefined'){const stageObserver=new ResizeObserver(()=>{if(compactLayout()||document.querySelector(".wrap").classList.contains("hud-small"))resize();});stageObserver.observe($('#battleViewport'));}
 document.addEventListener('click',ev=>{const b=ev.target.closest('[data-front]');if(!b||b.disabled)return;ev.preventDefault();const a=b.dataset.front;
  if(a==='home')showHome();if(a==='new')campaignMapOpen(true);if(a==='campaign')campaignMapOpen();if(a==='campaign-start')campaignMapStart();if(a==='campaign-scores')campaignMapScores();if(a==='campaign-sandbox')sandboxLaunchOpen();if(a==='new-confirm')beginNew();if(a==='credits')front('creditsView');if(a==='confirm'&&!$('#confirmView').hidden)launchNew(heroPending);if(a==='back')frontBack();if(a==='resume')closeFront();
  if(a==='continue'){try{if(S){closeFront();if(S.phase==='journey')journeyShow();}else if(loadedSave)restore(loadedSave);}catch(e){$('#homeError').textContent='Could not restore this run. Start a new one or import a backup.';}}

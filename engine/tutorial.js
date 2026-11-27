@@ -66,7 +66,7 @@ function tutorialRect(target){
   if(target==='formation')return {left:c.left+WALL_X*scale,top:c.top,width:(S.phase==='fight'?worldW()-WALL_X:zoneMax()-WALL_X)*scale,height:WORLD_H*scale};
   return {left:c.left+(benchSlot(0).x-28)*scale,top:c.top+WORLD_H*scale,width:(benchSlot(2).x-benchSlot(0).x+56)*scale,height:(LOGIC_H-WORLD_H)*scale};
  }
- const el=target&&document.querySelector(target);if(!el||!el.getClientRects().length)return null;const c=el.getBoundingClientRect();return {left:c.left,top:c.top,width:c.width,height:c.height};
+ const el=target&&document.querySelector(target);if(el&&typeof revealHudPane==="function")revealHudPane(el);if(!el||!el.getClientRects().length)return null;const c=el.getBoundingClientRect();return {left:c.left,top:c.top,width:c.width,height:c.height};
 }
 function tutorialPosition(lesson){
  const panel=tutorialEl('tutorialGuide'),spot=tutorialEl('tutorialSpot'),arrow=tutorialEl('tutorialPointer'),vw=innerWidth,vh=innerHeight,ui=Math.max(1,Number(document.documentElement.style.getPropertyValue('--ui-scale'))||1),pad=10*ui,gap=18*ui;
