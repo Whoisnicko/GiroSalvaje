@@ -7,7 +7,7 @@ const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { c
 const store = { get(k, d){ try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } }, set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
 
 /* ================= Sonido (Web Audio, todo sintetizado) ================= */
-const AU = { ctx:null, music:store.get('gs.music', true), sfx:store.get('gs.sfx', true), mGain:null, sGain:null, next:0, step:0, loop:0, track:'prep', last:{},voices:new Set(),count:{sfx:0,music:0},seed:0x6a09e667,noiseBuffer:null,ambBuffers:Object.create(null),ambient:null,timer:null };
+const AU = { ctx:null, music:store.get('gs.music', true), sfx:store.get('gs.sfx', true), mGain:null, sGain:null, next:0, step:0, loop:0, track:'prep',scoreKey:null,variants:Object.create(null),last:{},voices:new Set(),count:{sfx:0,music:0},seed:0x6a09e667,noiseBuffer:null,ambBuffers:Object.create(null),ambient:null,timer:null };
 const mtof = m => 440 * Math.pow(2, (m - 69) / 12);
 function audioInit(){
  if(document.hidden)return;if(AU.ctx){if(['suspended','interrupted'].includes(AU.ctx.state))try{Promise.resolve(AU.ctx.resume()).catch(()=>{});}catch(_){}return;}
@@ -15,17 +15,21 @@ function audioInit(){
 }
 function tone(f,dur,type='square',vol=.2,when=0,dest,f2){
  const group=dest===AU.mGain?'music':'sfx';if(!audio68Room(group)||!Number.isFinite(f)||f<=0||dur<=0)return;
- try{const t=Math.max(AU.ctx.currentTime,AU.ctx.currentTime+when),o=AU.ctx.createOscillator(),g=AU.ctx.createGain();o.type=type;o.frequency.setValueAtTime(f,t);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+dur);g.gain.setValueAtTime(Math.max(.0001,vol),t);g.gain.exponentialRampToValueAtTime(.0001,t+dur);o.connect(g);g.connect(dest||AU.sGain);audio68Track(o,[g],group);o.start(t);o.stop(t+dur+.02);}catch(_){}
+ try{const t=Math.max(AU.ctx.currentTime,AU.ctx.currentTime+when),o=AU.ctx.createOscillator(),g=AU.ctx.createGain();o.type=type;o.frequency.setValueAtTime(f,t);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+dur);g.gain.setValueAtTime(Math.max(.0001,vol),t);g.gain.exponentialRampToValueAtTime(.0001,t+dur);o.connect(g);g.connect(dest||AU.sGain);audio68Track(o,[g],group,g);o.start(t);o.stop(t+dur+.02);}catch(_){}
 }
 function noise(dur,vol=.2,freq=1200,when=0,dest,type='lowpass'){
  const group=dest===AU.mGain?'music':'sfx';if(!audio68Room(group)||dur<=0)return;
- try{const t=Math.max(AU.ctx.currentTime,AU.ctx.currentTime+when),buf=audio68NoiseBuffer(),s=AU.ctx.createBufferSource(),f=AU.ctx.createBiquadFilter(),g=AU.ctx.createGain();s.buffer=buf;f.type=type;f.frequency.value=freq;g.gain.setValueAtTime(Math.max(.0001,vol),t);g.gain.exponentialRampToValueAtTime(.0001,t+dur);s.connect(f);f.connect(g);g.connect(dest||AU.sGain);audio68Track(s,[f,g],group);s.start(t,audio68Random()*Math.max(0,buf.duration-dur),Math.min(dur,buf.duration));}catch(_){}
+ try{const t=Math.max(AU.ctx.currentTime,AU.ctx.currentTime+when),buf=audio68NoiseBuffer(),s=AU.ctx.createBufferSource(),f=AU.ctx.createBiquadFilter(),g=AU.ctx.createGain();s.buffer=buf;f.type=type;f.frequency.value=freq;g.gain.setValueAtTime(Math.max(.0001,vol),t);g.gain.exponentialRampToValueAtTime(.0001,t+dur);s.connect(f);f.connect(g);g.connect(dest||AU.sGain);audio68Track(s,[f,g],group,g);s.start(t,audio68Random()*Math.max(0,buf.duration-dur),Math.min(dur,buf.duration));}catch(_){}
 }
 function sfx(name){
   if (!AU.ctx || !AU.sfx || prefs.sfxVolume===0 || !audio68Room('sfx')) return;
-  const now = AU.ctx.currentTime, gap = { hit:.05, arrow:.06, fire:.12, enemyHit:.07, claw:.06, bite:.06, orb:.05, orbHit:.05, fireLaunch:.1, boom:.1, clank:.07, clash:.07, bolt:.08, grunt:.08, zap:.15, raise:.2, wail:1.5, arcaneBlock:.10, arcaneBreak:.15, arcaneSoul:.08 }[name] || AUDIO68.gap[name] || .035;
+  const now = AU.ctx.currentTime, gap = { hit:.05, arrow:.06, fire:.12, enemyHit:.07, claw:.06, bite:.06, orb:.05, orbHit:.05, fireLaunch:.1, boom:.1, clank:.07, clash:.07, bolt:.08, grunt:.08, zap:.15, raise:.2, wail:1.5, arcaneBlock:.10, arcaneBreak:.15, arcaneSoul:.08 }[name] || AUDIO69.gap[name] || AUDIO68.gap[name] || .035;
   if (AU.last[name]!==undefined && now - AU.last[name] < gap) return;
   AU.last[name] = now;
+  const variant=audio69Pick(name),[pitch,level,length]=AUDIO69.variants[variant];
+  const tone=(f,d,type='square',v=.2,w=0,dest,f2)=>audio69RawTone(f*pitch,d*length,type,v*level,w,dest,f2?f2*pitch:f2);
+  const noise=(d,v=.2,f=1200,w=0,dest,type='lowpass')=>audio69RawNoise(d*length,v*level,f*pitch,w,dest,type);
+  if(Object.hasOwn(AUDIO69.newCues,name)){audio69Recipe(AUDIO69.newCues[name],tone,noise);return;}
   switch (name) {
     case 'ui': tone(740,.065,'sine',.055);tone(1110,.07,'triangle',.025,.025);break;
     case 'summon': tone(92,.32,'sine',.18,0,null,46);[196,294,466].forEach((f,i)=>tone(f,.30,'triangle',.065,i*.045));noise(.19,.08,850,0,null,'bandpass');break;
@@ -78,7 +82,9 @@ function sfx(name){
     case 'win': [0, 4, 7, 12, 7, 12, 16].forEach((n, i) => tone(mtof(64 + n), .22, 'triangle', .14, i * .13)); break;
     case 'lose': [12, 7, 3, 0].forEach((n, i) => tone(mtof(57 + n), .35, 'triangle', .14, i * .22)); break;
   }
+  audio69Recipe(AUDIO69.accent[name]?.[variant],tone,noise);
 }
+const audio69RawTone=tone,audio69RawNoise=noise;
 /* Music medieval y épica en Re menor: 16 compases (sección A y B), laúd arpegiado, bordón grave de quinta,
    melodía de cuerno con vibrato (en la segunda vuelta la toma una flauta una octava arriba) y, en combate,
    timbales, redoblante y pandereta. */
@@ -101,7 +107,7 @@ function synth(f, dur, type, vol, when, cutoff, attack, vib){
   o.type = type; o.frequency.value = f; fl.type = 'lowpass'; fl.frequency.value = cutoff;
   if (vib) { const l = AU.ctx.createOscillator(), lg = AU.ctx.createGain(); l.frequency.value = 5.2; lg.gain.value = f * .006; l.connect(lg); lg.connect(o.frequency); l.start(t); l.stop(t + dur + .05);nodes.push(l,lg); }
   g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(vol, t + attack); g.gain.setValueAtTime(vol, t + Math.max(attack, dur * .7)); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
-  o.connect(fl); fl.connect(g); g.connect(AU.mGain); audio68Track(o,nodes,'music');o.start(t); o.stop(t + dur + .05);
+  o.connect(fl); fl.connect(g); g.connect(AU.mGain); audio68Track(o,nodes,'music',g);o.start(t); o.stop(t + dur + .05);
 }
 const pluck = (f, d, v, w) => { tone(f, d, 'triangle', v, w, AU.mGain); tone(f * 2, d * .35, 'square', v * .12, w, AU.mGain); };
 const timpani = w => { tone(95, .4, 'sine', .32, w, AU.mGain, 48); noise(.08, .1, 200, w, AU.mGain); };
@@ -123,13 +129,14 @@ const BBARS = BSONG.map(([ch, mel]) => { const on = {}; let p = 0; mel.forEach((
 const kick = w => { tone(120, .16, 'sine', .38, w, AU.mGain, 45); };
 function schedMusic(){
   if(!AU.ctx||AU.ctx.state!=='running'||document.hidden)return;
-  const want=audio68Scene();audio68Ambience(audio68Region());
-  if(!AU.music||prefs.musicVolume===0||prefs.volume===0||want==='end'){if(AU.track!==want){audio68Stop('music');AU.track=want;AU.step=0;AU.loop=0;}AU.next=AU.ctx.currentTime+.05;return;}
+  const want=audio68Scene(),key=audio69ScoreKey(want);audio68Ambience(audio68Region());
+  if(!AU.music||prefs.musicVolume===0||prefs.volume===0||want==='end'){if(AU.scoreKey!==key){audio69FadeMusic();AU.track=want;AU.scoreKey=key;AU.step=0;AU.loop=0;}AU.next=AU.ctx.currentTime+.05;return;}
   if (AU.next < AU.ctx.currentTime - .1) AU.next = AU.ctx.currentTime + .05; // tras volver de otra pestaña, no amontonar notas
-  if (want !== AU.track) { audio68Stop('music');AU.track = want; AU.step = 0; AU.loop = 0; AU.next = Math.max(AU.next, AU.ctx.currentTime + .05); }
+  if (key !== AU.scoreKey) { audio69FadeMusic();AU.track = want;AU.scoreKey=key;AU.step=0;AU.loop=0;AU.next=AU.ctx.currentTime+.09; }
   for(let budget=0;budget<4&&AU.next<AU.ctx.currentTime+.12;budget++) {
     const when = AU.next - AU.ctx.currentTime;
     if(AU.track==='menu'||AU.track==='campaign'){audio68MenuStep(AU.track,when);}
+    else if((AU.track==='prep'||AU.track==='battle')&&Object.hasOwn(AUDIO69.regional,audio68Region())){audio69RegionalStep(AU.track,when);}
     else if (AU.track === 'prep') {
       const spb = 60 / 86 / 2; // corcheas
       const st = AU.step, b = BARS[Math.floor(st / 8) % BARS.length], ch = CH[b.ch], i = st % 8;
@@ -579,7 +586,7 @@ function buyCard(){
   S.gold -= cost; S.cardBuys++;
   S.hand.push({ id:S.deck[di], di, used:false });
   setResult('Card purchased', `${CARDS[S.deck[di]].n} for ${cost} souls.`);
-  sfx('coin'); renderUI();
+  sfx('cardPurchase'); renderUI();
 }
 function useCard(i){
   heroCancelAim();
@@ -588,7 +595,7 @@ function useCard(i){
   if (!c || c.used || !usableNow(c.id)) return;
   const C = CARDS[c.id];
   if(sandboxActive()&&((c.id==='cripta'&&S.maxUnits>=SANDBOX_MAX_UNITS)||(c.id==='aullido'&&S.units.length>=SANDBOX_MAX_ENTITIES)))return;
-  if (C.aim) { S.aim = S.aim === i ? null : i; renderHand(); return; }
+  if (C.aim) { S.aim = S.aim === i ? null : i; if(S.aim!==null)sfx('cardAim');renderHand(); return; }
   if(S.phase==='prep'){if(spinning||S.drag||S.pendingMerge)return;prepUndoRecord('Play '+C.n);}
   C.play(); c.used = !sandboxActive(); if(c.used&&S.phase==='fight')tutorialSignal('card'); sfx('card'); renderHand();renderPrepUndo();
 }
@@ -719,13 +726,14 @@ function update(dt){
   magicAdvance(dt);
   const Wd = worldW();
   S.buff.haste = Math.max(0, S.buff.haste - dt); S.buff.slow = Math.max(0, S.buff.slow - dt);
-  const wasBlizzard=frostBlizzard(),wasAsh=ashCloud();S.fightT += dt;if(!wasAsh&&ashCloud()){bigMsg('ASH CLOUD · PROJECTILE DAMAGE −25%');sfx('horn');}if(!wasBlizzard&&frostBlizzard()){bigMsg('BLIZZARD · RANGED REACH −30%');sfx('horn');}
-  if (!S.charge && S.fightT > 40 && !S.queue.length) { S.charge = true; bigMsg('FINAL CHARGE!'); sfx('horn'); }
+  const wasBlizzard=frostBlizzard(),wasAsh=ashCloud();S.fightT += dt;if(!wasAsh&&ashCloud()){bigMsg('ASH CLOUD · PROJECTILE DAMAGE −25%');sfx('ashCloud');}if(!wasBlizzard&&frostBlizzard()){bigMsg('BLIZZARD · RANGED REACH −30%');sfx('blizzard');}
+  if (!S.charge && S.fightT > 40 && !S.queue.length) { S.charge = true; bigMsg('FINAL CHARGE!'); sfx('finalCharge'); }
   S.spawnT -= dt;
   if (S.queue.length && S.spawnT <= 0) {
     const q = S.queue.shift();
     let y = rnd(30, WORLD_H - 28);
     S.enemies.push({ ...q, maxHp:q.hp, x:invasionX(Wd), y, cd:0, flash:0, root:0, ph:Math.random() * 6 });
+    if(q.boss)sfx('bossArrival');
     tip('k_' + q.kind);
     S.spawnT = q.kind === 'jin' ? 0.45 : 0.7;
   }
@@ -933,6 +941,7 @@ function hitEnemy(e, d, c, o = {}){
   const kind=armored?'steel':c==='m'?'fire':c==='a'?'orb':c==='soul'?'lightning':'claw';
   feelImpact(e.x,e.y,kind==='fire'?'flesh':kind,e,0,real>=25||e.hp<=0);
   if (armored) sfx('clank');
+  if(real>=25&&!armored&&c!=='m'&&c!=='a')sfx('heavyImpact');
 }
 function landShot(s){
   if (s.k === 'orb') { if (s.tgt && s.tgt.hp > 0) { hitEnemy(s.tgt, s.dmg*ashShotFactor(s)*biomeProjectileFactor(s.tgt), 'a', { kb:0,source:s.source }); sfx('orbHit'); } else burst(s.x, s.y, 'a', 4, 40); }
@@ -1249,7 +1258,7 @@ document.addEventListener('click', e => {
   else if (a === 'speed') { S.speed = S.speed === 1 ? 2 : S.speed === 2 ? 4 : 1; renderUI(); }
   else if (a === 'relic') startRun(+b.dataset.i);
   else if (a === 'endcard') { if(menuOpen||$('#ov').hidden||!$('#ov').contains(b)||sandboxActive())return;if(campaignClaimEndCard(Number(b.dataset.i))||campaignEndClaimed()){showEndRestored();persist();}else {const notice=$('#endRewardNotice');if(notice)notice.textContent='Could not save your reward. Enable browser storage and retry.';} }
-  else if (a === 'reward') { if(!S||S.phase!=='reward'||menuOpen||$('#ov').hidden||!$('#ov').contains(b))return;const choice=S.offer[Number(b.dataset.i)];if(!choice)return;const wave=S.wave-1;const m=S.campaign||(S.campaign=CampaignSave.metadata(sessionRunId));if(m.claimedWaveRewards.includes(wave))return;choice.a();allMine().forEach(refreshHp);m.claimedWaveRewards.push(wave);S.offer=[];journeyEnter(); }
+  else if (a === 'reward') { if(!S||S.phase!=='reward'||menuOpen||$('#ov').hidden||!$('#ov').contains(b))return;const choice=S.offer[Number(b.dataset.i)];if(!choice)return;const wave=S.wave-1;const m=S.campaign||(S.campaign=CampaignSave.metadata(sessionRunId));if(m.claimedWaveRewards.includes(wave))return;choice.a();sfx('rewardClaim');allMine().forEach(refreshHp);m.claimedWaveRewards.push(wave);S.offer=[];journeyEnter(); }
 });
 document.addEventListener('keydown', e => {
   if (!S) return;
