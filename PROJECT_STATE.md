@@ -1,6 +1,9 @@
 # PROJECT_STATE
 
-## Current handoff — 2026-11-27
+## Current handoff — v7.68
+Latest candidate: v7.68 Audio Integration I; pending user playtest. Previous v7.67 functional baseline and all Final Polish tasks retained.
+
+## Previous handoff — 2026-11-27
 Latest production code: v22-alpha.7.67 (71c3c12a322cbda54d144318ff25ceea5dfa1258). User playtest 14/14 OK, art 7/10, Requiere mejoras; accepted working baseline, cosmetic issues deferred to Final Polish. Latest explicit full art approval: v7.58. Next recommended phase: Audio Integration I, pending confirmation. Historical entries below retained unchanged.
 
 Latest user-approved review: v22-alpha.7.58 (14/14 OK; art 8/10), branch review-ui-art-iv, 80de81b7d4f505829a70dcee394c6a26034b0352.
@@ -50,3 +53,8 @@ User explicitly requested direct publication to main for every candidate before 
 
 ## 7.67 user playtest — 2026-11-27
 14/14 OK; art 7/10; evaluation Requiere mejoras. Working baseline accepted provisionally; no final artistic approval. Regional rewards placement and asset linework/edges deferred to Final Polish, preserving all prior home/campaign pending work and all historical validations. See VALIDATION-v22-alpha7p67.md for exact results. Next recommended: Audio Integration I, pending confirmation; no runtime changes in this handoff.
+
+
+## v7.68 candidate
+# v22-alpha.7.68 — Audio Integration I
+Base: v7.67 (14/14 user OK, art 7/10 provisional). Audit: existing synthesized preparation/battle music, many SFX, master volume + music/SFX toggles; no menu music or regional ambience, fresh noise buffer per effect, no explicit voice limits. New original procedural menu/campaign compositions (not recorded orchestra), five regional ambience recipes and menu atmosphere, independent persisted music/effects/ambient levels and ambience toggle; master and old settings retained. Cached noise and ambience, separate audio PRNG, dynamic compressor, capped audible voices, visibility/autoplay guards, UI and summon cues. Existing preparation/battle tracks and effects retained. New settings grid scoped to Settings. No external samples or licensing requirements from third parties; no gameplay/balance/save schema changes. JS syntax checked; 34 mocked audio checks and 45 historic campaign/difficulty/challenge checks passed. Full real browser/audio audition, integrated responsive and performance QA, complete historical suite and Cloudflare deploy not independently verified. Pending visual polish (regional reward placement, linework, home/campaign and possible map master), all previous validation and backlogs preserved. Direct main publication after checks; playtest pending. Next: remaining Pixel HUD, approved unit art/animation and card/replayability roadmap only after user confirmation.
