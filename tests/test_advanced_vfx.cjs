@@ -30,5 +30,5 @@ const res=new Function(src+'\n'+harness)();for(const [k,v] of Object.entries(res
 assert.ok(!src.includes('Math.random'),'new presentation does not consume RNG');
 assert.ok(r.includes('vfxProjectileLights(S.shots)')&&r.includes('vfxBudget().detailShots')&&r.includes('vfxShotBody(s,t,detail)'),'renderer hooks');
 assert.ok(r.includes("bossDrawWarnings(W)")&&r.includes("spellDraw()"),'existing telegraphs and spells preserved');
-assert.ok(h.includes('engine/combat-fx.js?v=22a7p56')&&h.includes('engine/renderer.js?v=22a7p56'),'cache version');
+const fxVersion=Number(h.match(/engine\/combat-fx\.js\?v=22a7p(\d+)/)?.[1]||0),renderVersion=Number(h.match(/engine\/renderer\.js\?v=22a7p(\d+)/)?.[1]||0);assert.ok(fxVersion>=56&&renderVersion>=56,'cache version at least 7.56');
 console.log(res);

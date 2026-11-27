@@ -145,3 +145,5 @@ Role-specific procedural motion using shipped artwork; visual-only summon/fusion
 
 ## v22-alpha.7.57 — Advanced VFX II
 7.56 functional 8/8, artistic 7/10; user requested more ambitious attacks and pixel art, and asked about unfinished original main menu/map assets. Regional ambience and five distinct boss pixel motifs, limited draw budgets, original telegraphs preserved. Original two PNGs located by Drive metadata; not yet extracted/integrated. Next Main Menu & Campaign Art Integration IV, then dedicated Attack & Pixel Art Overhaul before Professional Polish. Card Overhaul, Replayability II-B/III, historic checks and branching map/token backlog preserved. See BACKLOG-MAIN-MENU-CAMPAIGN-ART.md. Browser validation pending.
+
+7.57 regression: 114/114 historical checks passed after updating only obsolete exact renderer cache-version assertion to a minimum version check; 32/32 new. No visual QA claim.
