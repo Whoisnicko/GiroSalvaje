@@ -1,4 +1,8 @@
 # PROJECT_STATE
+
+## Current handoff — 2026-11-27
+Latest production code: v22-alpha.7.67 (71c3c12a322cbda54d144318ff25ceea5dfa1258). User playtest 14/14 OK, art 7/10, Requiere mejoras; accepted working baseline, cosmetic issues deferred to Final Polish. Latest explicit full art approval: v7.58. Next recommended phase: Audio Integration I, pending confirmation. Historical entries below retained unchanged.
+
 Latest user-approved review: v22-alpha.7.58 (14/14 OK; art 8/10), branch review-ui-art-iv, 80de81b7d4f505829a70dcee394c6a26034b0352.
 Latest candidate: v22-alpha.7.59, review-pixel-hud-i; awaiting browser QA and user approval. Production unchanged in this phase.
 See PROYECTO-v22-alpha7p59.md, PLAYBOOK-v22-alpha7p59.md, LINKS-v22-alpha7p59.md, ROADMAP-CAMPAIGN.md and BACKLOG-* for preserved history.
@@ -42,3 +46,7 @@ User explicitly requested direct publication to main for every candidate before 
 ## v7.67 candidate
 # v22-alpha.7.67 — Campaign Fidelity Pass II
 27 Nov 2026. Base v7.66. User rejected campaign fidelity: flattened appearance, small/poor icons, loss of detail. Scope: campaign only; home markup/styles untouched and home feedback remains open. Actual map asset 926x746 (ratio 1.2413); approved concept wider, not the same source raster. Keep original coordinate plane and five interactive regions; no nonuniform scaling, no claim to recreate lost source detail. Remove blurred duplicated backdrop, use proportional map fit and adjust 64/36 tracks, decorative sides and navigation height. Nine complete ornamental tiles extracted from approved references (eight top tiles plus Main Menu from alternate approved crop); original painted text removed by localized inpainting, native labels and actions retained. Uniform 200x132 atlas cells, isotropic image scaling, container-based sizing. Lossless WebP 168362 bytes; older icons retained as fallback. Fix prior active Campaign gradient overwriting art. Increase regional typography, frame contrast and button legibility; keep fixed actions and compact tabs. Chromium isolated fixture passed 11 sizes: 3840x2160, 2048x1156, 1920x1080, 1600x900, 1366x768, 1280x720, 1024x768, 768x1024, 390x844, 375x667, 844x390: map ratio, nine tile ratios, tile and label bounds, active image CSS, fixed action bounds, no document overflow. First 1024x768 label failure corrected, all rerun. Fixture uses previous representative CSS/markup and placeholder region contents, not full game or actual map pixels. Full integrated browser QA and deployment not independently verified. Three historical logic suites passed 45 checks; loader syntax checked. No gameplay, balance, save, reward, progression or campaign data changes. Direct main publication requested. All previous validations, parked visual work and audio/HUD/guardian/human/animation/card/replayability roadmap retained. Await playtest.
+
+
+## 7.67 user playtest — 2026-11-27
+14/14 OK; art 7/10; evaluation Requiere mejoras. Working baseline accepted provisionally; no final artistic approval. Regional rewards placement and asset linework/edges deferred to Final Polish, preserving all prior home/campaign pending work and all historical validations. See VALIDATION-v22-alpha7p67.md for exact results. Next recommended: Audio Integration I, pending confirmation; no runtime changes in this handoff.

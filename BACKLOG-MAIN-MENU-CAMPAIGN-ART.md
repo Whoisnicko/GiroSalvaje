@@ -12,3 +12,7 @@ Next phase: inspect actual source pixels; identify crop coordinates and state co
 Original sheets copied unchanged into repository; CSS crops match the original labeled buttons and all 20 medals. Native actions preserved. Grimoire, Warlord Talents and Academy keep their existing controls because no exact labeled originals exist. No new reward logic. Browser verification and approval pending; main remains on 7.57.
 
 Roadmap: audio (music and SFX) before final visual overhaul; approve guardian and regional human unit designs, then author 4–5+ distinct animation poses per action, including Attack & Pixel Art Overhaul. Keep Card Overhaul and Replayability II-B/III open. Responsive behavior and prior regression suite mandatory.
+
+
+## 7.67 user playtest — 2026-11-27
+14/14 OK; art 7/10; evaluation Requiere mejoras. Working baseline accepted provisionally; no final artistic approval. Regional rewards placement and asset linework/edges deferred to Final Polish, preserving all prior home/campaign pending work and all historical validations. See VALIDATION-v22-alpha7p67.md for exact results. Next recommended: Audio Integration I, pending confirmation; no runtime changes in this handoff.
