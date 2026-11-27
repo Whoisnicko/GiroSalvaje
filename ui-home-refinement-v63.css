@@ -1,0 +1,112 @@
+/* 7.63: reference-driven home composition. Campaign and battle styles unchanged. */
+#front #homeView.v63:not([hidden]){
+ --home-unit:min(1dvh,1.75vw);--primary-h:calc(12.4 * var(--home-unit));--secondary-h:calc(8.05 * var(--home-unit));--dock-h:calc(10.7 * var(--home-unit));
+ grid-template-rows:minmax(0,1fr) auto auto;gap:0;padding:0 clamp(5px,1vw,20px) 0!important;
+ align-items:stretch;justify-items:center;
+ background-position:center;background-size:cover;
+}
+#front #homeView.v63 .g61-home-panel{width:min(96%,calc(68 * var(--home-unit)));height:100%;max-height:none;min-height:0;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto auto;align-items:stretch;justify-items:center;align-content:end;gap:0;padding:0;overflow:visible}
+#front #homeView.v63 .g61-brand{min-height:0;max-height:none;width:100%;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:0}
+#front #homeView.v63 .g61-brand img{width:min(100%,calc(49 * var(--home-unit)));height:100%;max-width:none;max-height:100%;object-fit:contain;filter:drop-shadow(0 3px 5px #000b)}
+#front #homeView.v63 :is(.g61-home-primary,.g61-home-secondary){display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:none;grid-auto-rows:var(--primary-h);width:100%;gap:0;min-height:0}
+#front #homeView.v63 .g61-home-secondary{grid-auto-rows:var(--secondary-h);width:100%}
+#front #homeView.v63 .g61-button{--bh:10000px;display:flex;align-items:center;justify-content:center;min-width:0;min-height:0;width:100%;height:100%;aspect-ratio:auto;text-transform:uppercase;letter-spacing:.01em}
+#front #homeView.v63 .g61-home-primary .g61-button{font-size:clamp(12px,calc(3.2 * var(--home-unit)),42px)}
+#front #homeView.v63 .g61-home-secondary .g61-button{font-size:clamp(10px,calc(2.05 * var(--home-unit)),32px)}
+#front #homeView.v63 .g61-picture{display:grid;height:auto;width:min(100%,calc(var(--primary-h) * 620 / 144));max-width:100%;max-height:100%;aspect-ratio:620/144;flex:none;background-size:400% 400%}
+#front #homeView.v63 .g61-home-secondary .g61-picture{width:min(100%,calc(var(--secondary-h) * 620 / 144))}
+.g63-assets-ready #front #homeView.v63 .g61-picture{background-image:url('assets/ui/gothic-controls-wide-v63.webp');background-size:400% 400%;background-position:var(--pos);background-repeat:no-repeat;background-color:transparent;border:0;box-shadow:none}
+#front #homeView.v63 .g61-label{line-height:1.05;text-wrap:balance;text-shadow:0 2px 3px #000,0 0 4px #000}
+.g63-assets-ready #front #homeView.v63 .g61-label{position:absolute;left:var(--ll);right:var(--lr);top:var(--lt);bottom:var(--lb);display:grid;place-items:center;padding:0}
+#front #homeView.v63 .g62-dock{width:min(96%,calc(156 * var(--home-unit)));display:grid;grid-template-columns:minmax(0,3fr) minmax(0,1fr);gap:clamp(5px,1.5vw,30px);align-items:center;padding:calc(1.5 * var(--home-unit)) 0 calc(.65 * var(--home-unit));min-height:0}
+#front #homeView.v63 .g61-home-collections{position:relative;box-sizing:border-box;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1%;width:100%;padding:calc(1.5 * var(--home-unit)) calc(2.6 * var(--home-unit));border:0;background:transparent url('assets/ui/legacy-dock-v63.svg') center/100% 100% no-repeat;box-shadow:none;isolation:isolate}
+#front #homeView.v63 .g61-home-collections::before,#front #homeView.v63 .g61-home-collections::after{content:"";position:absolute;width:calc(4.8 * var(--home-unit));height:calc(3 * var(--home-unit));left:50%;transform:translateX(-50%);background:url('assets/ui/legacy-gem-v63.svg') center/contain no-repeat;pointer-events:none;z-index:2}
+#front #homeView.v63 .g61-home-collections::before{top:calc(-.8 * var(--home-unit))}#front #homeView.v63 .g61-home-collections::after{bottom:calc(-.8 * var(--home-unit))}
+#front #homeView.v63 .g62-dock .g61-button{height:var(--dock-h);font-size:clamp(10px,calc(1.65 * var(--home-unit)),25px);width:100%}
+#front #homeView.v63 .g62-dock .g61-picture{width:min(100%,calc(var(--dock-h) * 620 / 144))}
+#front #homeView.v63 .g62-status{gap:2px 12px;padding:2px 6px;font:clamp(9px,1.05dvh,16px)/1.2 Georgia,serif;background:#100b17a0;align-self:end}
+#front #homeView.v63 .g62-status footer{font:inherit}
+/* Mobile portrait: maintain the vertical order with readable native text and a two-row dock. */
+@media(max-width:600px){
+ #front #homeView.v63:not([hidden]){--home-unit:1dvh;--primary-h:min(11dvh,21vw);--secondary-h:min(8dvh,17vw);--dock-h:min(7dvh,19vw);padding:0 5px!important}
+ #front #homeView.v63 .g61-home-panel{width:100%}
+ #front #homeView.v63 .g61-brand img{width:min(90%,40dvh)}
+ #front #homeView.v63 .g61-home-primary .g61-button{font-size:clamp(12px,4.4vw,21px)}
+ #front #homeView.v63 .g61-home-secondary .g61-button{font-size:clamp(11px,3.7vw,18px)}
+ #front #homeView.v63 .g62-dock{grid-template-columns:1fr;gap:3px;width:100%;padding:7px 0 2px}
+ #front #homeView.v63 .g61-home-collections{padding:7px 9px;gap:3px}
+ #front #homeView.v63 .g62-dock .g61-button{font-size:clamp(9px,2.6vw,13px)}
+ #front #homeView.v63 .g62-leaderboard{justify-self:center;width:56%}
+ #front #homeView.v63 .g62-status{font-size:9px;gap:1px 6px}
+}
+/* Low-height landscape: two and three columns instead of microscopic vertical controls. */
+@media(max-height:520px) and (min-width:601px){
+ #front #homeView.v63:not([hidden]){--primary-h:15dvh;--secondary-h:13dvh;--dock-h:12dvh;--home-unit:1dvh}
+ #front #homeView.v63 .g61-home-panel{width:min(84%,calc(155dvh))}
+ #front #homeView.v63 .g61-home-primary{grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:var(--primary-h)}
+ #front #homeView.v63 .g61-home-secondary{grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:var(--secondary-h)}
+ #front #homeView.v63 .g61-home-primary .g61-button{font-size:clamp(12px,4dvh,19px)}
+ #front #homeView.v63 .g61-home-secondary .g61-button{font-size:clamp(10px,3.1dvh,16px)}
+ #front #homeView.v63 .g62-dock .g61-button{font-size:clamp(10px,2.8dvh,15px)}
+}
+#front #homeView.v63 [data-g61-art="new"]{--ll:33.343%;--lr:5.270%;}
+#front #homeView.v63 [data-g61-art="continue"]{--ll:32.347%;--lr:5.616%;}
+#front #homeView.v63 [data-g61-art="sandbox"]{--ll:28.445%;--lr:5.507%;}
+#front #homeView.v63 [data-g61-art="treasury"]{--ll:35.971%;--lr:4.119%;}
+#front #homeView.v63 [data-g61-art="codex"]{--ll:36.777%;--lr:2.832%;}
+#front #homeView.v63 [data-g61-art="sanctum"]{--ll:36.885%;--lr:4.708%;}
+#front #homeView.v63 [data-g61-art="settings"]{--ll:33.458%;--lr:2.744%;}
+#front #homeView.v63 [data-g61-art="credits"]{--ll:38.396%;--lr:2.703%;}
+#front #homeView.v63 [data-g61-art="enter"]{--ll:26.392%;--lr:5.338%;}
+#front #homeView.v63 [data-g61-art="revisit"]{--ll:36.438%;--lr:7.357%;}
+#front #homeView.v63 [data-g61-art="scores"]{--ll:26.724%;--lr:4.810%;}
+#front #homeView.v63 [data-g61-art="choose"]{--ll:32.821%;--lr:7.899%;}
+#front #homeView.v63 [data-g61-art="start"]{--ll:27.896%;--lr:4.525%;}
+#front #homeView.v63 [data-g61-art="home"]{--ll:29.021%;--lr:2.723%;}
+#front #homeView.v63 [data-g61-art="map"]{--ll:25.078%;--lr:3.353%;}
+#front #homeView.v63 [data-g61-art="play"]{--ll:22.470%;--lr:21.102%;}/* Keep the real lower-dock art from the approved reference; all buttons are still native. */
+#front #homeView.v63:not([hidden]){--secondary-h:calc(8.5 * var(--home-unit))}
+#front #homeView.v63 .g62-dock{width:min(92%,calc(168 * var(--home-unit)))}
+#front #homeView.v63 .g61-home-collections{background-image:url('assets/ui/legacy-dock-art-v63.webp');padding:calc(1.8 * var(--home-unit)) calc(3.5 * var(--home-unit))}
+#front #homeView.v63 .g61-home-collections::before,#front #homeView.v63 .g61-home-collections::after{content:none}
+/* Use the original shorter artwork for collections, as in the selected mockup. */
+.g61-assets-ready #front #homeView.v63 .g62-dock .g61-picture{background-image:url('assets/ui/gothic-controls-v61.webp');background-size:400% 400%;width:min(100%,calc(var(--dock-h) * 420 / 144));aspect-ratio:420/144}
+#front #homeView.v63 .g62-dock [data-g61-art="sanctum"]{--ll:54.45%;--lr:6.95%}
+#front #homeView.v63 .g62-dock [data-g61-art="codex"]{--ll:54.29%;--lr:4.18%}
+#front #homeView.v63 .g62-dock [data-g61-art="treasury"]{--ll:53.1%;--lr:6.08%}
+#front #homeView.v63 .g62-dock [data-g61-art="scores"]{--ll:39.45%;--lr:7.1%}
+#front #homeView.v63 .g62-dock .g61-button{font-size:clamp(9px,min(1.48dvh,1.02vw),23px)}
+#front #homeView.v63 .g61-home-primary .g61-picture{filter:drop-shadow(0 0 5px #ffb55433)}
+/* Asset failures retain native button labels and a readable frame without stretched old art. */
+html:not(.g63-assets-ready) #front #homeView.v63 :is(.g61-home-primary,.g61-home-secondary) .g61-picture{background:linear-gradient(#3b2c3c,#15101f);border:2px solid #ad8654;border-radius:5px;box-shadow:inset 0 0 0 2px #1b1421}
+html:not(.g63-assets-ready) #front #homeView.v63 :is(.g61-home-primary,.g61-home-secondary) .g61-label{position:static;padding:2px 5px}
+html:not(.g61-assets-ready) #front #homeView.v63 .g62-dock .g61-picture{background:linear-gradient(#3b2c3c,#15101f);border:1px solid #ad8654;aspect-ratio:420/144}
+html:not(.g61-assets-ready) #front #homeView.v63 .g62-dock .g61-label{position:static;padding:2px}
+@media(max-width:1000px) and (min-height:521px){
+ #front #homeView.v63 .g62-dock{width:100%;grid-template-columns:1fr;gap:3px;padding:5px 0 2px}
+ #front #homeView.v63 .g62-leaderboard{width:50%;justify-self:center}
+ #front #homeView.v63 .g62-dock .g61-button{font-size:clamp(10px,1.65vw,15px);height:min(6.9dvh,9.5vw)}
+ #front #homeView.v63:not([hidden]){--primary-h:11.5dvh;--secondary-h:7.6dvh;--dock-h:min(6.9dvh,9.5vw)}
+ #front #homeView.v63 .g61-home-primary .g61-picture{width:min(100%,calc(var(--primary-h) * 620 / 144))}
+}
+@media(max-width:600px) and (min-height:521px){
+ #front #homeView.v63:not([hidden]){--primary-h:min(10.1dvh,21vw);--secondary-h:min(7.1dvh,17vw);--dock-h:min(7.6dvh,15vw)}
+ #front #homeView.v63 .g61-home-collections{grid-template-columns:repeat(2,minmax(0,1fr));padding:5px 8px;gap:1px;background-image:url('assets/ui/legacy-dock-v63.svg')}
+ #front #homeView.v63 .g61-home-collections .g61-button:last-child{grid-column:1/-1;width:50%;justify-self:center}
+ #front #homeView.v63 .g62-dock .g61-button{height:var(--dock-h);font-size:clamp(10px,2.7vw,13px)}
+ #front #homeView.v63 .g62-leaderboard{width:60%}
+ #front #homeView.v63 .g61-home-primary .g61-button{font-size:clamp(12px,4vw,20px)}
+ #front #homeView.v63 .g61-home-secondary .g61-button{font-size:clamp(11px,3.45vw,18px)}
+}
+@media(max-height:520px) and (min-width:601px){
+ #front #homeView.v63:not([hidden]){--secondary-h:13dvh;--dock-h:13dvh}
+ #front #homeView.v63 .g62-dock{width:96%}
+ #front #homeView.v63 .g62-dock .g61-button{font-size:clamp(9px,2.35dvh,13px)}
+ #front #homeView.v63 .g61-home-collections{padding:calc(1.4 * var(--home-unit)) calc(3.5 * var(--home-unit))}
+}
+/* Restrict clickable areas to visible artwork. Keep keyboard focus around the actual control. */
+#front #homeView.v63 .g61-home-primary .g61-button{width:min(100%,calc(var(--primary-h) * 620 / 144));justify-self:center}
+#front #homeView.v63 .g61-home-secondary .g61-button{width:min(100%,calc(var(--secondary-h) * 620 / 144));justify-self:center}
+#front #homeView.v63 .g62-dock .g61-button{width:min(100%,calc(var(--dock-h) * 420 / 144));justify-self:center}
+html:not(.g61-assets-ready) #front #homeView.v63 .g62-dock .g61-picture{background:linear-gradient(#3b2c3c,#15101f);border:1px solid #ad8654;aspect-ratio:420/144}
+html:not(.g61-assets-ready) #front #homeView.v63 .g62-dock .g61-label{position:static;padding:2px}

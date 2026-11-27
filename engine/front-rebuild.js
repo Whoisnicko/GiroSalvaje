@@ -2,6 +2,7 @@
 (function(){
  const view=document.getElementById('campaignMapView'),stage=document.getElementById('cm61-stage'),world=document.getElementById('cm61-world');
  const art=new Image();art.onload=()=>document.documentElement.classList.add('g61-assets-ready');art.onerror=()=>document.documentElement.classList.remove('g61-assets-ready');art.src='assets/ui/gothic-controls-v61.webp?v=22a7p61';
+ const homeAtlas=new Image();homeAtlas.onload=()=>document.documentElement.classList.add('g63-assets-ready');homeAtlas.onerror=()=>document.documentElement.classList.remove('g63-assets-ready');homeAtlas.src='assets/ui/gothic-controls-wide-v63.webp?v=22a7p63';
  const crown=document.querySelector('.g62-crown');if(crown){const header=new Image();header.onload=()=>crown.classList.add('g62-crown-ready');header.onerror=()=>crown.classList.remove('g62-crown-ready');header.src='assets/ui/campaign-crown-v62.webp?v=22a7p62';}
  if(!view||!stage||!world)return;
  const mq=matchMedia('(max-width:1000px)'),controls=Array.from(view.querySelectorAll('[data-cm-pane]'));
