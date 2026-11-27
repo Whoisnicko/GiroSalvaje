@@ -47,8 +47,8 @@ function challengeResultHTML(state=S){
 }
 function challengeMapHTML(region,rank,profile){
  const d=REGIONAL_CHALLENGES[region],seal=normalizeRegionalSeals(profile).includes(region);
- const medals=['Bronze','Silver','Gold'].map((name,i)=>'<span class="cm-mastery-medal '+(rank>=i+1?'earned':'locked')+' tier-'+(i+1)+'" aria-label="'+name+(rank>=i+1?' earned':' locked')+'">'+name+' '+(rank>=i+1?'✓':'—')+'</span>').join('');
- return '<section class="cm-challenge"><h3 class="cm-section-title">Regional mastery</h3><div class="cm-mastery-medals">'+medals+'</div><p><strong>'+d.name+'</strong> · '+(seal?'Mastery Seal earned':'Mastery Seal locked')+'</p><small>'+d.description+' Optional · any regional difficulty.</small></section>';
+ const medals=['Bronze','Silver','Gold','Mastery Seal'].map((name,i)=>{const earned=i===3?seal:rank>=i+1;return '<span class="cm-mastery-medal '+(earned?'earned':'locked')+' tier-'+(i+1)+'" aria-label="'+name+(earned?' earned':' locked')+'"><span class="cm-medal-label">'+name+' '+(earned?'✓':'—')+'</span></span>';}).join('');
+ return '<section class="cm-challenge" data-region="'+region+'"><h3 class="cm-section-title">Regional mastery</h3><div class="cm-mastery-medals">'+medals+'</div><p><strong>'+d.name+'</strong> · '+(seal?'Mastery Seal earned':'Mastery Seal locked')+'</p><small>'+d.description+' Optional · any regional difficulty.</small></section>';
 }
 
 const DEFAULT_CAMPAIGN_WAVES=5, CLASSIC_CAMPAIGN_WAVES=10;

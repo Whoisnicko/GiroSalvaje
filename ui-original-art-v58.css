@@ -1,0 +1,80 @@
+/* Original approved artwork. Source coordinates are expressed against the 1000×563 preview of the 1672×941 sheets.
+   Native buttons, labels, focus and campaign state stay authoritative. No changes to game rules. */
+.original-buttons-ready #homeView .gate-new{--art-size:438.59649% 670.2381%;--art-pos:4.92228% 18.78914%;--art-ratio:228/84;position:relative;isolation:isolate;overflow:hidden;}
+.original-buttons-ready #homeView .gate-new::after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;background-image:url("assets/ui/gothic-buttons-original-v58.png");background-size:var(--art-size);background-position:var(--art-pos);background-repeat:no-repeat;}
+.original-buttons-ready #homeView .gate-new:disabled::after{filter:grayscale(.85) brightness(.5);}
+.original-buttons-ready #homeView .gate-continue{--art-size:450.45045% 670.2381%;--art-pos:35.34704% 18.78914%;--art-ratio:222/84;position:relative;isolation:isolate;overflow:hidden;}
+.original-buttons-ready #homeView .gate-continue::after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;background-image:url("assets/ui/gothic-buttons-original-v58.png");background-size:var(--art-size);background-position:var(--art-pos);background-repeat:no-repeat;}
+.original-buttons-ready #homeView .gate-continue:disabled::after{filter:grayscale(.85) brightness(.5);}
+.original-buttons-ready #homeView .gate-settings,.original-buttons-ready #campaignMapView .cm-nav [data-front=settings]{--art-size:452.48869% 731.16883%;--art-pos:64.95507% 36.00823%;--art-ratio:221/77;position:relative;isolation:isolate;overflow:hidden;}
+.original-buttons-ready #homeView .gate-settings::after,.original-buttons-ready #campaignMapView .cm-nav [data-front=settings]::after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;background-image:url("assets/ui/gothic-buttons-original-v58.png");background-size:var(--art-size);background-position:var(--art-pos);background-repeat:no-repeat;}
+.original-buttons-ready #homeView .gate-settings:disabled::after,.original-buttons-ready #campaignMapView .cm-nav [data-front=settings]:disabled::after{filter:grayscale(.85) brightness(.5);}
+.original-buttons-ready #homeView .gate-credits,.original-buttons-ready #campaignMapView .cm-nav [data-front=credits]{--art-size:427.35043% 731.16883%;--art-pos:96.4752% 36.00823%;--art-ratio:234/77;position:relative;isolation:isolate;overflow:hidden;}
+.original-buttons-ready #homeView .gate-credits::after,.original-buttons-ready #campaignMapView .cm-nav [data-front=credits]::after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;background-image:url("assets/ui/gothic-buttons-original-v58.png");background-size:var(--art-size);background-position:var(--art-pos);background-repeat:no-repeat;}
+.original-buttons-ready #homeView .gate-credits:disabled::after,.original-buttons-ready #campaignMapView .cm-nav [data-front=credits]:disabled::after{filter:grayscale(.85) brightness(.5);}
+.original-buttons-ready #homeView .gate-progress [data-front=treasury],.original-buttons-ready #campaignMapView .cm-nav [data-front=treasury]{--art-size:425.53191% 662.35294%;--art-pos:96.47059% 18.82845%;--art-ratio:235/85;position:relative;isolation:isolate;overflow:hidden;}
+.original-buttons-ready #homeView .gate-progress [data-front=treasury]::after,.original-buttons-ready #campaignMapView .cm-nav [data-front=treasury]::after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;background-image:url("assets/ui/gothic-buttons-original-v58.png");background-size:var(--art-size);background-position:var(--art-pos);background-repeat:no-repeat;}
+.original-buttons-ready #homeView .gate-progress [data-front=treasury]:disabled::after,.original-buttons-ready #campaignMapView .cm-nav [data-front=treasury]:disabled::after{filter:grayscale(.85) brightness(.5);}
+.original-buttons-ready #homeView .gate-progress [data-front=codex],.original-buttons-ready #campaignMapView .cm-nav [data-front=codex]{--art-size:438.59649% 703.75%;--art-pos:4.92228% 36.02484%;--art-ratio:228/80;position:relative;isolation:isolate;overflow:hidden;}
+.original-buttons-ready #homeView .gate-progress [data-front=codex]::after,.original-buttons-ready #campaignMapView .cm-nav [data-front=codex]::after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;background-image:url("assets/ui/gothic-buttons-original-v58.png");background-size:var(--art-size);background-position:var(--art-pos);background-repeat:no-repeat;}
+.original-buttons-ready #homeView .gate-progress [data-front=codex]:disabled::after,.original-buttons-ready #campaignMapView .cm-nav [data-front=codex]:disabled::after{filter:grayscale(.85) brightness(.5);}
+.original-buttons-ready #homeView .gate-progress [data-front=sanctum],.original-buttons-ready #campaignMapView .cm-nav [data-front=sanctum]{--art-size:450.45045% 686.58537%;--art-pos:35.34704% 35.34304%;--art-ratio:222/82;position:relative;isolation:isolate;overflow:hidden;}
+.original-buttons-ready #homeView .gate-progress [data-front=sanctum]::after,.original-buttons-ready #campaignMapView .cm-nav [data-front=sanctum]::after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;background-image:url("assets/ui/gothic-buttons-original-v58.png");background-size:var(--art-size);background-position:var(--art-pos);background-repeat:no-repeat;}
+.original-buttons-ready #homeView .gate-progress [data-front=sanctum]:disabled::after,.original-buttons-ready #campaignMapView .cm-nav [data-front=sanctum]:disabled::after{filter:grayscale(.85) brightness(.5);}
+.original-buttons-ready #campaignMapView .cm-nav [data-front=campaign-sandbox]{--art-size:454.54545% 670.2381%;--art-pos:65% 18.78914%;--art-ratio:220/84;position:relative;isolation:isolate;overflow:hidden;}
+.original-buttons-ready #campaignMapView .cm-nav [data-front=campaign-sandbox]::after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;background-image:url("assets/ui/gothic-buttons-original-v58.png");background-size:var(--art-size);background-position:var(--art-pos);background-repeat:no-repeat;}
+.original-buttons-ready #campaignMapView .cm-nav [data-front=campaign-sandbox]:disabled::after{filter:grayscale(.85) brightness(.5);}
+.original-buttons-ready #campaignMapView .cm-nav [data-front=home]:last-of-type{--art-size:465.11628% 908.06452%;--art-pos:78.8535% 73.65269%;--art-ratio:215/62;position:relative;isolation:isolate;overflow:hidden;}
+.original-buttons-ready #campaignMapView .cm-nav [data-front=home]:last-of-type::after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;background-image:url("assets/ui/gothic-buttons-original-v58.png");background-size:var(--art-size);background-position:var(--art-pos);background-repeat:no-repeat;}
+.original-buttons-ready #campaignMapView .cm-nav [data-front=home]:last-of-type:disabled::after{filter:grayscale(.85) brightness(.5);}
+.original-buttons-ready #campaignMapView .cm-start[data-art-state=enter]{--art-size:531.91489% 804.28571%;--art-pos:2.46305% 56.59229%;--art-ratio:188/70;position:relative;isolation:isolate;overflow:hidden;}
+.original-buttons-ready #campaignMapView .cm-start[data-art-state=enter]::after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;background-image:url("assets/ui/gothic-buttons-original-v58.png");background-size:var(--art-size);background-position:var(--art-pos);background-repeat:no-repeat;}
+.original-buttons-ready #campaignMapView .cm-start[data-art-state=enter]:disabled::after{filter:grayscale(.85) brightness(.5);}
+.original-buttons-ready #campaignMapView .cm-start[data-art-state=revisit]{--art-size:549.45055% 804.28571%;--art-pos:26.28362% 56.59229%;--art-ratio:182/70;position:relative;isolation:isolate;overflow:hidden;}
+.original-buttons-ready #campaignMapView .cm-start[data-art-state=revisit]::after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;background-image:url("assets/ui/gothic-buttons-original-v58.png");background-size:var(--art-size);background-position:var(--art-pos);background-repeat:no-repeat;}
+.original-buttons-ready #campaignMapView .cm-start[data-art-state=revisit]:disabled::after{filter:grayscale(.85) brightness(.5);}
+.original-buttons-ready #campaignMapView .cm-score{--art-size:505.05051% 804.28571%;--art-pos:49.87531% 56.59229%;--art-ratio:198/70;position:relative;isolation:isolate;overflow:hidden;}
+.original-buttons-ready #campaignMapView .cm-score::after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;background-image:url("assets/ui/gothic-buttons-original-v58.png");background-size:var(--art-size);background-position:var(--art-pos);background-repeat:no-repeat;}
+.original-buttons-ready #campaignMapView .cm-score:disabled::after{filter:grayscale(.85) brightness(.5);}
+@media(min-width:851px) and (min-height:521px) and (min-aspect-ratio:13/10){
+.original-buttons-ready #homeView.art-ready .gate-button.btn{position:absolute}
+.original-buttons-ready #homeView.art-ready .gate-button.btn:disabled::after{filter:grayscale(.85) brightness(.48)}
+}
+@media(max-width:850px),(max-height:520px),(max-aspect-ratio:13/10){
+.original-buttons-ready #homeView .gate-actions .gate-button.btn{min-height:44px}
+.original-buttons-ready #homeView .gate-actions .gate-button:is(.gate-new,.gate-continue,.gate-settings,.gate-credits){aspect-ratio:var(--art-ratio);height:auto;padding:0}
+}
+.original-buttons-ready #homeView .gate-progress .btn{display:block;width:100%;min-height:40px;margin:3px 0}
+.original-buttons-ready #homeView .gate-progress{min-width:min(155px,100%)}
+.original-buttons-ready #campaignMapView .cm-nav .btn{min-height:42px}
+.original-buttons-ready #campaignMapView .cm-start,.original-buttons-ready #campaignMapView .cm-score{min-height:48px}
+.original-buttons-ready #homeView button:focus-visible,.original-buttons-ready #campaignMapView button:focus-visible{outline:3px solid #ffe1a1;outline-offset:2px}
+.original-buttons-ready #homeView button:not(:disabled):hover::after,.original-buttons-ready #campaignMapView button:not(:disabled):hover::after{filter:brightness(1.16)}
+.cm-mastery-medals{grid-template-columns:repeat(4,minmax(0,1fr))}
+.cm-mastery-medal{overflow:hidden;min-width:0}
+.cm-mastery-medal.tier-4.earned{color:#e8b9ff}
+.original-medals-ready .cm-mastery-medal::before{content:"";display:block;width:100%;aspect-ratio:var(--art-ratio,1);background-image:url("assets/ui/mastery-medals-original-v58.png");background-size:var(--art-size);background-position:var(--art-pos);background-repeat:no-repeat;margin:0 auto 3px}
+.original-medals-ready .cm-mastery-medal.locked::before{filter:grayscale(1) brightness(.42)}
+.cm-medal-label{display:block;font-size:10px;line-height:1.2;overflow-wrap:anywhere}
+.original-medals-ready #campaignMapView .cm-node[data-medal-tier="1"] .cm-rank,.original-medals-ready #campaignMapView .cm-node[data-medal-tier="2"] .cm-rank,.original-medals-ready #campaignMapView .cm-node[data-medal-tier="3"] .cm-rank{background-image:url("assets/ui/mastery-medals-original-v58.png");background-size:var(--art-size);background-position:var(--art-pos);background-repeat:no-repeat;align-items:flex-end;text-shadow:0 1px 2px #000,0 0 4px #000,0 0 6px #000;color:#fff;font-size:clamp(11px,1.2vw,16px)}
+@media(max-width:420px){.cm-mastery-medals{grid-template-columns:repeat(2,minmax(0,1fr))}.original-medals-ready .cm-mastery-medal::before{max-width:90px}}
+.original-medals-ready .cm-challenge[data-region="valley"] .tier-1,.original-medals-ready #campaignMapView .cm-node[data-cm-region="valley"][data-medal-tier="1"] .cm-rank{--art-size:757.57576% 731.16883%;--art-pos:12.4424% 29.42387%;--art-ratio:132/77;}
+.original-medals-ready .cm-challenge[data-region="valley"] .tier-2,.original-medals-ready #campaignMapView .cm-node[data-cm-region="valley"][data-medal-tier="2"] .cm-rank{--art-size:757.57576% 771.23288%;--art-pos:12.4424% 44.89796%;--art-ratio:132/73;}
+.original-medals-ready .cm-challenge[data-region="valley"] .tier-3,.original-medals-ready #campaignMapView .cm-node[data-cm-region="valley"][data-medal-tier="3"] .cm-rank{--art-size:714.28571% 750.66667%;--art-pos:12.09302% 60.04098%;--art-ratio:140/75;}
+.original-medals-ready .cm-challenge[data-region="valley"] .tier-4{--art-size:574.71264% 319.88636%;--art-pos:10.53269% 95.09044%;--art-ratio:174/176;}
+.original-medals-ready .cm-challenge[data-region="forest"] .tier-1,.original-medals-ready #campaignMapView .cm-node[data-cm-region="forest"][data-medal-tier="1"] .cm-rank{--art-size:757.57576% 731.16883%;--art-pos:33.17972% 29.42387%;--art-ratio:132/77;}
+.original-medals-ready .cm-challenge[data-region="forest"] .tier-2,.original-medals-ready #campaignMapView .cm-node[data-cm-region="forest"][data-medal-tier="2"] .cm-rank{--art-size:757.57576% 771.23288%;--art-pos:33.17972% 44.89796%;--art-ratio:132/73;}
+.original-medals-ready .cm-challenge[data-region="forest"] .tier-3,.original-medals-ready #campaignMapView .cm-node[data-cm-region="forest"][data-medal-tier="3"] .cm-rank{--art-size:714.28571% 750.66667%;--art-pos:33.02326% 60.04098%;--art-ratio:140/75;}
+.original-medals-ready .cm-challenge[data-region="forest"] .tier-4{--art-size:574.71264% 319.88636%;--art-pos:32.32446% 95.09044%;--art-ratio:174/176;}
+.original-medals-ready .cm-challenge[data-region="frozen"] .tier-1,.original-medals-ready #campaignMapView .cm-node[data-cm-region="frozen"][data-medal-tier="1"] .cm-rank{--art-size:757.57576% 731.16883%;--art-pos:53.91705% 29.42387%;--art-ratio:132/77;}
+.original-medals-ready .cm-challenge[data-region="frozen"] .tier-2,.original-medals-ready #campaignMapView .cm-node[data-cm-region="frozen"][data-medal-tier="2"] .cm-rank{--art-size:757.57576% 771.23288%;--art-pos:53.91705% 44.89796%;--art-ratio:132/73;}
+.original-medals-ready .cm-challenge[data-region="frozen"] .tier-3,.original-medals-ready #campaignMapView .cm-node[data-cm-region="frozen"][data-medal-tier="3"] .cm-rank{--art-size:714.28571% 750.66667%;--art-pos:53.95349% 60.04098%;--art-ratio:140/75;}
+.original-medals-ready .cm-challenge[data-region="frozen"] .tier-4{--art-size:574.71264% 319.88636%;--art-pos:54.11622% 95.09044%;--art-ratio:174/176;}
+.original-medals-ready .cm-challenge[data-region="ashen"] .tier-1,.original-medals-ready #campaignMapView .cm-node[data-cm-region="ashen"][data-medal-tier="1"] .cm-rank{--art-size:757.57576% 731.16883%;--art-pos:74.65438% 29.42387%;--art-ratio:132/77;}
+.original-medals-ready .cm-challenge[data-region="ashen"] .tier-2,.original-medals-ready #campaignMapView .cm-node[data-cm-region="ashen"][data-medal-tier="2"] .cm-rank{--art-size:757.57576% 771.23288%;--art-pos:74.65438% 44.89796%;--art-ratio:132/73;}
+.original-medals-ready .cm-challenge[data-region="ashen"] .tier-3,.original-medals-ready #campaignMapView .cm-node[data-cm-region="ashen"][data-medal-tier="3"] .cm-rank{--art-size:714.28571% 750.66667%;--art-pos:74.88372% 60.04098%;--art-ratio:140/75;}
+.original-medals-ready .cm-challenge[data-region="ashen"] .tier-4{--art-size:574.71264% 319.88636%;--art-pos:75.90799% 95.09044%;--art-ratio:174/176;}
+.original-medals-ready .cm-challenge[data-region="cathedral"] .tier-1,.original-medals-ready #campaignMapView .cm-node[data-cm-region="cathedral"][data-medal-tier="1"] .cm-rank{--art-size:757.57576% 731.16883%;--art-pos:95.39171% 29.42387%;--art-ratio:132/77;}
+.original-medals-ready .cm-challenge[data-region="cathedral"] .tier-2,.original-medals-ready #campaignMapView .cm-node[data-cm-region="cathedral"][data-medal-tier="2"] .cm-rank{--art-size:757.57576% 771.23288%;--art-pos:95.39171% 44.89796%;--art-ratio:132/73;}
+.original-medals-ready .cm-challenge[data-region="cathedral"] .tier-3,.original-medals-ready #campaignMapView .cm-node[data-cm-region="cathedral"][data-medal-tier="3"] .cm-rank{--art-size:714.28571% 750.66667%;--art-pos:95.81395% 60.04098%;--art-ratio:140/75;}
+.original-medals-ready .cm-challenge[data-region="cathedral"] .tier-4{--art-size:574.71264% 319.88636%;--art-pos:97.69976% 95.09044%;--art-ratio:174/176;}

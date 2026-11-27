@@ -7,3 +7,8 @@ User v7.56: 8/8 functional approval, art 7/10. VFX and attacks still basic; pixe
 - Existing approved assets: assets/ui/dark-gate-approved.webp, assets/ui/stop-humans-official.webp, assets/campaign-map-v46.webp, regional battlefield WebPs, bronze frame.
 
 Next phase: inspect actual source pixels; identify crop coordinates and state coverage; extract original art to usable sprites/frames; integrate into native menu buttons and campaign nodes while preserving text, keyboard, responsive behavior, progress and difficulty. No new mastery rewards or unlock mechanics; display only existing earned states. Do not claim asset integration until committed and browser-tested. Source metadata located, images not inspected or extracted yet. Replayability II-B/III and BACKLOG-ART-CARDS.md retained. Later dedicated Attack & Pixel Art Overhaul: authored attack sprite frames and distinct VFX sequences; review actual renders before production. Avoid pretending procedural marks are hand-animated sprites.
+
+## 7.58 review candidate
+Original sheets copied unchanged into repository; CSS crops match the original labeled buttons and all 20 medals. Native actions preserved. Grimoire, Warlord Talents and Academy keep their existing controls because no exact labeled originals exist. No new reward logic. Browser verification and approval pending; main remains on 7.57.
+
+Roadmap: audio (music and SFX) before final visual overhaul; approve guardian and regional human unit designs, then author 4–5+ distinct animation poses per action, including Attack & Pixel Art Overhaul. Keep Card Overhaul and Replayability II-B/III open. Responsive behavior and prior regression suite mandatory.

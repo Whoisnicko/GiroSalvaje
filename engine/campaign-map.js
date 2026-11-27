@@ -23,7 +23,7 @@ function campaignMapRender(){
  const rows=campaignMapData(),selected=rows.find(r=>r.id===campaignMapSelected)||rows[0],count=rows.filter(r=>r.conquered).length;
  campaignMapSelected=selected.id;
  if(!difficultyUnlocked(campaignProfileInit(),selected.id,campaignMapDifficulty))campaignMapDifficulty='normal';
- $('#cmNodes').innerHTML=rows.map(d=>'<button type="button" class="cm-node '+d.status+(d.id===selected.id?' selected':'')+'" data-cm-region="'+d.id+'" aria-pressed="'+(d.id===selected.id)+'" aria-label="'+d.def.name+' — '+d.status+'" style="--nx:'+d.x+'%;--ny:'+d.y+'%;--nw:'+d.w+'%;--nh:'+d.h+'%;--accent:'+d.color+'"><span class="cm-rank">'+d.roman+'</span><span class="cm-node-name">'+d.def.name+'</span><span class="cm-node-status" aria-hidden="true">'+(d.conquered?'✓':d.unlocked?'◆':'🔒')+'</span></button>').join('');
+ $('#cmNodes').innerHTML=rows.map(d=>'<button type="button" class="cm-node '+d.status+(d.id===selected.id?' selected':'')+'" data-cm-region="'+d.id+'" data-medal-tier="'+d.mastery+'" aria-pressed="'+(d.id===selected.id)+'" aria-label="'+d.def.name+' — '+d.status+'" style="--nx:'+d.x+'%;--ny:'+d.y+'%;--nw:'+d.w+'%;--nh:'+d.h+'%;--accent:'+d.color+'"><span class="cm-rank">'+d.roman+'</span><span class="cm-node-name">'+d.def.name+'</span><span class="cm-node-status" aria-hidden="true">'+(d.conquered?'✓':d.unlocked?'◆':'🔒')+'</span></button>').join('');
  $('#cmProgressText').textContent=count+' / 5 Regions Conquered';$('#cmProgressPct').textContent=count*20+'%';$('#cmProgressFill').style.width=count*20+'%';$('#cmProgress').setAttribute('aria-valuenow',count);
  const d=selected,b=BOSS_DATA[d.def.bossId],relic=REGIONAL_RELICS.find(r=>r.region===d.id),enemies=Object.entries(REGIONAL_ENEMIES).filter(([id,e])=>e.region===d.id).map(([id])=>id),roster=enemies.length?enemies:['sol','bal','cab'];
  $('#cmDetail').style.setProperty('--accent',d.color);
@@ -35,7 +35,7 @@ function campaignMapRender(){
  '<section class="cm-difficulties"><label for="cmDifficulty">Difficulty · '+d.mastery+'/3 mastered</label><select id="cmDifficulty" '+(!d.unlocked?'disabled':'')+'>'+Object.entries(DIFFICULTIES).map(([id,v])=>'<option value="'+id+'" '+(id===campaignMapDifficulty?'selected ':'')+(!difficultyUnlocked(campaignProfileInit(),d.id,id)?'disabled':'')+'>'+v.name+(!difficultyUnlocked(campaignProfileInit(),d.id,id)?' · locked':v.rank<=d.mastery?' · conquered':'')+'</option>').join('')+'</select><small>Enemy HP '+Math.round(DIFFICULTIES[campaignMapDifficulty].hp*100)+'% · damage '+Math.round(DIFFICULTIES[campaignMapDifficulty].damage*100)+'%</small></section>'+
  challengeMapHTML(d.id,d.mastery,campaignProfileInit())+
  '<div class="cm-record"><span>Personal best · '+DIFFICULTIES[campaignMapDifficulty].name+'</span><b>'+(d.best===null?'—':d.best.toLocaleString('en-US'))+'</b></div>'+
- '<button class="btn cm-start" type="button" data-front="campaign-start" '+(!d.unlocked?'disabled':'')+'>'+(d.conquered?'Revisit Region':d.unlocked?'Enter Region':'Region Locked')+'</button>'+
+ '<button class="btn cm-start" type="button" data-front="campaign-start" data-art-state="'+(d.conquered?'revisit':d.unlocked?'enter':'locked')+'" '+(!d.unlocked?'disabled':'')+'>'+(d.conquered?'Revisit Region':d.unlocked?'Enter Region':'Region Locked')+'</button>'+
  (!d.unlocked?'<p class="cm-lock-note">Conquer '+BIOME_DATA[d.previous].name+' to unlock.</p>':'')+
  '<button type="button" class="btn cm-score" data-front="campaign-scores">View regional scores</button>';
 }
