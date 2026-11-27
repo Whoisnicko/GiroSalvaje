@@ -78,3 +78,69 @@
 .original-medals-ready .cm-challenge[data-region="cathedral"] .tier-2,.original-medals-ready #campaignMapView .cm-node[data-cm-region="cathedral"][data-medal-tier="2"] .cm-rank{--art-size:757.57576% 771.23288%;--art-pos:95.39171% 44.89796%;--art-ratio:132/73;}
 .original-medals-ready .cm-challenge[data-region="cathedral"] .tier-3,.original-medals-ready #campaignMapView .cm-node[data-cm-region="cathedral"][data-medal-tier="3"] .cm-rank{--art-size:714.28571% 750.66667%;--art-pos:95.81395% 60.04098%;--art-ratio:140/75;}
 .original-medals-ready .cm-challenge[data-region="cathedral"] .tier-4{--art-size:574.71264% 319.88636%;--art-pos:97.69976% 95.09044%;--art-ratio:174/176;}
+
+/* The painted splash contains baked controls with a much wider ratio.
+   Once the sheet is available, use a real flow layout over a dark, opaque panel
+   rather than stretching the original buttons into those old hit rectangles. */
+.original-buttons-ready #homeView.dark-gate{
+ width:min(100%,940px);min-height:0;height:auto;aspect-ratio:auto;
+ padding:clamp(10px,2vw,20px);margin:auto;container-type:normal;
+}
+.original-buttons-ready #homeView.dark-gate .gate-splash{
+ object-fit:cover;opacity:.22;
+}
+.original-buttons-ready #homeView.dark-gate .gate-content{
+ position:relative;inset:auto;display:flex;flex-direction:column;align-items:center;
+ gap:8px;width:min(680px,100%);margin:0 auto;padding:clamp(8px,2vw,18px);
+ box-sizing:border-box;background:#100e18f5;border:1px solid #806344;border-radius:8px;
+}
+.original-buttons-ready #homeView.dark-gate .gate-title{
+ position:relative;inset:auto;width:min(420px,85%);height:auto;overflow:visible;
+ clip-path:none;margin:0;padding:0;
+}
+.original-buttons-ready #homeView.dark-gate .official-logo{max-height:132px}
+.original-buttons-ready #homeView.dark-gate .gate-actions{
+ position:static;inset:auto;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+ width:min(550px,100%);gap:6px;pointer-events:auto;
+}
+.original-buttons-ready #homeView.dark-gate .gate-actions .gate-button.btn{
+ position:relative;inset:auto;left:auto;top:auto;width:100%;height:auto;min-height:44px;
+ padding:5px 8px;box-sizing:border-box;pointer-events:auto;
+ border:1px solid #ad8555!important;border-radius:4px;background:linear-gradient(#30252a,#161822);
+ box-shadow:inset 0 0 0 2px #161018,0 3px 7px #0009;
+}
+.original-buttons-ready #homeView.dark-gate .gate-actions .gate-button .gate-label{
+ position:static;width:auto;height:auto;overflow:visible;clip-path:none;white-space:normal;
+}
+.original-buttons-ready #homeView.dark-gate .gate-actions .gate-button:is(.gate-new,.gate-continue,.gate-settings,.gate-credits){
+ aspect-ratio:var(--art-ratio);padding:0;
+}
+.original-buttons-ready #homeView.dark-gate .gate-actions .gate-button:is(.gate-new,.gate-continue,.gate-settings,.gate-credits) .gate-label{
+ position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);
+}
+.original-buttons-ready #homeView.dark-gate .gate-button.btn:disabled{opacity:.65;cursor:default}
+.original-buttons-ready #homeView.dark-gate .gate-leaderboard,
+.original-buttons-ready #homeView.dark-gate .gate-save,
+.original-buttons-ready #homeView.dark-gate .gate-footer,
+.original-buttons-ready #homeView.dark-gate .gate-progress{
+ position:static;inset:auto;max-width:none;text-align:center;
+}
+.original-buttons-ready #homeView.dark-gate .gate-progress{
+ width:min(550px,100%);box-sizing:border-box;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;padding:4px;
+}
+.original-buttons-ready #homeView.dark-gate .gate-progress .btn{
+ margin:0;height:auto;min-height:36px;aspect-ratio:var(--art-ratio);padding:0;
+}
+.original-buttons-ready #homeView.dark-gate .gate-progress p{grid-column:1/-1}
+.original-buttons-ready #homeView.dark-gate .gate-footer{flex-direction:row;flex-wrap:wrap;justify-content:center}
+.original-buttons-ready #homeView.dark-gate .gate-leaderboard{min-height:36px}
+.original-buttons-ready #campaignMapView .cm-start:not(:disabled),
+.original-buttons-ready #campaignMapView .cm-score{
+ width:min(100%,235px);aspect-ratio:var(--art-ratio);height:auto;align-self:center;
+}
+@media(max-width:420px){
+ .original-buttons-ready #homeView.dark-gate .gate-content{padding:8px}
+ .original-buttons-ready #homeView.dark-gate .gate-actions{grid-template-columns:1fr;width:min(255px,100%)}
+ .original-buttons-ready #homeView.dark-gate .gate-progress{grid-template-columns:1fr;width:min(255px,100%)}
+ .original-buttons-ready #homeView.dark-gate .gate-progress .btn{min-height:44px}
+}
