@@ -142,3 +142,6 @@ Role-specific procedural motion using shipped artwork; visual-only summon/fusion
 
 ## v22-alpha.7.56 — Advanced VFX I
 7.55 user playtest 8/8 approved. Generic impact and projectile visuals refined with bounded draw budgets, local glow, minimal projectile fallback, reduced motion. No gameplay, card, save or balance changes; Card Overhaul and Replayability remain deferred. Targeted checks passed; actual browser FPS and visual validation pending. Next Advanced VFX II (regional/champion/boss effects).
+
+## v22-alpha.7.57 — Advanced VFX II
+7.56 functional 8/8, artistic 7/10; user requested more ambitious attacks and pixel art, and asked about unfinished original main menu/map assets. Regional ambience and five distinct boss pixel motifs, limited draw budgets, original telegraphs preserved. Original two PNGs located by Drive metadata; not yet extracted/integrated. Next Main Menu & Campaign Art Integration IV, then dedicated Attack & Pixel Art Overhaul before Professional Polish. Card Overhaul, Replayability II-B/III, historic checks and branching map/token backlog preserved. See BACKLOG-MAIN-MENU-CAMPAIGN-ART.md. Browser validation pending.

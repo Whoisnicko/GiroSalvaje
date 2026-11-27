@@ -59,7 +59,7 @@ function draw(){
   const W = worldW(), now=performance.now()/1000, t = (prefs.reduced || motionPreference.matches) ? 0 : now;
   ctx.save();
   const camera=feelCamera();ctx.translate(camera.x,camera.y);
-  drawInkBackdrop(W);frostDrawWeather(W);ashDrawWeather(W);
+  drawInkBackdrop(W);regionalAmbient(W);frostDrawWeather(W);ashDrawWeather(W);
   if (S.phase === 'prep') {
     const zm = zoneMax();
     ctx.fillStyle = colors.soul; ctx.globalAlpha = 0.05; ctx.fillRect(WALL_X, 0, zm - WALL_X, WORLD_H); ctx.globalAlpha = 1;
@@ -70,6 +70,7 @@ function draw(){
   }
   for (const z of S.zones) { ctx.fillStyle = colors.muted; ctx.globalAlpha = .14 + .06 * Math.sin(t * 12); ctx.beginPath(); ctx.arc(z.x, z.y, z.r, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1; }
 
+  bossWindupAccents(W);
   bossDrawWarnings(W);
   feelDraw('ground');
   vfxProjectileLights(S.shots);

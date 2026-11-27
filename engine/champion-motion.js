@@ -28,12 +28,13 @@ function championDrawFX(){
  championFXSync();championFX=championFX.filter(f=>feelClock-f.at<f.life);
  if(!feelEnabled()){championFX=[];return;}
  const still=feelReduced(),soft=feelStrength();ctx.save();ctx.beginPath();ctx.rect(0,0,worldW(),WORLD_H);ctx.clip();
+ let bossDetails=0;
  for(const f of championFX){
   const q=Math.max(0,Math.min(1,(feelClock-f.at)/f.life)),a=(1-q)*soft;
   const r=still?f.r:f.r*(.65+.35*q);ctx.save();ctx.translate(f.x,f.y);
   ctx.strokeStyle=f.color;ctx.globalAlpha=.75*a;ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.stroke();
   if(f.points){ctx.globalAlpha=.9*a;ctx.lineWidth=2;ctx.beginPath();f.points.forEach((p,i)=>{const x=(p[0]-.5)*r*1.7,y=(p[1]-.5)*r*1.7;i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.stroke();}
-  else if(!still){ctx.fillStyle=f.color;for(let i=0;i<8;i++){const ang=i*Math.PI/4;ctx.fillRect(Math.round(Math.cos(ang)*r)-1,Math.round(Math.sin(ang)*r)-1,3,3);}}
+  else if(!still){if(bossDetails<(prefs.effects==='soft'?1:3)&&typeof bossPixelRelease==='function'&&bossPixelRelease(f,q,a)){bossDetails++;}else{ctx.fillStyle=f.color;for(let i=0;i<8;i++){const ang=i*Math.PI/4;ctx.fillRect(Math.round(Math.cos(ang)*r)-1,Math.round(Math.sin(ang)*r)-1,3,3);}}}
   ctx.restore();
  }ctx.restore();
 }
