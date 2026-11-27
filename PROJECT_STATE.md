@@ -71,3 +71,7 @@ Base 7.68: 19/19 user OK, soundtrack/SFX/ambience 7/10, artistic approval pendin
 
 ## User playtest v7.69 — 2026-11-27
 21/21 OK; soundtrack 5/10 (down from 7/10), SFX and ambience 7/10; evaluation Pendiente; no additional feedback supplied. Latest functional baseline 7.69, artistic approval pending. Recommended next phase v7.70 Audio Integration III — Soundtrack Art Direction & Recorded Audio Pilot (audition before integration), pending user confirmation. See VALIDATION-v22-alpha7p69.md. Preserve all historical validations and Final Polish/remaining roadmap. Documentation only; runtime unchanged.
+
+
+## Audio III audition selection — 2026-11-27
+Hybrid Dark Fantasy P3/B3 selected for Valley pilot; numerical ratings not supplied. Original source/license verified. Binary download blocked; awaiting original files. See AUDIO-III-SELECTION.md. No runtime changes; 7.69 remains functional baseline and all historical validations, Final Polish and remaining roadmap retained.
