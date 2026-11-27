@@ -30,8 +30,8 @@
 .wrap .command-dock .hand .card .cd{background:#15131e}
 .wrap .command-intel .wave-heading,.wrap .cabinet:before{background:linear-gradient(90deg,#34212a,#50362c,#211923);color:var(--goth-light)}
 /* Original atlas already used by main menu/campaign. Keep text and state of all battle controls native. */
-.original-buttons-ready .wrap .command-tools [data-front="settings"]{background-image:url("assets/ui/gothic-buttons-original-v58.png");background-size:452.48869% 731.16883%;background-position:64.95507% 36.00823%;background-repeat:no-repeat;color:transparent;min-width:92px;aspect-ratio:221/77}
-.original-buttons-ready .wrap .command-tools [data-front="settings"]:focus-visible{outline:2px solid #ffdf9c}
+.original-buttons-ready .wrap .command-tools [data-front="home"]{background-image:url("assets/ui/gothic-buttons-original-v58.png");background-size:465.11628% 908.06452%;background-position:78.8535% 73.65269%;background-repeat:no-repeat;color:transparent;min-width:92px;aspect-ratio:215/62}
+.original-buttons-ready .wrap .command-tools [data-front="home"]:focus-visible{outline:2px solid #ffdf9c}
 .wrap button:focus-visible{outline:2px solid #ffdf9c;outline-offset:-2px}
 .wrap .cabinet .cell.held{border-color:#79cce6}
 .wrap .cabinet .cell.win{border-color:#efc47b}
@@ -73,7 +73,7 @@
 /* Compact combat: stable battlefield and switchable lower panels instead of page-length stack.
    Never transform canvas or logical coordinates. Only the actual stage size is fitted by resize(). */
 @media(max-width:1099px),(max-height:649px){
- .wrap.hud-small{box-sizing:border-box;width:100%;max-width:none;height:100dvh;min-height:0;max-height:100dvh;margin:0;padding:4px;display:grid!important;grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,auto) minmax(85px,1fr) 34px minmax(0,32dvh) minmax(0,auto);grid-template-areas:"status" "field" "tabs" "pane" "tools";gap:4px;overflow:hidden}
+ .wrap.hud-small{box-sizing:border-box;width:100%;max-width:none;height:100dvh;min-height:0;max-height:100dvh;margin:0;padding:4px;display:grid!important;grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,auto) minmax(85px,1fr) 34px minmax(0,32dvh) minmax(0,auto) 14px;grid-template-areas:"status" "field" "tabs" "pane" "tools" "save";gap:4px;overflow:hidden}
  .wrap.hud-small>.hud-top{grid-area:status;min-height:0;max-height:24dvh;overflow:auto;display:flex;flex-wrap:wrap;padding:3px 5px;gap:3px}
  .wrap.hud-small .hud-brand-group{gap:3px}
  .wrap.hud-small .hud-brand-group .game-brand{height:28px;width:82px;flex-basis:82px}
@@ -116,10 +116,12 @@
  .wrap.hud-small>.command-intel{display:flex;flex-direction:column;gap:3px;padding:4px}
  .wrap.hud-small>header{grid-area:tools;position:relative;inset:auto;min-height:0;max-height:10dvh;overflow:auto;display:flex;gap:3px;padding:2px;align-items:center}
  .wrap.hud-small>header .command-tools{flex-wrap:wrap;gap:3px}
- .wrap.hud-small>.save-line{position:absolute;top:0;left:0;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);pointer-events:none}
+ .wrap.hud-small>.save-line{grid-area:save;position:static;width:auto;height:14px;margin:0;padding:0 3px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;line-height:14px;font-size:10px;pointer-events:none}
  .wrap.hud-small .reserve-outline{display:none}
 }
 @media(max-height:480px) and (orientation:landscape){
- .wrap.hud-small{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);grid-template-rows:minmax(0,auto) 32px minmax(60px,1fr) minmax(0,auto);grid-template-areas:"status status" "field tabs" "field pane" "tools tools"}
+ .wrap.hud-small{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);grid-template-rows:minmax(0,auto) 32px minmax(60px,1fr) minmax(0,auto) 14px;grid-template-areas:"status status" "field tabs" "field pane" "tools tools" "save save"}
  .wrap.hud-small>.hud-top{max-height:27dvh}
 }
+
+@media(max-width:1099px),(max-height:649px){body:has(.wrap.hud-small){margin:0;overflow:hidden}.wrap.hud-small>.save-line b{display:none}.wrap.hud-small>.save-line span{display:block;overflow:hidden;text-overflow:ellipsis}.wrap.hud-small .command-tools [data-front="home"]{flex:none;min-height:25px}.wrap.hud-small .cabinet .btns .btn:focus-visible{outline:2px solid #ffdf9c}}

@@ -14,3 +14,4 @@ Confirm build v22-alpha.7.59 before testing.
 - Both classes, summoning, holding, dragging/merging, reserve, cards and rune aim, tutorial, sandbox, saves and VFX: unchanged.
 - Missing image fallback and keyboard focus; no loss of progress or rewards.
 - Art rating /10 and approval.
+- Confirm the compact footer retains autosave status and the original Main menu button returns to menu.
