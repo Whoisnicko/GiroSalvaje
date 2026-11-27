@@ -10,7 +10,7 @@
  let campaignArtRequested=false, toolbarRequested=false;
  const loadCampaignArt=()=>{
   if(view.hidden)return;
-  if(!toolbarRequested){toolbarRequested=true;const toolbar=new Image();toolbar.onload=()=>document.documentElement.classList.add("g65-nav-ready");toolbar.onerror=()=>document.documentElement.classList.remove("g65-nav-ready");toolbar.src="assets/ui/campaign-nav-v65.webp?v=22a7p65";loadV66("assets/ui/campaign-nav-v66.webp?v=22a7p66").then(()=>document.documentElement.classList.add("g66-nav-ready")).catch(()=>document.documentElement.classList.remove("g66-nav-ready"));}
+  if(!toolbarRequested){toolbarRequested=true;const toolbar=new Image();toolbar.onload=()=>document.documentElement.classList.add("g65-nav-ready");toolbar.onerror=()=>document.documentElement.classList.remove("g65-nav-ready");toolbar.src="assets/ui/campaign-nav-v65.webp?v=22a7p65";loadV66("assets/ui/campaign-nav-v66.webp?v=22a7p66").then(()=>document.documentElement.classList.add("g66-nav-ready")).catch(()=>document.documentElement.classList.remove("g66-nav-ready"));loadV66("assets/ui/campaign-cards-v67.webp?v=22a7p67").then(()=>document.documentElement.classList.add("g67-cards-ready")).catch(()=>document.documentElement.classList.remove("g67-cards-ready"));}
   if(campaignArtRequested)return;
   campaignArtRequested=true;
   const load=path=>new Promise((resolve,reject)=>{const img=new Image();img.onload=resolve;img.onerror=reject;img.src=path;});
