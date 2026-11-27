@@ -5,9 +5,11 @@
  const homeAtlas=new Image();homeAtlas.onload=()=>document.documentElement.classList.add('g63-assets-ready');homeAtlas.onerror=()=>document.documentElement.classList.remove('g63-assets-ready');homeAtlas.src='assets/ui/gothic-controls-wide-v63.webp?v=22a7p63';
  if(!view||!stage||!world)return;
  // New art is loaded only when campaign opens. Keep the complete v62 fallback until both images decode.
- let campaignArtRequested=false;
+ let campaignArtRequested=false, toolbarRequested=false;
  const loadCampaignArt=()=>{
-  if(view.hidden||campaignArtRequested)return;
+  if(view.hidden)return;
+  if(!toolbarRequested){toolbarRequested=true;const toolbar=new Image();toolbar.onload=()=>document.documentElement.classList.add("g65-nav-ready");toolbar.onerror=()=>document.documentElement.classList.remove("g65-nav-ready");toolbar.src="assets/ui/campaign-nav-v65.webp?v=22a7p65";}
+  if(campaignArtRequested)return;
   campaignArtRequested=true;
   const load=path=>new Promise((resolve,reject)=>{const img=new Image();img.onload=resolve;img.onerror=reject;img.src=path;});
   Promise.all([load('assets/ui/region-plaques-v64.webp?v=22a7p64'),load('assets/ui/map-mask-repair-v64.webp?v=22a7p64')]).then(()=>document.documentElement.classList.add('g64-campaign-art-ready')).catch(()=>document.documentElement.classList.remove('g64-campaign-art-ready'));
