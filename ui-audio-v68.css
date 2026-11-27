@@ -1,0 +1,6 @@
+#settingsView .audio-settings-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px 14px;min-width:0;margin:6px 0 10px;padding:7px 10px;border:1px solid #997448;background:linear-gradient(#302438,#191420)}
+#settingsView .audio-settings-grid .setting-row{min-width:0;margin:0;padding:4px 0;gap:8px;font-size:clamp(12px,1.2vw,16px)}
+#settingsView .audio-settings-grid input[type=range]{width:clamp(58px,9vw,115px);min-width:0;accent-color:#c69a58}
+#settingsView .audio-settings-grid input[type=checkbox]{accent-color:#c69a58}
+@media(max-width:550px){#settingsView .audio-settings-grid{grid-template-columns:1fr;gap:1px;padding:4px 7px}#settingsView .audio-settings-grid input[type=range]{width:42%}}
+@media(max-height:650px){#settingsView .audio-settings-grid .setting-row{padding:2px 0}#settingsView .audio-settings-grid{margin:3px 0;gap:2px 8px}}
