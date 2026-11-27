@@ -114,3 +114,8 @@
 }
 @media(max-width:560px){#front #homeView.dark-gate{padding:7px}#front #homeView.dark-gate .gate-content{padding:7px;gap:6px}#front #homeView.dark-gate .gate-actions .gate-button.btn{height:clamp(44px,7dvh,58px)!important;gap:5px;padding:4px!important;--icon-size:26px;font-size:13px!important}#front #homeView.dark-gate .gate-progress .btn{height:auto!important;min-height:49px;flex-direction:column;text-align:center;justify-content:center;gap:3px;padding:3px!important;--icon-size:24px;font-size:11px!important}#front #homeView.dark-gate .official-logo{height:clamp(70px,16dvh,120px)}#front #homeView.dark-gate .gate-save p,#front #homeView.dark-gate .gate-progress p{font-size:10px}#front #campaignMapView .cm-heading h1{font-size:23px}#front #campaignMapView .cm-node{font-size:clamp(8px,2.4cqw,12px)}}
 @media(max-height:500px) and (min-width:561px){#front #homeView.dark-gate .gate-content{gap:4px;padding:6px}#front #homeView.dark-gate .official-logo{height:65px}#front #homeView.dark-gate .gate-actions{grid-template-columns:repeat(4,minmax(0,1fr))}#front #homeView.dark-gate .gate-actions .gate-button.btn{height:42px!important;--icon-size:25px;font-size:12px!important;padding:3px!important}#front #homeView.dark-gate .gate-progress .btn{height:36px!important;--icon-size:24px;font-size:12px!important;padding:3px!important}}
+
+/* A missing portrait never leaves a broken-image indicator; readable labels stay native. */
+#front #campaignMapView .cm-node .cm-rank{min-width:0;max-height:100%}
+#front #campaignMapView .cm-node-name{min-width:0;overflow-wrap:anywhere}
+#front #homeView.dark-gate .gate-progress .btn{min-width:0;overflow-wrap:anywhere}
