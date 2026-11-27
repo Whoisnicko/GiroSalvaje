@@ -139,3 +139,6 @@ Role-specific procedural motion using shipped artwork; visual-only summon/fusion
 
 ## v22-alpha.7.55 — UI Art Integration III / Guardian facing
 7.54 user playtest 8/8 approved; minor Zombie orientation bug reported. Visual target tracking, neutral reset and frozen pose fix; Grimoire/Hades states and themed outcome panels with actual campaign stats. No combat or balance change. Card splash art, design, variety and VFX explicitly deferred in BACKLOG-ART-CARDS.md; existing Replayability backlog untouched. Targeted source checks passed, browser pending. Next Advanced VFX (general combat effects; card-specific pass deferred).
+
+## v22-alpha.7.56 — Advanced VFX I
+7.55 user playtest 8/8 approved. Generic impact and projectile visuals refined with bounded draw budgets, local glow, minimal projectile fallback, reduced motion. No gameplay, card, save or balance changes; Card Overhaul and Replayability remain deferred. Targeted checks passed; actual browser FPS and visual validation pending. Next Advanced VFX II (regional/champion/boss effects).

@@ -72,6 +72,7 @@ function draw(){
 
   bossDrawWarnings(W);
   feelDraw('ground');
+  vfxProjectileLights(S.shots);
   drawInkAltar(t);
 
   // Reserve (debajo del campo): 3 lugares; los monsters de acá no pelean.
@@ -187,7 +188,8 @@ function draw(){
   feelDraw('front');
   for (const p of S.parts) { ctx.globalAlpha = Math.max(0, p.t / p.T); ctx.fillStyle = colors[p.c]; ctx.beginPath();ctx.ellipse(p.x,p.y,p.s*.65,p.s*.35,.6,0,Math.PI*2);ctx.fill(); }
   ctx.globalAlpha = 1;
-  for (const shot of S.shots) drawInkShot(shot,t);
+  const shotDetail=vfxBudget().detailShots;
+  for (let i=0;i<S.shots.length;i++) drawInkShot(S.shots[i],t,i>=S.shots.length-shotDetail);
   for (const f of S.floats) {
     ctx.globalAlpha = Math.max(0, f.t / f.T); ctx.fillStyle = colors[f.c]; ctx.font = `600 ${f.sz || 13}px Rubik, sans-serif`;
     const fy=f.y-(feelReduced()?0:(1-f.t/f.T)*30);
@@ -322,16 +324,7 @@ function drawInkBackdrop(W){
  }
  if(!battlefieldArt){drawV18Field(W);return;}ctx.save();ctx.imageSmoothingEnabled=false;ctx.drawImage(battlefieldArt,0,0,W,WORLD_H);ctx.restore();
 }
-function drawInkShot(s,t){
- ctx.save();ctx.translate(Math.round(s.x),Math.round(s.y));ctx.rotate(s.ang||0);
- const pal=HYBRID.palette[s.k==='fire'?'fire':'orb'];
- if(prefs.effects==='off'){ctx.fillStyle=pal[2];ctx.fillRect(-3,-2,6,4);ctx.restore();return;}
- if(prefs.effects==='soft')ctx.globalAlpha=.65;
- if(feelReduced())t=0;
- if(s.k==='bolt'){ctx.fillStyle=s.ignoreCover||s.burnDuration?'#ff7840':'#edbc65';ctx.fillRect(-16,-1,20,2);ctx.fillStyle=s.ignoreCover||s.burnDuration?'#ffdb88':'#fff6d7';ctx.fillRect(3,-2,5,4);ctx.fillStyle=s.ignoreCover||s.burnDuration?'#ff9a4f':'#836bed';ctx.fillRect(-17,-4,4,3);ctx.fillRect(-17,1,4,3);}
- else{for(let j=0;j<3;j++){ctx.strokeStyle=pal[j];ctx.lineWidth=[8,4,1.5][j];ctx.beginPath();for(let k=0;k<18;k++){let x=-30+k*2,y=Math.sin(k*.35+t*13+j*.4)*(18-k)*.18;k?ctx.lineTo(x,y):ctx.moveTo(x,y);}ctx.stroke();}ctx.fillStyle=pal[2];ctx.fillRect(0,-3,6,6);}
- ctx.restore();
-}
+function drawInkShot(s,t,detail=true){vfxShotBody(s,t,detail);}
 function hybridFX(){
  if(prefs.effects==='off')return;
  const t=performance.now()/1000;
