@@ -57,7 +57,7 @@
 #sandboxPanel:not(.academy-active) .sb-quickbar [data-sb=configure]{background:#51442d;color:#fff1ca;border-color:#c7aa70}
 #sandboxPanel:not(.academy-active) .sb-quickbar [data-sb=exit]{background:#342c38;color:#efdae4;border-color:#927a92}
 #sandboxPanel:not(.academy-active) .sb-quickbar button:disabled{opacity:.45;box-shadow:none}
-#sandboxPanel:not(.academy-active) .sb-quickbar button:not(:disabled):hover{filter:brightness(1.2);border-color:#fff1c9;color:inherit}
+#sandboxPanel:not(.academy-active) .sb-quickbar button:not(:disabled):hover{filter:brightness(1.2);border-color:#fff1c9}
 #sandboxPanel:not(.academy-active) .sb-quickbar .sb-drawer-toggle:not(:disabled):hover{color:#211708}
 #sandboxPanel:not(.academy-active) .sb-quickbar button:focus-visible{outline:2px solid #fff1c9;outline-offset:2px}
 @media(max-width:600px){#sandboxPanel:not(.academy-active) .sb-quickbar{gap:4px}#sandboxPanel:not(.academy-active) .sb-quickbar button{font-size:11px;padding:6px 8px;min-height:36px}#sandboxPanel:not(.academy-active) .sb-quickbar .sb-drawer-toggle{min-width:80px;min-height:38px;font-size:12px}}
