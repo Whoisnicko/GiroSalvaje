@@ -130,6 +130,8 @@ const kick = w => { tone(120, .16, 'sine', .38, w, AU.mGain, 45); };
 function schedMusic(){
   if(!AU.ctx||AU.ctx.state!=='running'||document.hidden)return;
   const want=audio68Scene(),key=audio69ScoreKey(want);audio68Ambience(audio68Region());
+  const enabled=AU.music&&prefs.musicVolume>0&&prefs.volume>0&&want!=='end';
+  if(audio70Tick(want,enabled)){AU.track=want;AU.scoreKey=key;AU.next=AU.ctx.currentTime+.05;return;}
   if(!AU.music||prefs.musicVolume===0||prefs.volume===0||want==='end'){if(AU.scoreKey!==key){audio69FadeMusic();AU.track=want;AU.scoreKey=key;AU.step=0;AU.loop=0;}AU.next=AU.ctx.currentTime+.05;return;}
   if (AU.next < AU.ctx.currentTime - .1) AU.next = AU.ctx.currentTime + .05; // tras volver de otra pestaña, no amontonar notas
   if (key !== AU.scoreKey) { audio69FadeMusic();AU.track = want;AU.scoreKey=key;AU.step=0;AU.loop=0;AU.next=AU.ctx.currentTime+.09; }
@@ -165,7 +167,7 @@ function schedMusic(){
     }
   }
 }
-function setMusic(on){ AU.music = on; store.set('gs.music', on); audio68Mix();if(!on)audio68Stop('music'); renderSnd(); }
+function setMusic(on){ AU.music = on; store.set('gs.music', on); audio68Mix();if(!on){audio70Stop(true,true);audio70CancelLoad();audio68Stop('music');} renderSnd(); }
 function setSfx(on){ AU.sfx = on; store.set('gs.sfx', on); audio68Mix();if(!on)audio68Stop('sfx'); renderSnd(); }
 function renderSnd(){ $('#musBtn').className = 'snd' + (AU.music ? ' on' : ''); $('#musBtn').textContent = '♪ Music ' + (AU.music ? 'on' : 'off'); $('#sfxBtn').className = 'snd' + (AU.sfx ? ' on' : ''); $('#sfxBtn').textContent = 'Sound ' + (AU.sfx ? 'on' : 'off'); }
 

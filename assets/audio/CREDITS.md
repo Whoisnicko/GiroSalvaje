@@ -1,0 +1,7 @@
+# Audio credits — Stop Humans!
+
+- Medieval: Exploration — RandomMind — https://opengameart.org/content/medieval-exploration — CC0 https://creativecommons.org/publicdomain/zero/1.0/ . Re-encoded MP3 112 kbps and split into byte fragments, reassembled unchanged on playback. Runtime gain and loop.
+- Battle March - Epic Orchestral Music Loop — PlayOnLoop — https://www.playonloop.com/ — https://opengameart.org/content/battle-march-epic-orchestral-music-loop — CC BY 3.0 https://creativecommons.org/licenses/by/3.0/ . Original free short WAV unchanged; runtime gain and loop.
+- The Last Encounter (Original Version) — Music by Matthew Pablo — https://www.matthewpablo.com/ — https://opengameart.org/content/rpg-battle-theme-the-last-encounter-0 — CC BY-SA 3.0 https://creativecommons.org/licenses/by-sa/3.0/ . Re-encoded MP3 112 kbps and split into byte fragments; distributed audio and adaptations under CC BY-SA 3.0. Runtime gain and loop. Retain credit and license when redistributing.
+
+These are independent background music assets selected dynamically in-game, not edited to fixed audiovisual sequences. Share-alike obligations for any further adaptations or synchronization must be reviewed before commercial distribution. No endorsement implied. Original source files archived in project Drive.

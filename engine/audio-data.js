@@ -1273,3 +1273,28 @@ const AUDIO69=Object.freeze({
     "cardAim": 0.14
   }
 });
+
+/* Recorded pilot assets: CC credits in assets/audio/CREDITS.md. */
+const AUDIO70=Object.freeze({
+  "prep": {
+    "file": "valley-preparation",
+    "parts": 7,
+    "bytes": 3309757,
+    "gain": 1.25,
+    "title": "Medieval: Exploration"
+  },
+  "battle": {
+    "file": "valley-battle.wav",
+    "parts": 0,
+    "bytes": 498148,
+    "gain": 0.33,
+    "title": "Battle March"
+  },
+  "boss": {
+    "file": "boss-last-encounter",
+    "parts": 6,
+    "bytes": 2416892,
+    "gain": 0.31,
+    "title": "The Last Encounter"
+  }
+});
