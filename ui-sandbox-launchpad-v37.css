@@ -41,3 +41,23 @@
 
 #sandboxPanel .sb-drawer-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;color:#e8cb92;font:700 12px Georgia,serif}
 #sandboxPanel .sb-drawer-heading button{min-height:32px}
+
+/* 7.72D — accessible sandbox control hierarchy; no campaign HUD changes. */
+#sandboxPanel:not(.academy-active) .sb-quickbar{justify-content:flex-start;gap:6px;flex-wrap:wrap}
+#sandboxPanel:not(.academy-active) .sb-quickbar button{min-height:38px;padding:7px 12px;font:700 13px/1.15 system-ui,sans-serif;white-space:nowrap;border-width:1px;box-shadow:inset 0 1px #ffffff13,0 1px 2px #0008}
+#sandboxPanel:not(.academy-active) .sb-quickbar .sb-drawer-toggle{margin-left:0;min-width:104px;min-height:40px;background:linear-gradient(#d9b476,#a87c3f);color:#211708;border-color:#ffdc9b;font-size:14px}
+#sandboxPanel:not(.academy-active) .sb-quickbar .sb-army-shortcut{background:#45365d;color:#f0e1ff;border-color:#b496d3}
+#sandboxPanel:not(.academy-active) .sb-quickbar [aria-expanded=true]{outline:2px solid #fff0b8;outline-offset:1px}
+#sandboxPanel:not(.academy-active) .sb-quickbar [data-sb=fight]{background:#24593c;color:#e3ffe7;border-color:#85c59a}
+#sandboxPanel:not(.academy-active) .sb-quickbar [data-sb=retry]{background:#303c5d;color:#e5edff;border-color:#879bd0}
+#sandboxPanel:not(.academy-active) .sb-quickbar [data-sb=stop]{background:#653236;color:#ffdfdc;border-color:#d48383}
+#sandboxPanel:not(.academy-active) .sb-quickbar [data-sb=heal]{background:#285458;color:#dcfffc;border-color:#7ecac6}
+#sandboxPanel:not(.academy-active) .sb-quickbar [data-sb=god]{background:#263846;color:#e7f0f8;border-color:#8ba1b3}
+#sandboxPanel:not(.academy-active) .sb-quickbar [data-sb=god][aria-pressed=true]{background:#285344;color:#c2ffdf;border-color:#87d7ac}
+#sandboxPanel:not(.academy-active) .sb-quickbar [data-sb=configure]{background:#51442d;color:#fff1ca;border-color:#c7aa70}
+#sandboxPanel:not(.academy-active) .sb-quickbar [data-sb=exit]{background:#342c38;color:#efdae4;border-color:#927a92}
+#sandboxPanel:not(.academy-active) .sb-quickbar button:disabled{opacity:.45;box-shadow:none}
+#sandboxPanel:not(.academy-active) .sb-quickbar button:not(:disabled):hover{filter:brightness(1.2);border-color:#fff1c9;color:inherit}
+#sandboxPanel:not(.academy-active) .sb-quickbar .sb-drawer-toggle:not(:disabled):hover{color:#211708}
+#sandboxPanel:not(.academy-active) .sb-quickbar button:focus-visible{outline:2px solid #fff1c9;outline-offset:2px}
+@media(max-width:600px){#sandboxPanel:not(.academy-active) .sb-quickbar{gap:4px}#sandboxPanel:not(.academy-active) .sb-quickbar button{font-size:11px;padding:6px 8px;min-height:36px}#sandboxPanel:not(.academy-active) .sb-quickbar .sb-drawer-toggle{min-width:80px;min-height:38px;font-size:12px}}

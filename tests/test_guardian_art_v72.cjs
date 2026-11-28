@@ -8,6 +8,7 @@ const res={};res.badDimensions=installGuardian72({width:1,height:1})===0;res.abs
 res.installed=installGuardian72(sheet)===21;res.portraits=Object.keys(URL_).length===7;
 for(const name of GUARDIAN72_ART.names)for(let level=1;level<=3;level++){
  const base=guardian72Frames(name,{level}),white=guardian72Frames(name,{level,flash:true}),gray=guardian72Frames(name,{level,gray:true});
+ if(level>1){res[name+level]=base===null&&white===null&&gray===null;continue;}
  res[name+level]=base.length===12&&white.length===12&&gray.length===12&&base[0]!==white[0]&&base[0]!==gray[0]&&base[0].width===144&&base[0].height===96&&base[0]===base[1];
  // Ghost idle uses a distinct vertical offset.
  if(name==='espectro'||name==='banshee')res[name+level]=base.length===12&&white.length===12&&gray.length===12&&base[0]!==white[0]&&base[0]!==gray[0]&&base[0]!==base[1];

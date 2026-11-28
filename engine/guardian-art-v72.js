@@ -6,6 +6,9 @@ const GUARDIAN72_ART=Object.freeze({
 });
 const GUARDIAN72_FRAMES=Object.create(null);
 const GUARDIAN72_BOUNDS=Object.create(null);
+// Cropped evolved concept art has been rejected in the battlefield playtest.
+// Keep only approved-for-preview base silhouettes active; preserve old tier art until redraw.
+function guardian72Playable(level){return level===1;}
 function guardian72Bounds(data,w,h){
  if(data.length!==w*h*4)return null;
  let l=w,t=h,r=-1,b=-1;
@@ -13,6 +16,7 @@ function guardian72Bounds(data,w,h){
  return r>=l?{l,t,r:r+1,b:b+1,w:r-l+1,h:b-t+1}:null;
 }
 function guardian72Geometry(name,level,s){
+ if(!guardian72Playable(level))return null;
  const b=GUARDIAN72_BOUNDS[name]?.[level];if(!b)return null;
  const maxWidth=(name==='dragon'?1.40:name==='zombi'?1.12:1.15)*s;
  const k=Math.min(s*.88/b.h,maxWidth/b.w);
@@ -24,7 +28,9 @@ function guardian72Level(u){
  return Number.isInteger(raw)&&raw>=1&&raw<=3?raw:1;
 }
 function guardian72Frames(name,o={}){
- const entry=GUARDIAN72_FRAMES[name]?.[o.guardianLevel??o.level??1];
+ const level=o.guardianLevel??o.level??1;
+ if(!guardian72Playable(level))return null;
+ const entry=GUARDIAN72_FRAMES[name]?.[level];
  return entry?.[o.flash?'white':o.gray?'gray':'base']||null;
 }
 function guardian72Enabled(){return typeof location==='undefined'||new URLSearchParams(location.search).get('guardians')!=='original';}

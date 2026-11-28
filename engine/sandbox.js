@@ -216,6 +216,19 @@ function renderSandbox(){
  sbEl('sbGod').textContent='God mode: '+(S.sandboxGod?'ON':'OFF');sbEl('sbGod').setAttribute('aria-pressed',String(S.sandboxGod));const damageMode=sbEl('sbDamageMode');damageMode.textContent=S.sandboxGod?'IMMUNE':'DAMAGE ON';damageMode.setAttribute('data-immune',String(S.sandboxGod));
  for(const b of p.querySelectorAll('[data-sb]')){const a=b.dataset.sb;b.disabled=spinning||!ready||(academyActive()&&['unit1','unit2','unit3'].includes(a))||(['fight','unit','unit1','unit2','unit3','clearUnits'].includes(a)&&!prep)||(a==='retry'&&!S.sandboxEncounter)||(['enemy','enemyOnly'].includes(a)&&!sbEl('sbEnemy').value);}
 }
+function sandboxDrawerAction(action){
+ const p=sbEl('sandboxPanel');
+ if(!p||p.hidden||academyActive())return;
+ if(action==='army'){sandboxTab('army');p.open=true;}else p.open=!p.open;
+ sandboxDrawerSync();
+}
+function sandboxDrawerSync(){
+ const p=sbEl('sandboxPanel');if(!p)return;
+ for(const b of p.querySelectorAll('[data-sb-drawer]')){
+  const open=p.open&&(b.dataset.sbDrawer!=='army'||!!p.querySelector('[data-sb-tab="army"][aria-selected="true"]'));
+  b.setAttribute('aria-expanded',String(open));
+ }
+}
 function initSandboxControls(){
  sbEl('sbRegion').innerHTML=Object.values(BIOME_DATA).map(b=>'<option value="'+b.id+'">'+b.name+'</option>').join('');
  sbEl('sbBoss').innerHTML='<option value="" disabled>Select boss</option>'+sandboxBossOptions().map(b=>'<option value="'+b.id+'">'+b.name+'</option>').join('');
@@ -225,5 +238,6 @@ function initSandboxControls(){
  sbEl('sbUnit').innerHTML=MERGEABLE.map(t=>'<option value="'+t+'">'+NAMES[t]+'</option>').join('');
  sandboxRefreshRoster();sbEl('sbRoster').addEventListener('change',()=>{sandboxRefreshRoster();if(sandboxActive())renderSandbox();});sbEl('sbEnemy').addEventListener('change',()=>{sbEl('sbEnemyInfo').textContent=sbEl('sbEnemy').value?enemyDisplayNote({kind:sbEl('sbEnemy').value}):'No regional units.';});sandboxLaunchInit();
  sbEl('sandboxEnter').addEventListener('click',academyOpen);
- sbEl('sandboxPanel').addEventListener('click',e=>{const direct=e.target.closest('[data-sb-boss]');if(direct&&!direct.disabled){e.preventDefault();sandboxPickBoss(direct.dataset.sbBoss,true);return;}const close=e.target.closest('[data-sb-close]');if(close){e.preventDefault();sbEl('sandboxPanel').open=false;return;}const tab=e.target.closest('[data-sb-tab]');if(tab){e.preventDefault();sandboxTab(tab.dataset.sbTab);return;}const b=e.target.closest('[data-sb]');if(b){e.preventDefault();if(!b.disabled)sandboxAction(b.dataset.sb);}});
+ sbEl('sandboxPanel').addEventListener('toggle',sandboxDrawerSync);
+ sbEl('sandboxPanel').addEventListener('click',e=>{const drawer=e.target.closest('[data-sb-drawer]');if(drawer){e.preventDefault();sandboxDrawerAction(drawer.dataset.sbDrawer);return;}const direct=e.target.closest('[data-sb-boss]');if(direct&&!direct.disabled){e.preventDefault();sandboxPickBoss(direct.dataset.sbBoss,true);return;}const close=e.target.closest('[data-sb-close]');if(close){e.preventDefault();sbEl('sandboxPanel').open=false;return;}const tab=e.target.closest('[data-sb-tab]');if(tab){e.preventDefault();sandboxTab(tab.dataset.sbTab);sandboxDrawerSync();return;}const b=e.target.closest('[data-sb]');if(b){e.preventDefault();if(!b.disabled)sandboxAction(b.dataset.sb);}});
 }

@@ -1,8 +1,8 @@
 const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
 const read=p=>fs.readFileSync(path.join(__dirname,'..',p),'utf8');
 const mod=read('engine/guardian-art-v72.js'),game=read('engine/game.js'),sandbox=read('engine/sandbox.js'),html=read('index.html');
-const geom=new Function(mod+`const data=new Uint8ClampedArray(144*96*4);for(let y=50;y<90;y++)for(let x=20;x<120;x++)data[(y*144+x)*4+3]=255;const b=guardian72Bounds(data,144,96);GUARDIAN72_BOUNDS.dragon={3:b};return {b,g:guardian72Geometry('dragon',3,60),blank:guardian72Bounds(new Uint8ClampedArray(16),2,2)};`)();
-assert.deepEqual(geom.b,{l:20,t:50,r:120,b:90,w:100,h:40});assert.equal(geom.blank,null);assert.ok(Math.abs(geom.g.width-84)<1e-8);assert.ok(Math.abs(geom.g.y+90*geom.g.k-geom.g.foot)<1e-8);
+const geom=new Function(mod+`const data=new Uint8ClampedArray(144*96*4);for(let y=50;y<90;y++)for(let x=20;x<120;x++)data[(y*144+x)*4+3]=255;const b=guardian72Bounds(data,144,96);GUARDIAN72_BOUNDS.dragon={1:b,3:b};return {b,g:guardian72Geometry('dragon',1,60),blocked:guardian72Geometry('dragon',3,60),blank:guardian72Bounds(new Uint8ClampedArray(16),2,2)};`)();
+assert.deepEqual(geom.b,{l:20,t:50,r:120,b:90,w:100,h:40});assert.equal(geom.blank,null);assert.equal(geom.blocked,null);assert.ok(Math.abs(geom.g.width-84)<1e-8);assert.ok(Math.abs(geom.g.y+90*geom.g.k-geom.g.foot)<1e-8);
 const helper=game.slice(game.indexOf('const WALKABLE_BANDS='),game.indexOf('function fieldNormalizeArmy'));
 const band=new Function('const WORLD_H=260,clamp=(x,a,b)=>Math.max(a,Math.min(b,x)),S={};const biomeId=()=> "cathedral";'+helper+'return [fieldY(0),fieldY(260),fieldY(130),fieldY(20,14,246,"valley"),walkableBand("cathedral",30,232),Object.keys(WALKABLE_BANDS).map(r=>[r,fieldY(0,0,260,r),fieldY(230,14,246,r),walkableBand(r,30,232)[1]]),walkableBand("unknown",30,232)];')();
 assert.deepEqual(band,[104,246,130,62.4,[104,232],[["valley",62.4,230,232],["forest",52,230,232],["frozen",52,230,232],["ashen",80.6,230,232],["cathedral",104,230,232]],[30,232]]);
