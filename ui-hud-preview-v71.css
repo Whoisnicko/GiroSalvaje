@@ -1,0 +1,128 @@
+/* STOP HUMANS — Gothic Pixel v7.71 integrated preview.
+   Paint-only overrides. No canvas sizing, layout tracks, positions, card fan,
+   pointer handlers, reserve coordinates, gameplay or storage modifications. */
+html.hud71 .wrap {
+  --hud71-rim:#ac8450;--hud71-bright:#efd1a0;--hud71-paper:#eee1cd;
+  --hud71-dark:#11111a;--hud71-violet:#292133;--hud71-cyan:#83d3e3;
+  background:#100f17;
+}
+html.hud71 .wrap>.hud-top,
+html.hud71 .wrap>.cabinet,
+html.hud71 .wrap>.command-intel,
+html.hud71 .wrap>.command-dock>.table,
+html.hud71 .wrap>header{
+  background-image:linear-gradient(135deg,#302334 0%,#1e1b28 32%,#12141e 76%,#181622 100%);
+  border-color:var(--hud71-rim);
+  box-shadow:inset 0 0 0 1px #0b0a10,inset 0 0 0 3px #59412f,inset 0 0 15px #0007;
+}
+html.hud71 .wrap>.cabinet,
+html.hud71 .wrap>.command-intel,
+html.hud71 .wrap>.command-dock>.table,
+html.hud71 .wrap.shared-reserve .reserve-outline{
+  border-image-source:url('assets/ui/gothic-frame-v62.svg');
+  border-image-slice:18;
+  border-image-repeat:stretch;
+}
+html.hud71 .wrap>.lane{border-color:#9d7849;background-color:#10151c;box-shadow:inset 0 0 0 1px #493226}
+html.hud71 .wrap .hud-top .chip,
+html.hud71 .wrap .hud-hero-class,
+html.hud71 .wrap .hero-skill.btn,
+html.hud71 .wrap #magicHud .magic-spell{
+  color:var(--hud71-paper);
+  border-color:#92734f;
+  background-image:linear-gradient(145deg,#382e3d,#1b1b28 70%);
+  box-shadow:inset 0 0 0 1px #0f0f18,inset 0 0 0 2px #5a4437;
+  text-shadow:0 1px #090a11;
+}
+html.hud71 .wrap .hud-top .chip b{color:#ffdfaa;font-variant-numeric:tabular-nums}
+html.hud71 .wrap .hud-top .chip.battle-meter{
+  background:linear-gradient(90deg,var(--battle-meter-color) var(--battle-fill),#211c29 var(--battle-fill)) bottom/100% 5px no-repeat,linear-gradient(145deg,#382e3d,#171a26);
+}
+html.hud71 .wrap .hud-top .altar-meter{--battle-meter-color:#78bf8a}
+html.hud71 .wrap .hud-top .altar-meter.bad{--battle-meter-color:#e26d62;border-color:#ce7666}
+html.hud71 .wrap .hud-top .reserve-meter{--battle-meter-color:#ad8edc}
+html.hud71 .wrap .hud-top .capacity-meter{--battle-meter-color:#d2a960}
+html.hud71 .wrap .hud-top .soul{border-color:#6fabbc;background-image:linear-gradient(135deg,#263f4c,#151e2c)}
+html.hud71 .wrap .hud-top .soul b{color:#99e5f2}
+html.hud71 .wrap .hud-top .hud-icon{color:#edce99}
+html.hud71 .wrap .hud-top .hp-icon{color:#7fd39a}
+html.hud71 .wrap #magicHud .magic-meter,html.hud71 .wrap .hero-hp-track,html.hud71 .wrap .hero-rage-track{
+  background:#100f19;outline-color:#a58053;box-shadow:inset 0 0 0 1px #0a0b13;
+}
+html.hud71 .wrap #magicHud .magic-meter i{background:linear-gradient(90deg,#367baf,#83dbea)}
+html.hud71 .wrap #heroHpFill{background:linear-gradient(90deg,#3b824e,#9cdb9a)}
+html.hud71 .wrap #heroRageFill{background:linear-gradient(90deg,#8b3537,#ed9b59)}
+html.hud71 .wrap #magicHud .magic-cast{background-image:linear-gradient(#493a68,#23213c);border-color:#b2a0dd;color:#ede2ff}
+html.hud71 .wrap #heroHud .hero-action{background-image:linear-gradient(#73462e,#33212b);border-color:#cba26d;color:#ffe2b5}
+html.hud71 .wrap .cabinet:before,
+html.hud71 .wrap .command-intel .wave-heading,
+html.hud71 .wrap .command-dock .hand-h{
+  background-image:linear-gradient(90deg,#211825,#50392e 50%,#211825);
+  color:#ffe1ad;border-color:#b38a55;text-shadow:0 1px #100e15;
+}
+html.hud71 .wrap .cabinet .reels{
+  background:linear-gradient(145deg,#4b342c,#14121c 55%);
+  border-image-source:url('assets/ui/frame-bronze-v19.svg');
+  box-shadow:inset 0 0 0 1px #b28b50,inset 0 0 10px #000a;
+}
+html.hud71 .wrap .cabinet .cell{
+  background:radial-gradient(ellipse at 48% 34%,#414254 0%,#212332 48%,#12131d 85%);
+  border-color:#8c6d4c;box-shadow:inset 0 0 0 1px #121019;
+}
+html.hud71 .wrap .cabinet .cell.held{border-color:#85d7e7;box-shadow:inset 0 0 0 2px #65aabf,0 0 5px #5cb7d14d}
+html.hud71 .wrap .cabinet .cell.win{border-color:#f4c979;box-shadow:inset 0 0 0 2px #c59a5f,0 0 6px #f3c57855}
+html.hud71 .wrap .cabinet .cell.held.win{border-color:#f4c979;box-shadow:inset 0 0 0 2px #85d7e7,0 0 6px #f3c57855}
+html.hud71 .wrap .cabinet .cell:disabled:not(.held):not(.win){filter:saturate(.78)}
+html.hud71 .wrap .cabinet .summon-lever{
+  background-image:linear-gradient(90deg,#281d28,#503a2c,#1e1924);border-color:#ba935e;
+}
+html.hud71 .wrap .cabinet .lever-track{background-image:linear-gradient(90deg,#17121c,#795432,#201823);border-color:#c29861}
+html.hud71 .wrap .cabinet .lever-knob{background-image:radial-gradient(circle at 33% 25%,#dfab73,#854736 53%,#38212b);border-color:#e4bf87}
+html.hud71 .wrap .cabinet .summon-caption{color:#f0d6ad}
+html.hud71 .wrap .cabinet .spin-counter{background:#151823;color:#b5e5ee;box-shadow:inset 0 0 0 1px #6c8e96}
+html.hud71 .wrap .cabinet .btns .btn:not([data-act="fight"]),
+html.hud71 .wrap>header .command-tools button,
+html.hud71 .wrap .prep-undo-btn{
+  background-image:linear-gradient(#4b343d,#231e2a);border-color:#ba935e;color:#f4d9b1;
+  box-shadow:inset 0 0 0 1px #17121c;
+}
+html.hud71 .wrap .cabinet .btns .btn[data-act="fight"]:not(.warn){
+  background-image:linear-gradient(135deg,#3e7466,#1b3d37 65%,#152c2b);border-color:#8ac3a3;color:#eaffde;box-shadow:inset 0 0 0 1px #1a302b,inset 0 0 0 2px #537e62;
+}
+html.hud71 .wrap .cabinet .btns .btn[data-act="fight"].warn{background-image:linear-gradient(#894c3d,#40252a);color:#ffddb0;border-color:#e1a375}
+html.hud71 .wrap .cabinet #hadesRoom{background-image:linear-gradient(110deg,#38252e,#725035 48%,#2a1c28);border-color:#dfb477;color:#ffdea7}
+html.hud71 .wrap .cabinet .result,
+html.hud71 .wrap .command-intel .relic,
+html.hud71 .wrap .command-intel .box,
+html.hud71 .wrap .command-intel .field-info{
+  background-image:linear-gradient(145deg,#2b2431,#171922);border-color:#8e6b47;color:var(--hud71-paper);
+}
+html.hud71 .wrap .cabinet .result small,html.hud71 .wrap .command-intel .rd{color:#ddd0bd}
+html.hud71 .wrap .command-intel .wave-heading strong{color:#ffe1ab}
+html.hud71 .wrap .command-intel .wave-count b{color:#eecfa0}
+html.hud71 .wrap .command-intel .wave-heading small,html.hud71 .wrap .command-intel .wave-count small{color:#d1bda2}
+html.hud71 .wrap .command-intel .medal{border-color:#c69a60;box-shadow:inset 0 0 0 1px #281923}
+html.hud71 .wrap .command-dock .hand .card[data-cardi]{
+  --hud71-card:#ba955f;
+  background:linear-gradient(145deg,#3b2b3d,#191b28 55%,#131722);
+  border-color:var(--hud71-card);
+  box-shadow:inset 0 0 0 1px #0d0c15,inset 0 0 0 2px #5b453a,0 3px 7px #0009;
+}
+html.hud71 .wrap .command-dock .hand .card.atk{--hud71-card:#b97664}
+html.hud71 .wrap .command-dock .hand .card.ctl{--hud71-card:#82adce}
+html.hud71 .wrap .command-dock .hand .card.sup{--hud71-card:#b8a16d}
+html.hud71 .wrap .command-dock .hand .card.sum{--hud71-card:#ac89c4}
+html.hud71 .wrap .command-dock .hand .card .cn{color:#ffdfaf;background:linear-gradient(#3d2e3c,#221d2b);border-bottom-color:var(--hud71-card)}
+html.hud71 .wrap .command-dock .hand .card .art{background:radial-gradient(ellipse,#3d354b,#171a27 72%);border-color:var(--hud71-card)}
+html.hud71 .wrap .command-dock .hand .card .cd{background:#171923;color:#e8dfd2}
+html.hud71 .wrap .command-dock .hand .card .ty{color:var(--hud71-card)}
+html.hud71 .wrap .command-dock .hand .card[data-card-state="aim"]{outline-color:#a1e9f3;box-shadow:inset 0 0 0 2px #6cbfd4,0 0 5px #5bb5d166}
+html.hud71 .wrap .command-dock .hand .card.buy{background-image:linear-gradient(#263c4e,#141e2b);border-color:#80b6ca;color:#afe7ef}
+html.hud71 .wrap.shared-reserve .reserve-outline{box-shadow:inset 0 0 0 1px #7f659b}
+html.hud71 .wrap.shared-reserve .reserve-outline span{color:#d5bfec;text-shadow:0 1px #0b0b13}
+html.hud71 .wrap .hud-pane-nav button{background-image:linear-gradient(#392b3a,#201c29);border-color:#98744c;color:#ecd5ae}
+html.hud71 .wrap .hud-pane-nav button[aria-pressed="true"]{background-image:linear-gradient(#725236,#342531);border-color:#e2bf82;color:#fff0cc}
+html.hud71 .wrap button:focus-visible{outline-color:#ffe1a8}
+html.hud71 .wrap .cabinet .btn:disabled,html.hud71 .wrap #heroHud button:disabled,html.hud71 .wrap #magicHud button:disabled{filter:saturate(.55)}
+/* No transforms, dimensions, typography sizing, positioning or display changes.
+   PREPARATION/AIM collision retained as deferred issue until separate geometry-safe review. */

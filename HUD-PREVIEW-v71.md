@@ -1,0 +1,8 @@
+# Integrated HUD preview — v22-alpha.7.71 (not a release)
+Base: main 8906b0320cf3a55544b1e2f40dc9076bbd355c5d (runtime 7.70). Branch preview-hud-v71 only. Exact production index markup and all runtime/asset files retained, plus paint-only scoped CSS and comparison toggle. F8 toggles old/new HUD on the same live game state, ?hud=original opens the old design. No changes to geometry, layout, saved coordinates, gameplay, audio, assets, or save schema. PREPARATION/AIM collision remains deferred: fixing it requires geometry review. No production push. User requested a real integrated view rather than standalone HUD fixture. Browser integration not verified from this environment; no screenshot claim. 
+## Run
+If Cloudflare preview deployments are enabled, use the branch preview link from the Pages dashboard. Alternatively download the branch ZIP, extract and run START-HUD-PREVIEW.bat (requires Python on Windows) or run python -m http.server 8071 --bind 127.0.0.1 from the extracted directory. Open http://127.0.0.1:8071/ and choose Free Sandbox. Localhost has separate localStorage from production; do not use online rankings from a preview. Press F8 to compare. Test Sorcerer/Warlord, both phases, wide/narrow and mobile. No visual approval implied.
+Production: https://stophumans.pages.dev/
+Preview branch: https://github.com/Whoisnicko/StopHumans/tree/preview-hud-v71
+Drive: https://drive.google.com/drive/folders/1TxAeu0S7SySTQlCC9HuMsQhhYv6gJW0f
+All historical validations, deferred Final Polish and development contract retained. No approval of layout relocation.
