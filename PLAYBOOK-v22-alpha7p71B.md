@@ -1,0 +1,5 @@
+# Playbook v22-alpha.7.71B
+Production https://stophumans.pages.dev/
+GitHub https://github.com/Whoisnicko/StopHumans/tree/main
+Preview comparison (F8) https://preview-hud-v71.stophumans.pages.dev/
+Check version 7.71B. In Free Sandbox and normal campaign test Sorcerer/Warlord, prep and combat. Compare against user-approved screenshot: palette and panel frames, Soul Gacha and lever, wave intel, cards and fan, reserve and drag placement, HUD chips, champion skills and footer. Check disabled/held/winning/aim/focus states, responsive desktop 1920/1366/4K and mobile 390/844, compact Altar/Cards/Intel navigation, canvas aspect and pointer alignment, no overflow or accidental moves. Check save/reload, audio and campaign progression. No automatic approval; report OK/FAIL/N/T and artistic score. All historical validations and backlog retained.
