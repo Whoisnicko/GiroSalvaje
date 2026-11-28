@@ -791,12 +791,13 @@ function update(dt){
     u.cd = st.cd;
     const dmg = st.dmg * (1 + buff) * (warCry?1+cryStats.damageBonus:1)*catGroundFactor(u)*relicGuardianFactor(u);
     const dd = dist(tgt, u) || 1; u.lx = (tgt.x - u.x) / dd; u.ly = (tgt.y - u.y) / dd; u.lunge = .14;
-    if (u.type === 'M') { const frostfire=ascensionFrostfire(u,tgt);S.shots.push({ k:'fire', x:u.x + 14, y:u.y - 12, tgt, tx:tgt.x, ty:tgt.y, sp:300, dmg, source:u, splash:st.splash,frostfire }); sfx('fireLaunch'); }
-    else if (u.type === 'A') { const special=ascensionSoulShot(u,tgt,dmg,frostRange(u,st.range));S.shots.push(special||{ k:'orb', x:u.x + 8, y:u.y - 4, tgt, tx:tgt.x, ty:tgt.y, sp:380, dmg, source:u }); sfx('orb'); }
+    if (u.type === 'M') { const ascDragon=ascensionEligible(u),frostfire=ascensionFrostfire(u,tgt);S.shots.push({ k:'fire', x:u.x + 14, y:u.y - 12, tgt, tx:tgt.x, ty:tgt.y, sp:300, dmg, source:u, splash:st.splash,frostfire,ascDragon }); sfx('fireLaunch'); }
+    else if (u.type === 'A') { const blades=ascensionSoulShots(u,tgt,dmg,frostRange(u,st.range));if(blades)S.shots.push(...blades);else S.shots.push({ k:'orb', x:u.x + 8, y:u.y - 4, tgt, tx:tgt.x, ty:tgt.y, sp:380, dmg, source:u }); sfx('orb'); }
     else {
       const c = UCOL[u.type];
-      if(u.type==='W')ascensionPlague(u,tgt,dmg);
+      if(u.type==='W'&&ascensionZombieSpecial(u,tgt)){sfx('heavyImpact');continue;}
       hitEnemy(tgt, dmg, c,{source:u});
+      if(u.type==='W')ascensionZombieSplash(u,tgt,dmg);
       S.fx.push({ k:'claw', x:tgt.x, y:tgt.y, c, t:.18, T:.18 });
       sfx(u.type === 'L' ? 'bite' : 'claw');
     }
@@ -829,6 +830,7 @@ function update(dt){
     e.root = Math.max(0, e.root - dt);
     e.moving = false;
     e.lunge = Math.max(0, (e.lunge || 0) - dt);
+    if(ascensionControlled(e)){frostClearMotion(e);e.kbv=0;continue;}
     heroAdvanceKnockback(e,dt,Wd);
     if (e.kbv > 1) { const nx = e.x + e.kbv * dt; e.x = nx; e.kbv *= Math.pow(.002, dt); }
     if(WALKABLE_BANDS[biomeId(S)])e.y=fieldY(e.y,e.r,WORLD_H-e.r);
@@ -975,7 +977,7 @@ function hitEnemy(e, d, c, o = {}){
 function landShot(s){
   if (s.k === 'orb') { if (s.tgt && s.tgt.hp > 0) { hitEnemy(s.tgt, s.dmg*ashShotFactor(s)*biomeProjectileFactor(s.tgt), 'a', { kb:0,source:s.source }); sfx('orbHit'); } else burst(s.x, s.y, 'a', 4, 40); }
   else if (s.k === 'fire') {
-    S.enemies.forEach(e => { if (e.hp > 0 && Math.hypot(e.x - s.tx, e.y - s.ty) <= s.splash) hitEnemy(e, s.dmg*ashShotFactor(s)*biomeProjectileFactor(e), 'm',{source:s.source}); });
+    S.enemies.forEach(e => { if (e.hp > 0 && Math.hypot(e.x - s.tx, e.y - s.ty) <= s.splash) {hitEnemy(e, s.dmg*ashShotFactor(s)*biomeProjectileFactor(e), 'm',{source:s.source});ascensionDragonStatus(s,e);} });
     ascensionFrostfireImpact(s);
     S.fx.push({ k:'ring', x:s.tx, y:s.ty, r:s.splash, c:'m', t:.35, T:.35 });
     burst(s.tx, s.ty, 'm', 14, 140); burst(s.tx, s.ty, 'gold', 8, 100);

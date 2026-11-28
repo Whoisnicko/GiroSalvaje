@@ -177,7 +177,7 @@ function frostWalkVector(u,dx,dy,dt,state=S,W){
 }
 function frostCoast(u,dt,W){
  if(biomeId(S)!=='frozen'||!Number.isFinite(u.iceVX)||u.moving)return;
- if(u.down||u.hp<=0||frostFrozen(u)||u.kind&&spellEnemyRooted(u)){frostClearMotion(u);return;}
+ if(u.down||u.hp<=0||frostFrozen(u)||u.kind&&(spellEnemyRooted(u)||(typeof ascensionControlled==='function'&&ascensionControlled(u)))){frostClearMotion(u);return;}
  const v=frostWalkVector(u,0,0,dt,S,W);
  const r=u.r||radius(u)||10;u.x=Math.max(WALL_X+r,Math.min(W-r,u.x+v.dx));u.y=Math.max(r,Math.min(WORLD_H-r,u.y+v.dy));u.moving=!!(v.dx||v.dy);
 }

@@ -119,7 +119,7 @@ function feelDraw(layer){
  ctx.restore();
 }
 function vfxProjectilePalette(s){
- return s.k==='reaper'?{dark:'#1a777c',mid:'#5de8e1',core:'#e0ffff',radius:18}:s.frostfire?{dark:'#245f9b',mid:'#62d0ff',core:'#e6fbff',radius:22}:s.k==='fire'?{dark:'#b74725',mid:'#ff9b43',core:'#fff0ad',radius:22}:s.k==='orb'?{dark:'#6038ae',mid:'#c391ff',core:'#f0e3ff',radius:16}:s.burnDuration?{dark:'#a74125',mid:'#ff9452',core:'#ffe5b4',radius:10}:{dark:'#715443',mid:'#e9ba68',core:'#fff2cf',radius:8};
+ return s.k==='reaper'?{dark:'#1a777c',mid:'#5de8e1',core:'#e0ffff',radius:18}:s.ascDragon||s.frostfire?{dark:'#245f9b',mid:'#62d0ff',core:'#e6fbff',radius:22}:s.k==='fire'?{dark:'#b74725',mid:'#ff9b43',core:'#fff0ad',radius:22}:s.k==='orb'?{dark:'#6038ae',mid:'#c391ff',core:'#f0e3ff',radius:16}:s.burnDuration?{dark:'#a74125',mid:'#ff9452',core:'#ffe5b4',radius:10}:{dark:'#715443',mid:'#e9ba68',core:'#fff2cf',radius:8};
 }
 function vfxProjectileLights(shots){
  const budget=vfxBudget();if(!budget.projectileLights||!shots.length)return;
