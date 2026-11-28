@@ -1,0 +1,2 @@
+# Playbook — 7.72 guardian preview
+Use preview branch game and guardian-gallery-v72.html to evaluate all 21 actual crops. In Free Sandbox summon five mergeable guardians at 1/2/3; test skeleton raised by Necromancer I/II/III and Howl Werewolf I. Evaluate readable proportions, transparency, movement, attack, hit flash, fallen sprites, reserve spacing, portrait icons and game scale. Compare via ?guardians=original. Test HUD, audio, saves and responsive. Werewolf II/III are design-only in gallery; no new mechanics. No main push before approval.

@@ -127,7 +127,7 @@ function draw(){
       const pose = feelPose(u,visualPose(u, now)), motion=animMotion(u,pose,feelClock,inBench);
       const {ox,oy,rot,sx,sy}=motion,frame=pose.frame;
       if (u.down) {   // caído en el piso: acostado, gris, sin barra de vida
-        ctx.globalAlpha = .7; sprite(USPR[u.type], u.x, u.y + s * .22, s, { rot:Math.PI / 2, gray:true }); ctx.globalAlpha = 1;
+        ctx.globalAlpha = .7; sprite(USPR[u.type], u.x, u.y + s * .22, s, { rot:Math.PI / 2, gray:true, guardianLevel:guardian72Level(u) }); ctx.globalAlpha = 1;
         ctx.fillStyle = colors.muted; ctx.font = '600 10px Rubik, sans-serif'; ctx.fillText('fallen', u.x, u.y - s / 2 + 4);
         continue;
       }
@@ -142,11 +142,11 @@ function draw(){
       }
       if (u.type === 'N' && S.phase === 'fight') { ctx.fillStyle = colors.leaf; ctx.globalAlpha = .5 + .4 * Math.sin(t * 8 + ph); ctx.beginPath(); ctx.arc(u.x + s * .38, u.y - s * .32 + oy, 3, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1; }
       if (dragging || hovU === u || S.sel === u) { ctx.fillStyle = colors.soul; ctx.globalAlpha = S.sel === u ? .38 : .28; ctx.beginPath(); ctx.arc(u.x, u.y, s / 2 + 8, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1; }
-      if (u.pile > 1) { ctx.globalAlpha = .6; sprite(USPR[u.type], u.x + ox - 7, u.y + oy - 5, s, { rot, sx, sy, frame, flipX:pose.flipX, level:u.lvl }); ctx.globalAlpha = 1; }
+      if (u.pile > 1) { ctx.globalAlpha = .6; sprite(USPR[u.type], u.x + ox - 7, u.y + oy - 5, s, { rot, sx, sy, frame, flipX:pose.flipX, level:u.lvl, guardianLevel:guardian72Level(u) }); ctx.globalAlpha = 1; }
       if (S.buff.haste > 0 && S.phase === 'fight') { ctx.strokeStyle = colors.gold; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(u.x, u.y, s / 2 + 3, 0, Math.PI * 2); ctx.stroke(); }
       if (u.type === 'A' || u.type === 'B') ctx.globalAlpha = .82 + Math.sin(t * 4 + ph) * .1;
       ctx.globalAlpha*=motion.alpha;
-      sprite(USPR[u.type], u.x + ox, u.y + oy, s, { flash:u.flash > 0, rot, sx, sy, frame, flipX:pose.flipX, level:u.temp ? 1 : u.lvl });
+      sprite(USPR[u.type], u.x + ox, u.y + oy, s, { flash:u.flash > 0, rot, sx, sy, frame, flipX:pose.flipX, level:u.temp ? 1 : u.lvl, guardianLevel:guardian72Level(u) });
       ctx.globalAlpha = 1;
       if (u.lvl > 1 && !u.temp) { ctx.fillStyle = colors.gold; ctx.font = '11px Rubik, sans-serif'; ctx.fillText('★'.repeat(u.lvl), u.x, u.y - s / 2 - 8); }
       if (u.train) { ctx.fillStyle = colors.bg; ctx.fillRect(u.x - s / 2 - 12, u.y + s / 2 - 12, 30, 13); ctx.fillStyle = colors.leaf; ctx.font = '600 10px Rubik, sans-serif'; ctx.fillText(`+${trainingPercent(u)}%`, u.x - s / 2 + 3, u.y + s / 2 - 5); }
@@ -208,7 +208,7 @@ function bar(x, y, w, h, p, c){ ctx.fillStyle = colors.bg; ctx.fillRect(x, y, w,
 
 
 function sprite(name,x,y,h,o={}){
- const frames=(o.flash?SPRW[name]:o.gray?SPRGRAY[name]:(SPRLEVEL[name]?.[o.level]||SPR[name]));
+ const frames=guardian72Frames(name,o)||(o.flash?SPRW[name]:o.gray?SPRGRAY[name]:(SPRLEVEL[name]?.[o.level]||SPR[name]));
  if(!frames?.length){ctx.fillStyle='#d6bc85';ctx.fillRect(x-8,y-8,16,16);return;}
  const fr=frames[Math.abs(Math.floor(o.frame||0))%frames.length];if(!fr){ctx.fillStyle=MONSTER_TINT[name]||'#b7bbd4';ctx.fillRect(x-h*.22,y-h*.35,h*.44,h*.7);ctx.fillStyle='#201b32';ctx.fillRect(x-h*.12,y-h*.16,h*.08,h*.08);ctx.fillRect(x+h*.04,y-h*.16,h*.08,h*.08);return;}const w=h*fr.width/fr.height;
  ctx.save();ctx.imageSmoothingEnabled=false;ctx.translate(Math.round(x),Math.round(y));if(o.rot&&(!feelReduced()||o.gray))ctx.rotate(o.rot);if(o.flipX||o.sy||o.sx)ctx.scale((o.flipX?-1:1)*(o.sx||1),o.sy||1);if(fr.image)ctx.drawImage(fr.image,fr.sx,fr.sy,fr.width,fr.height,-w/2,-h/2,w,h);else ctx.drawImage(fr,-w/2,-h/2,w,h);ctx.restore();
