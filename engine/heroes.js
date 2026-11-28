@@ -53,7 +53,7 @@ function heroClampLanding(p,width=worldW()){
  if(!p||!Number.isFinite(p.x)||!Number.isFinite(p.y))return null;
  width=Number.isFinite(width)?Math.max(420,width):420;
  const r=HERO_CLASSES.warlord.radius;
- return {x:Math.max(WALL_X+r,Math.min(width-r,p.x)),y:Math.max(r,Math.min(WORLD_H-r,p.y))};
+ return {x:Math.max(WALL_X+r,Math.min(width-r,p.x)),y:typeof fieldY==='function'?fieldY(p.y,r,WORLD_H-r):Math.max(r,Math.min(WORLD_H-r,p.y))};
 }
 function heroDefaultLanding(width=worldW()){return heroClampLanding({x:WALL_X+95,y:WORLD_H*.5},width);}
 function heroValidLanding(p,width=worldW()){return !!p&&Number.isFinite(p.x)&&Number.isFinite(p.y)&&p.x>=WALL_X&&p.x<=width&&p.y>=0&&p.y<WORLD_H;}

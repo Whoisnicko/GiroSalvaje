@@ -5,6 +5,20 @@ const GUARDIAN72_ART=Object.freeze({
  names:Object.freeze(['zombi','espectro','dragon','nigromante','banshee','lobo','esqueleto'])
 });
 const GUARDIAN72_FRAMES=Object.create(null);
+const GUARDIAN72_BOUNDS=Object.create(null);
+function guardian72Bounds(data,w,h){
+ if(data.length!==w*h*4)return null;
+ let l=w,t=h,r=-1,b=-1;
+ for(let y=0;y<h;y++)for(let x=0;x<w;x++)if(data[(y*w+x)*4+3]>32){l=Math.min(l,x);r=Math.max(r,x);t=Math.min(t,y);b=Math.max(b,y);}
+ return r>=l?{l,t,r:r+1,b:b+1,w:r-l+1,h:b-t+1}:null;
+}
+function guardian72Geometry(name,level,s){
+ const b=GUARDIAN72_BOUNDS[name]?.[level];if(!b)return null;
+ const maxWidth=(name==='dragon'?1.40:name==='zombi'?1.12:1.15)*s;
+ const k=Math.min(s*.88/b.h,maxWidth/b.w);
+ const foot=s*.5-2;
+ return {k,x:-(b.l+b.w/2)*k,y:foot-b.b*k,top:foot-b.h*k,foot,width:b.w*k};
+}
 function guardian72Level(u){
  const raw=u.type==='K'?u.nl:u.temp?1:u.lvl;
  return Number.isInteger(raw)&&raw>=1&&raw<=3?raw:1;
@@ -29,6 +43,7 @@ function installGuardian72(sheet){
     g.imageSmoothingEnabled=false;g.drawImage(sheet,(tier-1)*w,row*h,w,h,0,0,w,h);
     const alpha=g.getImageData(0,0,w,h).data;
     if(!alpha.some((v,i)=>i%4===3&&v>100))continue;
+    const bounds=guardian72Bounds(alpha,w,h);if(bounds)(GUARDIAN72_BOUNDS[name]||(GUARDIAN72_BOUNDS[name]={}))[tier]=bounds;
     const variants={base:[],white:[],gray:[]},cache=new Map();
     for(let frame=0;frame<12;frame++){
      const [dx,dy]=guardian72Offsets(name,frame);

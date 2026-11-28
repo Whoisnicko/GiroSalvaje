@@ -343,7 +343,7 @@ const CARDS = {
   manos:   { n:'Earth Hands',ic:'✋', t:'ctl', aim:75, d:()=>'Humans in the area are rooted for 3 s.', play(p){ S.enemies.forEach(e => { if (dist(e, p) <= 75 + e.r) e.root = 3; }); S.fx.push({ k:'ring', x:p.x, y:p.y, r:75, c:'leaf', t:.5, T:.5 }); } },
   huesos:  { n:'Bone Rain',  ic:'✹', t:'atk', aim:60, d:(wave)=>`${bonesDmg(wave)} area damage. Ignores armor.`, play(p){ S.enemies.forEach(e => { if (dist(e, p) <= 60 + e.r) damage(e, bonesDmg(), { pierce:true }); }); S.fx.push({ k:'ring', x:p.x, y:p.y, r:60, c:'cream', t:.4, T:.4 }); sfx('hit'); } },
   festin:  { n:'Feast',            ic:'❦', t:'sup', d:()=>'Your monsters heal 60% HP; fallen monsters revive with 40%.', play(){ S.units.forEach(u => { if (u.down) { u.down = false; u.hp = u.maxHp * .4; floatText(u.x, u.y - 22, 'Back up!', 'leaf'); } else { const before=u.hp;u.hp = Math.min(u.maxHp, u.hp + u.maxHp * .6); feelNumber(u.x,u.y-22,u.hp-before,'heal');feelImpact(u.x,u.y,'heal'); } }); } },
-  aullido: { n:'Howl',           sp:'lobo', t:'sum', aim:20, d:()=>'Summon a werewolf at the target for this wave.', play(p){ const u = makeUnit('L', 1); u.temp = true; u.x = clamp(p.x, WALL_X + 20, worldW() - 20); u.y = clamp(p.y, 20, WORLD_H - 20); S.units.push(u); } },
+  aullido: { n:'Howl',           sp:'lobo', t:'sum', aim:20, d:()=>'Summon a werewolf at the target for this wave.', play(p){ const u = makeUnit('L', 1); u.temp = true; u.x = clamp(p.x, WALL_X + 20, worldW() - 20); u.y = fieldY(p.y,20,WORLD_H-20); S.units.push(u); } },
   ofrenda: { n:'Offering',           ic:'⌂', t:'sup', d:()=>'The Altar restores 15 HP.', play(){ const before=S.wallHp;S.wallHp = Math.min(S.wallMax, S.wallHp + 15);feelNumber(WALL_X+20,40,S.wallHp-before,'heal');feelImpact(WALL_X-8,WORLD_H*.42,'heal'); } },
   niebla:  { n:'Mist',            ic:'≈', t:'ctl', d:()=>'Humans move 60% slower for 6 s.', play(){ S.buff.slow = 6; bigMsg('MIST'); } },
   temblor: { n:'Earthquake',           ic:'⌁', t:'atk', d:(wave)=>`${quakeDmg(wave)} damage to all humans. Ignores armor.`, play(){ S.enemies.forEach(e => damage(e, quakeDmg(), { pierce:true })); S.fx.push({ k:'quake', t:.4, T:.4 }); sfx('altar'); } },
@@ -474,9 +474,23 @@ const fieldCount = () => fieldUnits().reduce((s, u) => s + u.pile, 0);
 function sharedReserve(){return document.querySelector('.wrap').classList.contains('shared-reserve');}
 const benchSlot = i => ({ x:(sharedReserve()?worldW()-330:WALL_X+34) + i * 62, y:WORLD_H + 32 });
 function syncReservePositions(){if(S)S.bench.forEach((u,i)=>{if(u&&S.drag?.u!==u)Object.assign(u,benchSlot(i));});}
+/* Normalized center-coordinate bands calibrated against illustrated terrain.
+   Cathedral only until other backgrounds are visually reviewed. Reserve is separate. */
+const WALKABLE_BANDS=Object.freeze({cathedral:Object.freeze([.40,.74])});
+function walkableBand(region,min,max){const band=WALKABLE_BANDS[region];return band?[Math.max(min,WORLD_H*band[0]),Math.min(max,WORLD_H*band[1])]:[min,max];}
+function fieldY(y,min=14,max=WORLD_H-14,region=biomeId(S)){const [lo,hi]=walkableBand(region,min,max);return clamp(y,lo,Math.max(lo,hi));}
+function fieldNormalizeArmy(){
+ if(!WALKABLE_BANDS[biomeId(S)])return;
+ const moved=S.units.filter(u=>!u.temp&&fieldY(u.y)!==u.y);
+ for(const u of moved){
+  const old=u.y;u.y=fieldY(u.y);
+  if(!canStand(u,u.x,u.y,u).ok){const p=findFree(u,u.x,u.y,u);if(p)Object.assign(u,p);}
+  if(u.hy!=null)u.hy=fieldY(u.hy);
+ }
+}
 function canStand(u, x, y, ignore){
   const r = radius(u);
-  if (x < WALL_X + r + 4 || x > zoneMax() || y < r + 8 || y > WORLD_H - r - 12) return { ok:false, why:'fuera' };
+  if (x < WALL_X + r + 4 || x > zoneMax() || y < r + 8 || y > WORLD_H - r - 12 || fieldY(y,r+8,WORLD_H-r-12)!==y) return { ok:false, why:'fuera' };
   const hit = fieldUnits().find(o => o !== u && o !== ignore && Math.hypot(o.x - x, o.y - y) < r + radius(o) + 2);
   return hit ? { ok:false, why:'ocupado', hit } : { ok:true };
 }
@@ -704,6 +718,7 @@ function startFight(){
   }
   if (S.drag) { cancelDrag(); }
   prepUndoClear();
+  fieldNormalizeArmy();
   S.phase = 'fight'; heroResetWave(); magicResetWave(); S.held.clear(); S.wins.clear(); S.confirmFight = false; S.drag = null; S.aim = null; S.sel = null;
   S.buff = { haste:0, slow:0 }; S.zones = []; S.fightT = 0; S.charge = false;ashResetBattle();catResetBattle();relicResetBattle();
   const W = waveInfo(S.wave);
@@ -719,7 +734,7 @@ function startFight(){
 }
 
 /* Unobstructed movement while terrain is disabled. */
-function moveHuman(e,dx,dy,dt){ if(!dx&&!dy)return;const factor=biomeWalkFactor(e),v=frostWalkVector(e,dx*factor,dy*factor,dt);e.x+=v.dx;e.y+=v.dy;if(biomeId(S)==='frozen'){e.x=Math.max(WALL_X+e.r,Math.min(worldW()-e.r,e.x));e.y=Math.max(e.r,Math.min(WORLD_H-e.r,e.y));}e.moving=!!(v.dx||v.dy); }
+function moveHuman(e,dx,dy,dt){ if(!dx&&!dy)return;const factor=biomeWalkFactor(e),v=frostWalkVector(e,dx*factor,dy*factor,dt);e.x+=v.dx;e.y+=v.dy;if(WALKABLE_BANDS[biomeId(S)])e.y=fieldY(e.y,e.r,WORLD_H-e.r);if(biomeId(S)==='frozen'){e.x=Math.max(WALL_X+e.r,Math.min(worldW()-e.r,e.x));e.y=Math.max(e.r,Math.min(WORLD_H-e.r,e.y));}e.moving=!!(v.dx||v.dy); }
 
 // Keep an entry gap beyond the deployment zone; never spawn inside it.
 function invasionX(W){return Math.min(W-18,Math.max(zoneMax()+100,W*.86));}
@@ -733,7 +748,7 @@ function update(dt){
   S.spawnT -= dt;
   if (S.queue.length && S.spawnT <= 0) {
     const q = S.queue.shift();
-    let y = rnd(30, WORLD_H - 28);
+    const [entryTop,entryBottom]=walkableBand(biomeId(S),30,WORLD_H-28);let y = rnd(entryTop,entryBottom);
     S.enemies.push({ ...q, maxHp:q.hp, x:invasionX(Wd), y, cd:0, flash:0, root:0, ph:Math.random() * 6 });
     if(q.boss)sfx('bossArrival');
     tip('k_' + q.kind);
@@ -810,7 +825,8 @@ function update(dt){
     e.lunge = Math.max(0, (e.lunge || 0) - dt);
     heroAdvanceKnockback(e,dt,Wd);
     if (e.kbv > 1) { const nx = e.x + e.kbv * dt; e.x = nx; e.kbv *= Math.pow(.002, dt); }
-    if (bossAdvance(e,dt)){frostClearMotion(e);continue;}
+    if(WALKABLE_BANDS[biomeId(S)])e.y=fieldY(e.y,e.r,WORLD_H-e.r);
+    if (bossAdvance(e,dt)){if(WALKABLE_BANDS[biomeId(S)])e.y=fieldY(e.y,e.r,WORLD_H-e.r);frostClearMotion(e);continue;}
     if(spellEnemyRooted(e))frostClearMotion(e);frostHeraldPulse(e);ashPriestPulse(e);catRevive(e);
     let sp = spellEnemyRooted(e) ? 0 : e.sp * spellEnemySpeedFactor(e)*catSpeed(e);
 
@@ -880,7 +896,7 @@ function update(dt){
       const n = S.units.find(u => u.type === 'N' && !u.down && u.hp > 0 && !frostFrozen(u) && u.cd <= 0 && (u.skels || 0) < skelCap(u.lvl) && dist(u, e) <= stats('N', u.lvl, u).range);
       if (n) {
         const k = makeUnit('K', 1); k.temp = true; k.nl = n.lvl; refreshHp(k);
-        k.x = clamp(e.x, WALL_X + 20, worldW() - 20); k.y = clamp(e.y, 20, WORLD_H - 20); k.hx = k.x; k.hy = k.y;
+        k.x = clamp(e.x, WALL_X + 20, worldW() - 20); k.y = fieldY(e.y,20,WORLD_H-20); k.hx = k.x; k.hy = k.y;
         S.units.push(k); if(typeof animMark==='function')animMark(k,'summon');n.cd = stats('N', n.lvl, n).cd * synergyFactor(n,'raiseCooldown'); n.skels = (n.skels || 0) + 1;
         S.fx.push({ k:'ring', x:k.x, y:k.y, r:30, c:'leaf', t:.6, T:.6 }); burst(k.x, k.y, 'leaf', 12, 90);
         S.fx.push({ k:'line', x1:n.x, y1:n.y, x2:k.x, y2:k.y, c:'leaf', t:.35, T:.35 });
@@ -926,7 +942,7 @@ function zap(e, d, from){
 }
 function stepUnit(u, tx, ty, step,dt){
   const d = Math.hypot(tx - u.x, ty - u.y); if (d < 1) return;
-  const s = Math.min(step*biomeWalkFactor(u), d),v=frostWalkVector(u,(tx-u.x)/d*s,(ty-u.y)/d*s,dt),nx=u.x+v.dx,ny=clamp(u.y+v.dy,14,WORLD_H-14);
+  const s = Math.min(step*biomeWalkFactor(u), d),v=frostWalkVector(u,(tx-u.x)/d*s,(ty-u.y)/d*s,dt),nx=u.x+v.dx,ny=fieldY(u.y+v.dy,14,WORLD_H-14);
   u.x=biomeId(S)==='frozen'?clamp(nx,WALL_X+14,worldW()-14):nx;u.y=ny;u.moving=!!(v.dx||v.dy);
 }
 function burst(x, y, c, n, sp = 90){ for (let i = 0; i < n; i++) { const a = Math.random() * Math.PI * 2, v = rnd(sp * .4, sp); S.parts.push({ x, y, vx:Math.cos(a) * v, vy:Math.sin(a) * v - 30, t:rnd(.25, .5), T:.5, c, s:rnd(2, 3.5) }); } }
