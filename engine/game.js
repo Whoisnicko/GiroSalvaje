@@ -474,17 +474,19 @@ const fieldCount = () => fieldUnits().reduce((s, u) => s + u.pile, 0);
 function sharedReserve(){return document.querySelector('.wrap').classList.contains('shared-reserve');}
 const benchSlot = i => ({ x:(sharedReserve()?worldW()-330:WALL_X+34) + i * 62, y:WORLD_H + 32 });
 function syncReservePositions(){if(S)S.bench.forEach((u,i)=>{if(u&&S.drag?.u!==u)Object.assign(u,benchSlot(i));});}
-/* Normalized center-coordinate bands calibrated against illustrated terrain.
-   Cathedral only until other backgrounds are visually reviewed. Reserve is separate. */
-const WALKABLE_BANDS=Object.freeze({cathedral:Object.freeze([.40,.74])});
-function walkableBand(region,min,max){const band=WALKABLE_BANDS[region];return band?[Math.max(min,WORLD_H*band[0]),Math.min(max,WORLD_H*band[1])]:[min,max];}
+/* Region-specific upper limits calibrated from the five actual 1100x500 backdrops.
+   Entity coordinates are centers; feet render below them. Foreground remains playable
+   to the original entity/board margin. No interior obstacle or lower-art mask. */
+const WALKABLE_BANDS=Object.freeze({valley:.24,forest:.20,frozen:.20,ashen:.31,cathedral:.40});
+function walkableBand(region,min,max){const top=WALKABLE_BANDS[region];return [Math.min(max,Math.max(min,Number.isFinite(top)?WORLD_H*top:min)),max];}
 function fieldY(y,min=14,max=WORLD_H-14,region=biomeId(S)){const [lo,hi]=walkableBand(region,min,max);return clamp(y,lo,Math.max(lo,hi));}
 function fieldNormalizeArmy(){
  if(!WALKABLE_BANDS[biomeId(S)])return;
- const moved=S.units.filter(u=>!u.temp&&fieldY(u.y)!==u.y);
+ const top=walkableBand(biomeId(S),0,WORLD_H)[0];
+ const moved=S.units.filter(u=>!u.temp&&u.y<top);
  for(const u of moved){
-  const old=u.y;u.y=fieldY(u.y);
-  if(!canStand(u,u.x,u.y,u).ok){const p=findFree(u,u.x,u.y,u);if(p)Object.assign(u,p);}
+  const p=findFree(u,u.x,top,u);
+  if(p)Object.assign(u,p);else u.y=top;
   if(u.hy!=null)u.hy=fieldY(u.hy);
  }
 }
@@ -506,7 +508,7 @@ function findFree(u, x0, y0, ignore){
 }
 function placeNew(u){
   const x0 = Math.min(BASE[u.type].x, zoneMax() - 20);
-  for (let y = 40; y <= WORLD_H - 40; y += 44) if (canStand(u, x0, y).ok) { u.x = x0; u.y = y; S.units.push(u); return u; }
+  for (let y = fieldY(40,radius(u)+8,WORLD_H-radius(u)-12); y <= WORLD_H - 40; y += 44) if (canStand(u, x0, y).ok) { u.x = x0; u.y = y; S.units.push(u); return u; }
   const p = findFree(u, x0, WORLD_H / 2);
   if (!p) return null;
   u.x = p.x; u.y = p.y; S.units.push(u); return u;
@@ -883,7 +885,7 @@ function update(dt){
       if (e.cd <= 0) { e.cd = 1; hitAltar(ashEnemyAttack(e) * (e.kind === 'ant' ? 3 : 1)); }
     } else moveHuman(e, -sp * dt, 0,dt);
   }
-  if(biomeId(S)==='frozen'){for(const u of S.units)frostCoast(u,dt,Wd);for(const e of alive)frostCoast(e,dt,Wd);}
+  if(biomeId(S)==='frozen'){for(const u of S.units){frostCoast(u,dt,Wd);u.y=fieldY(u.y,radius(u),WORLD_H-radius(u));}for(const e of alive){frostCoast(e,dt,Wd);e.y=fieldY(e.y,e.r,WORLD_H-e.r);}}
   const deadE = S.enemies.filter(e => e.hp <= 0);
   if (deadE.length) {
     deadE.forEach(e => {
