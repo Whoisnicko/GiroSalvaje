@@ -18,5 +18,5 @@ res.tier1=guardian72Frames('dragon',{level:1})===null;
 return res;`;
 const result=new Function(mod+harness)();for(const [k,v] of Object.entries(result))assert.equal(v,true,k);
 assert.ok(read('engine/assets.js').includes('installGuardian73(guardianEvolvedSheet)'));
-assert.ok(read('index.html').includes('v22-alpha.7.73-preview'));
+assert.ok(read('index.html').includes('v22-alpha.7.73'));
 console.log(result);
