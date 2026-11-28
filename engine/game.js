@@ -723,6 +723,7 @@ function startFight(){
   fieldNormalizeArmy();
   S.phase = 'fight'; heroResetWave(); magicResetWave(); S.held.clear(); S.wins.clear(); S.confirmFight = false; S.drag = null; S.aim = null; S.sel = null;
   S.buff = { haste:0, slow:0 }; S.zones = []; S.fightT = 0; S.charge = false;ashResetBattle();catResetBattle();relicResetBattle();
+  ascensionReset();
   const W = waveInfo(S.wave);
   S.units.forEach(u => { frostResetUnit(u);u.hx = u.x; u.hy = u.y; u.skels = 0; infusionReset(u); u.cd = Math.min(u.cd, .3); });
   S.altarCd = 0;
@@ -760,6 +761,7 @@ function update(dt){
   S.zones = S.zones.filter(z => z.t > 0);
 
   heroAdvance(dt);ashAdvance(Wd);catAdvance();relicAdvance();
+  ascensionAdvance();
   const alive = S.enemies.filter(e => e.hp > 0);
   const banshees = S.units.filter(u => u.type === 'B' && !u.down);
   for (const u of S.units) {
@@ -770,7 +772,7 @@ function update(dt){
     // Aura de la Banshee: +30/50/80% de daño y velocidad de ataque a los monsters cercanos
     const buff = bansheeOn(u),warCry=martialGuardBuff(u),cryStats=warCry?talentSkill('cry',S.hero):null;
     u.buffed = buff;
-    if (u.type === 'B') { u.cd -= dt; if (u.cd <= 0) { u.cd = st.cd; S.fx.push({ k:'ring', x:u.x, y:u.y, r:st.range, c:'soul', t:.7, T:.7 }); if (Math.random() < .35) sfx('wail'); } continue; }
+    if (u.type === 'B') { ascensionLament(u,st.range);u.cd -= dt; if (u.cd <= 0) { u.cd = st.cd; S.fx.push({ k:'ring', x:u.x, y:u.y, r:st.range, c:'soul', t:.7, T:.7 }); if (Math.random() < .35) sfx('wail'); } continue; }
     if (u.type === 'N') { u.cd = Math.max(0, u.cd - dt); continue; }
     // Zombies, licántropos y esqueletos salen de su puesto a interceptar humans dentro de su zona de patrulla
     if (BASE[u.type].guard) {
@@ -781,7 +783,7 @@ function update(dt){
       else if (!tg && Math.hypot(u.x - home.x, u.y - home.y) > 3) stepUnit(u, home.x, home.y, BASE[u.type].move * dt,dt);
     }
     let tgt = null, best = 1e9;
-    for (const e of alive) { const d = dist(e, u) - e.r - radius(u); if (d < best) { best = d; tgt = e; } }
+    for (const e of alive) { if(e.hp<=0&&u.lvl===3&&ascensionEnabled())continue;const d = dist(e, u) - e.r - radius(u); if (d < best) { best = d; tgt = e; } }
     if (!tgt || best > frostRange(u,st.range)) continue;
     if(visual)visual.target=tgt;
     u.cd -= dt * (S.buff.haste > 0 ? 2 : 1) * (1 + buff) * (warCry?1+cryStats.speedBonus:1) * synergyFactor(u,'attackRate') * catAttackRate(u) * relicGuardianFactor(u);
@@ -789,10 +791,11 @@ function update(dt){
     u.cd = st.cd;
     const dmg = st.dmg * (1 + buff) * (warCry?1+cryStats.damageBonus:1)*catGroundFactor(u)*relicGuardianFactor(u);
     const dd = dist(tgt, u) || 1; u.lx = (tgt.x - u.x) / dd; u.ly = (tgt.y - u.y) / dd; u.lunge = .14;
-    if (u.type === 'M') { S.shots.push({ k:'fire', x:u.x + 14, y:u.y - 12, tgt, tx:tgt.x, ty:tgt.y, sp:300, dmg, source:u, splash:st.splash }); sfx('fireLaunch'); }
-    else if (u.type === 'A') { S.shots.push({ k:'orb', x:u.x + 8, y:u.y - 4, tgt, tx:tgt.x, ty:tgt.y, sp:380, dmg, source:u }); sfx('orb'); }
+    if (u.type === 'M') { const frostfire=ascensionFrostfire(u,tgt);S.shots.push({ k:'fire', x:u.x + 14, y:u.y - 12, tgt, tx:tgt.x, ty:tgt.y, sp:300, dmg, source:u, splash:st.splash,frostfire }); sfx('fireLaunch'); }
+    else if (u.type === 'A') { const special=ascensionSoulShot(u,tgt,dmg,frostRange(u,st.range));S.shots.push(special||{ k:'orb', x:u.x + 8, y:u.y - 4, tgt, tx:tgt.x, ty:tgt.y, sp:380, dmg, source:u }); sfx('orb'); }
     else {
       const c = UCOL[u.type];
+      if(u.type==='W')ascensionPlague(u,tgt,dmg);
       hitEnemy(tgt, dmg, c,{source:u});
       S.fx.push({ k:'claw', x:tgt.x, y:tgt.y, c, t:.18, T:.18 });
       sfx(u.type === 'L' ? 'bite' : 'claw');
@@ -812,6 +815,7 @@ function update(dt){
   // Proyectiles: persiguen a su objetivo y aplican el daño al impactar.
   for (const s of S.shots) {
     ashShotTrack(s);
+    if(s.k==='reaper'){ascensionReaperStep(s,dt);continue;}
     if (s.tgt && s.tgt.hp > 0) { s.tx = s.tgt.x; s.ty = s.tgt.y; }
     const dx = s.tx - s.x, dy = s.ty - s.y, d = Math.hypot(dx, dy), step = s.sp * dt;
     if (d <= step + 4) { s.done = true; landShot(s); continue; }
@@ -830,7 +834,7 @@ function update(dt){
     if(WALKABLE_BANDS[biomeId(S)])e.y=fieldY(e.y,e.r,WORLD_H-e.r);
     if (bossAdvance(e,dt)){if(WALKABLE_BANDS[biomeId(S)])e.y=fieldY(e.y,e.r,WORLD_H-e.r);frostClearMotion(e);continue;}
     if(spellEnemyRooted(e))frostClearMotion(e);frostHeraldPulse(e);ashPriestPulse(e);catRevive(e);
-    let sp = spellEnemyRooted(e) ? 0 : e.sp * spellEnemySpeedFactor(e)*catSpeed(e);
+    let sp = spellEnemyRooted(e) ? 0 : e.sp * spellEnemySpeedFactor(e)*catSpeed(e)*ascensionSlow(e);
 
     const forcedHero=martialTaunted(e)?S.hero:null;
     const lonelyCleric = e.kind === 'cle' && !S.queue.some(q => q.kind !== 'cle') && !alive.some(o => o.kind !== 'cle' && o.hp > 0);
@@ -897,12 +901,17 @@ function update(dt){
       // Necromancer: levanta un esqueleto aliado de cada humano que cae en su área
       const n = S.units.find(u => u.type === 'N' && !u.down && u.hp > 0 && !frostFrozen(u) && u.cd <= 0 && (u.skels || 0) < skelCap(u.lvl) && dist(u, e) <= stats('N', u.lvl, u).range);
       if (n) {
-        const k = makeUnit('K', 1); k.temp = true; k.nl = n.lvl; refreshHp(k);
-        k.x = clamp(e.x, WALL_X + 20, worldW() - 20); k.y = fieldY(e.y,20,WORLD_H-20); k.hx = k.x; k.hy = k.y;
-        S.units.push(k); if(typeof animMark==='function')animMark(k,'summon');n.cd = stats('N', n.lvl, n).cd * synergyFactor(n,'raiseCooldown'); n.skels = (n.skels || 0) + 1;
-        S.fx.push({ k:'ring', x:k.x, y:k.y, r:30, c:'leaf', t:.6, T:.6 }); burst(k.x, k.y, 'leaf', 12, 90);
-        S.fx.push({ k:'line', x1:n.x, y1:n.y, x2:k.x, y2:k.y, c:'leaf', t:.35, T:.35 });
-        floatText(k.x, k.y - 24, 'Skeleton!', 'leaf', 11); sfx('raise'); tip('raise');
+        const count=ascensionRaiseCount(n);
+        for(let j=0;j<count;j++){
+          const k=makeUnit('K',1);k.temp=true;k.nl=n.lvl;refreshHp(k);
+          k.x=clamp(e.x,WALL_X+20,worldW()-20);k.y=fieldY(e.y,20,WORLD_H-20);
+          if(j){const kr=radius(k),offset=kr*2+4;let pos=null;for(const [dx,dy] of [[0,offset],[0,-offset],[offset,0],[-offset,0]]){const x=clamp(e.x+dx,WALL_X+kr,worldW()-kr),y=fieldY(e.y+dy,kr,WORLD_H-kr);if(S.units.every(o=>o.down||o.hp<=0||Math.hypot(o.x-x,o.y-y)>=radius(o)+kr+2)){pos={x,y};break;}}if(!pos)break;Object.assign(k,pos);if(!ascensionRaiseCommit(n))break;}
+          k.hx=k.x;k.hy=k.y;S.units.push(k);if(typeof animMark==='function')animMark(k,'summon');n.skels=(n.skels||0)+1;
+          S.fx.push({k:'ring',x:k.x,y:k.y,r:30,c:'leaf',t:.6,T:.6});burst(k.x,k.y,'leaf',12,90);
+          S.fx.push({k:'line',x1:n.x,y1:n.y,x2:k.x,y2:k.y,c:'leaf',t:.35,T:.35});
+          if(j)ascensionFx('N',k.x,k.y,34);floatText(k.x,k.y-24,'Skeleton!','leaf',11);
+        }
+        n.cd=stats('N',n.lvl,n).cd*synergyFactor(n,'raiseCooldown');sfx('raise');tip('raise');
       }
     });
     S.enemies = S.enemies.filter(e => e.hp > 0);
@@ -967,6 +976,7 @@ function landShot(s){
   if (s.k === 'orb') { if (s.tgt && s.tgt.hp > 0) { hitEnemy(s.tgt, s.dmg*ashShotFactor(s)*biomeProjectileFactor(s.tgt), 'a', { kb:0,source:s.source }); sfx('orbHit'); } else burst(s.x, s.y, 'a', 4, 40); }
   else if (s.k === 'fire') {
     S.enemies.forEach(e => { if (e.hp > 0 && Math.hypot(e.x - s.tx, e.y - s.ty) <= s.splash) hitEnemy(e, s.dmg*ashShotFactor(s)*biomeProjectileFactor(e), 'm',{source:s.source}); });
+    ascensionFrostfireImpact(s);
     S.fx.push({ k:'ring', x:s.tx, y:s.ty, r:s.splash, c:'m', t:.35, T:.35 });
     burst(s.tx, s.ty, 'm', 14, 140); burst(s.tx, s.ty, 'gold', 8, 100);
     S.shake = Math.max(S.shake, 3); feelImpact(s.tx,s.ty,'fire',null,Math.max(24,s.splash));sfx('boom');
@@ -1340,6 +1350,7 @@ function restore(v){
  s.freeHill=false;
  if(typeof s.resultSub==='string')s.resultSub=s.resultSub.replace('Terrain changed. ','');
  s.held=new Set(s.held);s.wins=new Set(s.wins);s.seenKinds=new Set(s.seenKinds);s.ter=new Map();s.relic=RELICS[s.relicIndex]||null;
+ ascensionNormalize(s);
  const refs=[...s.units,...s.bench.filter(Boolean),...s.enemies,...heroRefs(s)];s.shots=s.shots.map(q=>({...q,tgt:refs[q.targetIndex]||null,source:refs[q.sourceIndex]||null}));
  s.offer=s.offer.map(o=>{const legacyNames={"Ectoplasma":"Ectoplasm","Carne dura":"Tough Flesh","Fuego antiguo":"Ancient Fire","Cosecha de almas":"Soul Harvest","Luna llena":"Full Moon","Garras firmes":"Steady Claws","Altar reforzado":"Fortified Altar","Necromancia":"Necromancy","Rugido del dragón":"Dragon Roar","Manos de la tierra":"Earth Hands","Lluvia de huesos":"Bone Rain","Festín":"Feast","Aullido":"Howl","Ofrenda":"Offering","Niebla":"Mist","Temblor":"Earthquake","Murciélagos":"Bats","Cripta ampliada":"Expanded Crypt","Cosecha":"Harvest","Lago maldito":"Cursed Lake","Colina":"Hill","Pantano":"Swamp","Bendición":"Blessing","Carta para esta partida":"Card for this run","Carta":"Card"};o={...o,n:legacyNames[o.n]||o.n,kind:legacyNames[o.kind]||o.kind};let b=BLESS.find(b=>b.n===o.n);if(o.kind==='Blessing'&&b)return {...b,kind:o.kind};let id=Object.keys(CARDS).find(id=>CARDS[id].n===o.n);if(!id && ['Cursed Lake','Hill','Swamp'].includes(o.n))id='cripta';if(!id)throw Error('Invalid reward');return {n:CARDS[id].n,ic:CARDS[id].ic,d:CARDS[id].d(s.wave),kind:o.kind,a:()=>S.deck.push(id)};});
  if(v.profileState)campaignImportProfile(v.profileState);

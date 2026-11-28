@@ -1,0 +1,23 @@
+const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
+const code=fs.readFileSync(path.join(__dirname,'..','engine/guardian-ascension.js'),'utf8');
+const harness=`
+let S={phase:'fight',fightT:0,units:[],bench:[],enemies:[],fx:[],shots:[]};
+const frostFrozen=u=>!!u.frozen,regionalDef=e=>e.regional||null,skelCap=l=>[3,4,6][l-1],radius=u=>u.r||10,floatText=()=>{};
+const damage=(e,d)=>{e.hp-=Math.max(1,d-(e.armor||0));},hitEnemy=(e,d)=>damage(e,d),ashShotFactor=s=>s.ashCrossed?.75:1,biomeProjectileFactor=e=>e.cover?.75:1;
+const unit=type=>({type,lvl:3,hp:100,x:0,y:0,r:10}),enemy=(x,y=0)=>({x,y,hp:1000,r:5});
+const results={},w=unit('W'),a=unit('A'),m=unit('M'),n=unit('N'),b=unit('B');S.units=[w,a,m,n,b];
+results.cooldowns=Object.values(ASCENSION_RULES).map(x=>x.cd).join(',')==='8,6,9,12,12';
+results.early=!ascensionReady(w);S.fightT=3;results.ready=ascensionReady(w);w.frozen=true;results.frozen=!ascensionReady(w);w.frozen=false;w.lvl=2;results.tier2=!ascensionReady(w);w.lvl=3;w.down=true;results.dead=!ascensionReady(w);w.down=false;
+const e1=enemy(20),e2=enemy(30),e3=enemy(40),e4=enemy(65);S.enemies=[e1,e2,e3,e4];
+results.plague=ascensionPlague(w,e1,100)&&w.ascNext===11&&[e1,e2,e3].every(e=>e.ascPlague)&&!e4.ascPlague;
+results.cooldown=!ascensionPlague(w,e1,100);S.fightT=4;ascensionAdvance();results.tick=e1.hp===990&&e2.hp===990;
+const w2=unit('W');S.units.push(w2);results.refresh=ascensionPlague(w2,e1,50)&&e1.ascPlague.rate===10&&e1.ascPlague.next===5;S.fightT=7;ascensionAdvance();results.noDuplicate=e1.hp===960;
+e1.boss=true;results.bossSlow=ascensionSlow(e1)===1;delete e1.boss;
+S.fightT=8;S.enemies=[enemy(30),enemy(60),enemy(90),enemy(110),enemy(40,50)];const shot=ascensionSoulShot(a,S.enemies[0],100,150);results.reaper=!!shot&&a.ascNext===14;ascensionReaperStep(shot,.5);results.pierce=shot.done&&shot.hitIds.length===3&&S.enemies.map(e=>e.hp).join(',')==='900,955,975,1000,1000';
+results.edge=ascensionSegmentEntry(0,0,100,0,enemy(50,15),10)===.5;results.miss=ascensionSegmentEntry(0,0,100,0,enemy(50,16),10)===null;
+S.enemies=[enemy(20),enemy(72),enemy(73),enemy(74),enemy(75),enemy(100)];results.frostfire=ascensionFrostfire(m,S.enemies[0])&&m.ascNext===17;ascensionFrostfireImpact({frostfire:true,tx:0,ty:0,splash:70,dmg:100});results.outer=S.enemies.map(e=>e.hp).join(',')==='1000,965,965,965,1000,1000';
+n.skels=5;results.raiseCap=ascensionRaiseCount(n)===1;n.skels=4;results.raiseTwo=ascensionRaiseCount(n)===2&&ascensionRaiseCommit(n)&&n.ascNext===20;results.raiseCooldown=ascensionRaiseCount(n)===1;
+S.enemies=Array.from({length:6},(_,i)=>enemy(10+i*10));S.enemies[0].boss=true;results.lament=ascensionLament(b,100)&&b.ascNext===20&&S.enemies.filter(e=>e.ascLament).length===5;results.bossLament=ascensionEnemyDamage(S.enemies[0])===.925&&S.enemies[0].ascLament.until===10;results.normalLament=ascensionEnemyDamage(S.enemies[1])===.85&&S.enemies[1].ascLament.until===12;
+S.fightT=13;results.expired=ascensionEnemyDamage(S.enemies[1])===1;
+S.shots=[shot];const saved=JSON.parse(JSON.stringify(S));ascensionNormalize(saved);results.save=saved.shots[0].hitIds.length===3&&saved.ascSeq>=Math.max(...shot.hitIds);ascensionReset(S);results.reset=!w.ascNext&&!b.ascNext&&Object.keys(S.ascMetrics).length===0;return results;`;
+const res=new Function(code+harness)();for(const [k,v] of Object.entries(res))assert.equal(v,true,k);console.log(res);

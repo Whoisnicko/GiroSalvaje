@@ -146,7 +146,7 @@ function ashActive(state=S){return biomeId(state)==='ashen'&&state.phase==='figh
 function ashCloud(state=S){const t=state.fightT||0;return ashActive(state)&&t>=ASH_RULES.first&&(t-ASH_RULES.first)%ASH_RULES.period<ASH_RULES.duration;}
 function ashShotTrack(shot,state=S){if(ashCloud(state))shot.ashCrossed=true;}
 function ashShotFactor(shot){return shot.ashCrossed&&ashActive()?ASH_RULES.projectileFactor:1;}
-function ashEnemyAttack(e,state=S){return e.dmg*(bossDef(e)?.ascension&&e.catAscended?1.25:1)*(ashActive(state)&&e.ashBuffUntil>state.fightT?(e.ashBuffFactor||1):1);}
+function ashEnemyAttack(e,state=S){return e.dmg*(bossDef(e)?.ascension&&e.catAscended?1.25:1)*(ashActive(state)&&e.ashBuffUntil>state.fightT?(e.ashBuffFactor||1):1)*(typeof ascensionEnemyDamage==='function'?ascensionEnemyDamage(e,state):1);}
 function ashResetUnit(u){delete u.ashBurnUntil;delete u.ashBurnNext;delete u.ashBurnRate;delete u.ashBuffUntil;delete u.ashBuffFactor;delete u.ashPulseAt;}
 function ashResetBattle(){S.ashPatches=[];S.ashGroundNext=1;for(const u of [...(S.units||[]),...(S.bench||[]).filter(Boolean),...(S.enemies||[]),S.hero].filter(Boolean))ashResetUnit(u);}
 function ashApplyBurn(u,shot,dealt){if(!ashActive()||!shot.burnDuration||!(dealt>0)||u.hp<=0||u.down)return;const now=S.fightT;if(!(u.ashBurnUntil>now)){u.ashBurnNext=now+1;u.ashBurnRate=0;}u.ashBurnUntil=Math.max(u.ashBurnUntil||0,now+shot.burnDuration);u.ashBurnRate=Math.max(u.ashBurnRate||0,shot.burnRate||0);}

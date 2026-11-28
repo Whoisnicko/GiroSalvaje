@@ -12,7 +12,7 @@ function sandboxPerf(now,delta){
  if(!sbPerfStart||delta>1000){sbPerfStart=now;sbPerfFrames=0;sbPerfWorst=0;return;}
  sbPerfFrames++;sbPerfWorst=Math.max(sbPerfWorst,delta);
  const elapsed=now-sbPerfStart;if(elapsed<1000)return;
- const fps=Math.round(sbPerfFrames*1000/elapsed);const perf=sbEl('sbPerf'),label=fps+' FPS · '+Math.round(sbPerfWorst)+' ms';if(perf.textContent!==label)perf.textContent=label;sbPerfStart=now;sbPerfFrames=0;sbPerfWorst=0;
+ const fps=Math.round(sbPerfFrames*1000/elapsed);const perf=sbEl('sbPerf'),label=fps+' FPS · '+Math.round(sbPerfWorst)+' ms';if(perf.textContent!==label)perf.textContent=label;const asc=sbEl('sbAscension');if(asc)asc.textContent=ascensionSandboxSummary();sbPerfStart=now;sbPerfFrames=0;sbPerfWorst=0;
 }
 function sandboxRefill(){if(!sandboxActive())return;S.gold=999999;S.spinsLeft=999;S.maxUnits=Math.min(S.maxUnits,SANDBOX_MAX_UNITS);}
 function sandboxCards(){S.deck=Object.keys(CARDS);S.hand=S.deck.map((id,di)=>({id,di,used:false}));S.aim=null;}
