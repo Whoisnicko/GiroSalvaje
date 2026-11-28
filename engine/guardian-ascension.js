@@ -27,7 +27,7 @@ function ascensionControl(e,type,state=S){
  else if(type==='M'){if(!boss||e.ascFreezeGuard>now||ascensionControlled(e,state))return false;e.ascFreezeUntil=now+d.freeze;e.ascFreezeGuard=e.ascFreezeUntil+d.freezeGuard;}
  else return false;
  if(e.bossCast){delete e.bossCast;e.bossCooldown=Math.max(e.bossCooldown||0,typeof bossDef==='function'?(bossDef(e)?.cooldown||0):0);}
- delete e.iceVX;delete e.iceVY;e.kbv=0;delete e.heroKB; e.moving=false;
+ delete e.iceVX;delete e.iceVY;e.kbv=0;delete e.heroKB;delete e.heroKnockback; e.moving=false;
  ascensionMetric(type,'controls',1,state);return true;
 }
 function ascensionZombieSpecial(u,tgt,state=S){
@@ -73,7 +73,7 @@ function ascensionReaperStep(s,dt,state=S){
  const group=s.volley?state.shots.filter(q=>q.k==='reaper'&&q.volley===s.volley):[s],seen=new Set(group.flatMap(q=>q.hitIds||[]));const hits=[];
  for(const e of state.enemies){if(e.hp<=0||seen.has(ascensionId(e,state)))continue;const at=ascensionSegmentEntry(s.x,s.y,nx,ny,e,d.width);if(at!==null)hits.push({e,at});}
  hits.sort((a,b)=>a.at-b.at);
- for(const {e} of hits){if(e.hp<=0||seen.has(e.ascId))continue;const weight=s.hitIds.length?d.secondary:1;seen.add(e.ascId);s.hitIds.push(e.ascId);const before=e.hp;
+ for(const {e} of hits){if(e.hp<=0||seen.has(e.ascId))continue;const weight=(s.localHits||0)?d.secondary:1;s.localHits=(s.localHits||0)+1;seen.add(e.ascId);s.hitIds.push(e.ascId);const before=e.hp;
  hitEnemy(e,s.dmg*weight*ashShotFactor(s)*biomeProjectileFactor(e),'a',{kb:0,source:s.source});
  ascensionMetric('A','hits',1,state);ascensionMetric('A','damage',Math.min(before,Math.max(0,before-e.hp)),state);if(s.special)ascensionFx('A',e.x,e.y,16,state);}
  // Replicate the full volley hit set onto every surviving projectile for save/restore and completed siblings.
