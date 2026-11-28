@@ -161,3 +161,7 @@ Date: 2026-11-28. User-reported browser playtest: 12/12 OK. Tested runtime commi
 Production: https://stophumans.pages.dev/
 Source: https://github.com/Whoisnicko/StopHumans/tree/main
 Rollback reference: be696c4745d12f234a52d521495bb4743eedcaa0 (do not reset without authorization).
+
+
+# V7.74 — Guardian Ascension design proposal
+Design branch only. See PROYECTO-v22-alpha7p74-DESIGN.md; no runtime change or implementation approval.
