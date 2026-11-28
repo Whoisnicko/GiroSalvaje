@@ -830,7 +830,7 @@ function update(dt){
     e.root = Math.max(0, e.root - dt);
     e.moving = false;
     e.lunge = Math.max(0, (e.lunge || 0) - dt);
-    if(ascensionControlled(e)){frostClearMotion(e);e.kbv=0;continue;}
+    if(ascensionControlled(e)){frostClearMotion(e);e.kbv=0;delete e.heroKbx;delete e.heroKby;continue;}
     heroAdvanceKnockback(e,dt,Wd);
     if (e.kbv > 1) { const nx = e.x + e.kbv * dt; e.x = nx; e.kbv *= Math.pow(.002, dt); }
     if(WALKABLE_BANDS[biomeId(S)])e.y=fieldY(e.y,e.r,WORLD_H-e.r);
